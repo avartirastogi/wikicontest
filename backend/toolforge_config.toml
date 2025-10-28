@@ -1,0 +1,20 @@
+GREETING = "Welcome to WikiContest on Toolforge!"
+
+# Security
+SECRET_KEY = "your-secret-key-here"
+JWT_SECRET_KEY = "your-jwt-secret-key-here"
+
+# Database (MySQL for Toolforge - Recommended)
+SQLALCHEMY_DATABASE_URI = "mysql://username:password@tools-db/database_name"
+SQLALCHEMY_TRACK_MODIFICATIONS = false
+
+# JWT Configuration
+JWT_ACCESS_TOKEN_EXPIRES = 86400
+
+# Debug mode (set to false for production)
+DEBUG = false
+
+# OAuth Configuration (add your OAuth consumer details)
+OAUTH_MWURI = "https://meta.wikimedia.org/w/index.php"
+CONSUMER_KEY = "3f383c834a07a181723f1a1de566f7cf"
+CONSUMER_SECRET = "62c40e0fde2377613d1f82b9b7aabc9fe2a73b30"
