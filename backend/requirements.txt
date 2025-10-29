@@ -6,7 +6,7 @@ Flask-CORS==4.0.0
 
 # Database dependencies
 PyMySQL==1.1.0
-SQLAlchemy==1.4.53
+SQLAlchemy==2.0.36
 
 # Authentication and security
 bcrypt==4.1.2
