@@ -48,17 +48,34 @@ A web platform for hosting and participating in collaborative online competition
    # Edit .env and update your MySQL credentials
    ```
 
-6. **Initialize database**
+6. **Setup OAuth (Optional - for Wikimedia login)**
+   
+   To enable OAuth 1.0a login with Wikimedia:
+   
+   a. Register an OAuth consumer at: https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration
+   
+   b. Set the callback URL to: `http://localhost:5000/api/user/oauth/callback` (or your production URL)
+   
+   c. Add your OAuth credentials to `.env`:
+   ```env
+   OAUTH_MWURI=https://meta.wikimedia.org/w/index.php
+   CONSUMER_KEY=your-consumer-key-here
+   CONSUMER_SECRET=your-consumer-secret-here
+   ```
+   
+   d. Users can then click "Login with Wikimedia" on the login page
+
+7. **Initialize database**
    ```bash
    python init_db.py
    ```
 
-7. **Run the application**
+8. **Run the application**
    ```bash
    python app.py
    ```
 
-8. **Open in browser**
+9. **Open in browser**
    ```
    http://localhost:5000
    ```
@@ -72,6 +89,30 @@ The `.env.example` file contains all configuration options. Copy it to `.env` an
 - **Database**: MySQL connection string (default)
 - **Security Keys**: Change in production!
 - **CORS**: Frontend development URLs
+- **OAuth 1.0a**: Wikimedia OAuth credentials (optional, for OAuth login)
+
+### OAuth 1.0a Setup (for Wikimedia Login)
+
+1. **Register OAuth Consumer**:
+   - Go to: https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration
+   - Fill in your application details
+   - Set callback URL: `http://localhost:5000/api/user/oauth/callback` (development)
+   - For production, use your production URL: `https://yourdomain.com/api/user/oauth/callback`
+
+2. **Add Credentials to `.env`**:
+   ```env
+   OAUTH_MWURI=https://meta.wikimedia.org/w/index.php
+   CONSUMER_KEY=your-consumer-key-from-registration
+   CONSUMER_SECRET=your-consumer-secret-from-registration
+   ```
+
+3. **Test OAuth Login**:
+   - Start the application
+   - Click "Login with Wikimedia" on the login page
+   - Authorize the application on Wikimedia
+   - You'll be redirected back and logged in
+
+**Note**: OAuth login works alongside regular email/password login. Users can choose either method.
 
 ## 🧪 Testing
 

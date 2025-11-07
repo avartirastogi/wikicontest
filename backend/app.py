@@ -72,14 +72,18 @@ def create_app():
     app.config['JWT_CSRF_IN_COOKIES'] = True  # Include CSRF token in cookies
     
     # =========================================================================
-    # OAUTH CONFIGURATION (Wikimedia OAuth 1.0a)
+    # OAUTH 1.0a CONFIGURATION (Wikimedia OAuth 1.0a)
     # =========================================================================
     
-    # OAuth configuration from environment variables
-    # These are loaded from .env file for Wikimedia OAuth authentication
+    # OAuth 1.0a configuration from environment variables
+    # These values are loaded from .env file for Wikimedia OAuth 1.0a authentication
+    # The mwoauth library uses these credentials to authenticate users via OAuth 1.0a protocol
     app.config['OAUTH_MWURI'] = os.getenv('OAUTH_MWURI', 'https://meta.wikimedia.org/w/index.php')
     app.config['CONSUMER_KEY'] = os.getenv('CONSUMER_KEY', '')
     app.config['CONSUMER_SECRET'] = os.getenv('CONSUMER_SECRET', '')
+    # Set to True if OAuth consumer was registered with "oob" (out-of-band) callback
+    # Most web apps should use False and register with a proper callback URL
+    app.config['OAUTH_USE_OOB'] = os.getenv('OAUTH_USE_OOB', 'False').lower() == 'true'
     
     # =========================================================================
     # DATABASE CONFIGURATION
@@ -224,6 +228,48 @@ def health_check():
         'status': 'healthy', 
         'message': 'WikiContest API is running',
         'version': '1.0.0'
+    }), 200
+
+@app.route('/api/oauth/config', methods=['GET'])
+def oauth_config_check():
+    """
+    Diagnostic endpoint to check OAuth configuration.
+    
+    This helps verify that OAuth is properly configured and shows
+    what callback URL will be used. Useful for troubleshooting.
+    
+    Returns:
+        JSON: OAuth configuration details (without secrets)
+    """
+    from flask import request as flask_request
+    
+    consumer_key = app.config.get('CONSUMER_KEY', '')
+    consumer_secret = app.config.get('CONSUMER_SECRET', '')
+    mw_uri = app.config.get('OAUTH_MWURI', 'https://meta.wikimedia.org/w/index.php')
+    use_oob = app.config.get('OAUTH_USE_OOB', False)
+    custom_callback_path = app.config.get('OAUTH_CALLBACK_PATH', None)
+    
+    # Build callback URL
+    scheme = flask_request.scheme
+    host = flask_request.host
+    if custom_callback_path:
+        callback_url = f"{scheme}://{host}{custom_callback_path}"
+    else:
+        callback_url = f"{scheme}://{host}/api/user/oauth/callback"
+    
+    return jsonify({
+        'oauth_configured': bool(consumer_key and consumer_secret),
+        'consumer_key': consumer_key[:10] + '...' if consumer_key else 'NOT SET',
+        'consumer_secret_set': bool(consumer_secret),
+        'mw_uri': mw_uri,
+        'use_oob': use_oob,
+        'callback_url': callback_url,
+        'custom_callback_path': custom_callback_path,
+        'instructions': {
+            'if_use_oob_true': 'Your OAuth consumer must be registered with "oob" (out-of-band)',
+            'if_use_oob_false': f'Your OAuth consumer must be registered with this exact callback URL: {callback_url}',
+            'check_registration': 'Go to https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration to verify your consumer settings'
+        }
     }), 200
 
 # =============================================================================
