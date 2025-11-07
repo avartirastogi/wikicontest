@@ -153,11 +153,19 @@ def login():
 @handle_errors
 def logout():
     """
-    Logout user and clear JWT token
+    Logout user and clear JWT token.
+    
+    This works for both regular users and OAuth users.
+    It clears the JWT cookie and any OAuth session data.
     
     Returns:
         JSON response with success message
     """
+    # Clear OAuth session data if present (for OAuth users)
+    session.pop('request_token', None)
+    session.pop('request_secret', None)
+    
+    # Clear JWT token cookie (works for both regular and OAuth users)
     response = make_response(jsonify({'message': 'Logout successful'}))
     unset_jwt_cookies(response)
     return response, 200
@@ -338,7 +346,8 @@ def oauth_login():
     Returns:
         Redirect to Wikimedia OAuth authorization page
     """
-    # Get OAuth configuration from app config (loaded from .env)
+    # Get OAuth 1.0a configuration from app config (loaded from .env file)
+    # These values come from the .env file: CONSUMER_KEY, CONSUMER_SECRET, OAUTH_MWURI
     consumer_key = current_app.config.get('CONSUMER_KEY')
     consumer_secret = current_app.config.get('CONSUMER_SECRET')
     mw_uri = current_app.config.get('OAUTH_MWURI', 'https://meta.wikimedia.org/w/index.php')
@@ -349,19 +358,58 @@ def oauth_login():
             'error': 'OAuth not configured. Please set CONSUMER_KEY and CONSUMER_SECRET in .env file'
         }), 500
     
+    # Log OAuth configuration for debugging
+    current_app.logger.info(f'OAuth login initiated - Consumer Key: {consumer_key[:10]}...')
+    current_app.logger.info(f'OAuth MW URI: {mw_uri}')
+    
     try:
         # Generate OAuth request token
-        # The callback URL should match what's registered in OAuth consumer
-        callback_url = request.url_root.rstrip('/') + '/api/user/oauth/callback'
+        # The callback URL must match exactly what's registered in OAuth consumer
+        # Build absolute callback URL from request
+        # Use request.scheme and request.host to build proper absolute URL
+        scheme = request.scheme  # 'http' or 'https'
+        host = request.host  # '127.0.0.1:5000' or domain name
+        
+        # Check if we should use a custom callback path (e.g., for Toolforge)
+        # Toolforge OAuth consumer is registered with /oauth/callback
+        # Regular deployment uses /api/user/oauth/callback
+        custom_callback_path = current_app.config.get('OAUTH_CALLBACK_PATH', None)
+        if custom_callback_path:
+            # Use custom callback path (e.g., /oauth/callback for Toolforge)
+            callback_url = f"{scheme}://{host}{custom_callback_path}"
+        else:
+            # Use default blueprint route path
+            callback_url = f"{scheme}://{host}/api/user/oauth/callback"
+        
+        # Check if OAuth consumer is registered with "oob" (out-of-band)
+        # If your OAuth consumer was registered with "oob", you must use "oob" here
+        # Otherwise, use the callback URL that matches your registration
+        # Most web applications should register with a callback URL, not "oob"
+        use_oob = current_app.config.get('OAUTH_USE_OOB', False)
+        
+        if use_oob:
+            # Use "oob" for out-of-band (manual verification code entry)
+            # This is required if OAuth consumer was registered with "oob"
+            callback_param = "oob"
+            current_app.logger.info('Using OAuth callback: oob (out-of-band)')
+            current_app.logger.warning('OAuth consumer registered with "oob" - user will need to manually enter verification code')
+        else:
+            # Use the callback URL for automatic redirect
+            # This must match exactly what was registered in OAuth consumer
+            callback_param = callback_url
+            current_app.logger.info(f'Using OAuth callback URL: {callback_url}')
+            current_app.logger.info(f'IMPORTANT: Make sure your OAuth consumer is registered with this exact callback URL: {callback_url}')
         
         # Create OAuth consumer
         consumer_token = mwoauth.ConsumerToken(consumer_key, consumer_secret)
         
         # Get request token from Wikimedia
+        # The callback parameter is required and must match OAuth consumer registration exactly
+        # If registered with "oob", use "oob". If registered with URL, use that exact URL
         redirect_url, request_token = mwoauth.initiate(
             mw_uri,
             consumer_token,
-            callback=callback_url
+            callback=callback_param
         )
         
         # Store request token in session for later verification
@@ -394,7 +442,8 @@ def oauth_callback():
     Returns:
         Redirect to frontend with success message or error
     """
-    # Get OAuth configuration from app config
+    # Get OAuth 1.0a configuration from app config (loaded from .env file)
+    # These values come from the .env file: CONSUMER_KEY, CONSUMER_SECRET, OAUTH_MWURI
     consumer_key = current_app.config.get('CONSUMER_KEY')
     consumer_secret = current_app.config.get('CONSUMER_SECRET')
     mw_uri = current_app.config.get('OAUTH_MWURI', 'https://meta.wikimedia.org/w/index.php')

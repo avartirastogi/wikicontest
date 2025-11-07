@@ -138,6 +138,26 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
+@app.route('/oauth/callback', methods=['GET'])
+def oauth_callback_toolforge():
+    """
+    Handle OAuth callback from Wikimedia for Toolforge deployment.
+    
+    This route is at /oauth/callback to match the OAuth consumer registration.
+    It redirects to the blueprint route handler at /api/user/oauth/callback
+    while preserving all query parameters.
+    """
+    if not MODELS_LOADED:
+        return jsonify({'error': 'Models not loaded'}), 500
+    
+    # Redirect to the blueprint route with all query parameters preserved
+    # This ensures the OAuth callback works with the registered callback URL
+    query_string = request.query_string.decode('utf-8')
+    if query_string:
+        return redirect(f'/api/user/oauth/callback?{query_string}')
+    else:
+        return redirect('/api/user/oauth/callback')
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
