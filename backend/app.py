@@ -72,6 +72,16 @@ def create_app():
     app.config['JWT_CSRF_IN_COOKIES'] = True  # Include CSRF token in cookies
     
     # =========================================================================
+    # OAUTH CONFIGURATION (Wikimedia OAuth 1.0a)
+    # =========================================================================
+    
+    # OAuth configuration from environment variables
+    # These are loaded from .env file for Wikimedia OAuth authentication
+    app.config['OAUTH_MWURI'] = os.getenv('OAUTH_MWURI', 'https://meta.wikimedia.org/w/index.php')
+    app.config['CONSUMER_KEY'] = os.getenv('CONSUMER_KEY', '')
+    app.config['CONSUMER_SECRET'] = os.getenv('CONSUMER_SECRET', '')
+    
+    # =========================================================================
     # DATABASE CONFIGURATION
     # =========================================================================
     

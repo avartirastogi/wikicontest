@@ -86,6 +86,18 @@ class Config:
     # Logging settings
     LOG_LEVEL = 'INFO'
     LOG_FILE = 'logs/app.log'
+    
+    # =========================================================================
+    # OAUTH CONFIGURATION (Wikimedia OAuth 1.0a)
+    # =========================================================================
+    
+    # OAuth base URI for Wikimedia
+    OAUTH_MWURI = os.getenv('OAUTH_MWURI', 'https://meta.wikimedia.org/w/index.php')
+    
+    # OAuth consumer credentials
+    # These should be obtained from: https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration
+    CONSUMER_KEY = os.getenv('CONSUMER_KEY', '')
+    CONSUMER_SECRET = os.getenv('CONSUMER_SECRET', '')
 
 
 class DevelopmentConfig(Config):
