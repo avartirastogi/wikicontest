@@ -3,12 +3,13 @@ User Routes for WikiContest Application
 Handles user registration, login, logout, and dashboard functionality
 """
 
-from flask import Blueprint, request, jsonify, make_response
+from flask import Blueprint, request, jsonify, make_response, session, redirect, url_for, current_app
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies
 from models.user import User
 from middleware.auth import require_auth, require_role, handle_errors, validate_json_data
 import re
 from database import db
+import mwoauth
 
 # Create blueprint
 user_bp = Blueprint('user', __name__)
@@ -320,3 +321,166 @@ def update_profile():
     user.save()
     
     return jsonify({'message': 'Profile updated successfully'}), 200
+
+# =============================================================================
+# OAUTH ROUTES (Wikimedia OAuth 1.0a)
+# =============================================================================
+
+@user_bp.route('/oauth/login', methods=['GET'])
+@handle_errors
+def oauth_login():
+    """
+    Initiate OAuth login with Wikimedia.
+    
+    This route starts the OAuth 1.0a authentication flow with Wikimedia.
+    It uses the OAuth consumer credentials from the .env file.
+    
+    Returns:
+        Redirect to Wikimedia OAuth authorization page
+    """
+    # Get OAuth configuration from app config (loaded from .env)
+    consumer_key = current_app.config.get('CONSUMER_KEY')
+    consumer_secret = current_app.config.get('CONSUMER_SECRET')
+    mw_uri = current_app.config.get('OAUTH_MWURI', 'https://meta.wikimedia.org/w/index.php')
+    
+    # Check if OAuth is configured
+    if not consumer_key or not consumer_secret:
+        return jsonify({
+            'error': 'OAuth not configured. Please set CONSUMER_KEY and CONSUMER_SECRET in .env file'
+        }), 500
+    
+    try:
+        # Generate OAuth request token
+        # The callback URL should match what's registered in OAuth consumer
+        callback_url = request.url_root.rstrip('/') + '/api/user/oauth/callback'
+        
+        # Create OAuth consumer
+        consumer_token = mwoauth.ConsumerToken(consumer_key, consumer_secret)
+        
+        # Get request token from Wikimedia
+        redirect_url, request_token = mwoauth.initiate(
+            mw_uri,
+            consumer_token,
+            callback=callback_url
+        )
+        
+        # Store request token in session for later verification
+        session['request_token'] = request_token.key
+        session['request_secret'] = request_token.secret
+        
+        # Redirect user to Wikimedia for authorization
+        return redirect(redirect_url)
+        
+    except Exception as e:
+        current_app.logger.error(f'OAuth initiation error: {str(e)}')
+        return jsonify({
+            'error': 'Failed to initiate OAuth login',
+            'details': str(e)
+        }), 500
+
+@user_bp.route('/oauth/callback', methods=['GET'])
+@handle_errors
+def oauth_callback():
+    """
+    Handle OAuth callback from Wikimedia.
+    
+    This route is called by Wikimedia after the user authorizes the application.
+    It exchanges the request token for an access token and creates/updates the user.
+    
+    Query parameters:
+        oauth_verifier: Verification code from Wikimedia
+        oauth_token: Request token (should match session)
+    
+    Returns:
+        Redirect to frontend with success message or error
+    """
+    # Get OAuth configuration from app config
+    consumer_key = current_app.config.get('CONSUMER_KEY')
+    consumer_secret = current_app.config.get('CONSUMER_SECRET')
+    mw_uri = current_app.config.get('OAUTH_MWURI', 'https://meta.wikimedia.org/w/index.php')
+    
+    # Get OAuth parameters from callback
+    oauth_verifier = request.args.get('oauth_verifier')
+    oauth_token = request.args.get('oauth_token')
+    
+    # Get stored request token from session
+    request_token_key = session.get('request_token')
+    request_secret = session.get('request_secret')
+    
+    # Validate callback parameters
+    if not oauth_verifier or not oauth_token:
+        return jsonify({'error': 'Missing OAuth parameters'}), 400
+    
+    if not request_token_key or not request_secret:
+        return jsonify({'error': 'OAuth session expired. Please try again.'}), 400
+    
+    if oauth_token != request_token_key:
+        return jsonify({'error': 'Invalid OAuth token'}), 400
+    
+    try:
+        # Create consumer and request tokens
+        consumer_token = mwoauth.ConsumerToken(consumer_key, consumer_secret)
+        request_token = mwoauth.RequestToken(request_token_key, request_secret)
+        
+        # Exchange request token for access token
+        access_token = mwoauth.complete(
+            mw_uri,
+            consumer_token,
+            request_token,
+            oauth_verifier
+        )
+        
+        # Get user identity from Wikimedia
+        identity = mwoauth.identify(mw_uri, consumer_token, access_token)
+        
+        # Extract user information
+        username = identity.get('username', '')
+        user_id = identity.get('sub', '')
+        
+        if not username:
+            return jsonify({'error': 'Failed to get user information from Wikimedia'}), 500
+        
+        # Find or create user in database
+        # Use username as the unique identifier
+        user = User.query.filter_by(username=username).first()
+        
+        if not user:
+            # Create new user from OAuth
+            # OAuth users don't need a password, but User model requires one
+            # Generate a random secure password that will never be used
+            import secrets
+            random_password = secrets.token_urlsafe(32)
+            # User.__init__ will automatically hash the password via set_password
+            user = User(
+                username=username,
+                email=f'{username}@wikimedia.oauth',  # Placeholder email
+                password=random_password,  # Random password (OAuth users won't use it)
+                role='user'
+            )
+            user.save()
+        else:
+            # Update existing user if needed
+            # OAuth users might not have a password set
+            pass
+        
+        # Create JWT token for the user
+        access_token_jwt = create_access_token(identity=str(user.id))
+        
+        # Clear OAuth session data
+        session.pop('request_token', None)
+        session.pop('request_secret', None)
+        
+        # Create response with redirect to frontend
+        response = make_response(redirect('/'))
+        
+        # Set JWT token in HTTP-only cookie
+        set_access_cookies(response, access_token_jwt)
+        
+        return response
+        
+    except Exception as e:
+        current_app.logger.error(f'OAuth callback error: {str(e)}')
+        return jsonify({
+            'error': 'OAuth authentication failed',
+            'details': str(e)
+        }), 500

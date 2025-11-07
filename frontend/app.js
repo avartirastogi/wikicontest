@@ -393,12 +393,24 @@ async function checkAuth() {
 }
 
 // Contest Functions
+/**
+ * Load all contests from the backend.
+ * 
+ * This function fetches contests without requiring authentication,
+ * allowing non-logged-in users to view contests.
+ * 
+ * @returns {Promise<void>}
+ */
 async function loadContests() {
     try {
+        // Load contests without authentication requirement
+        // This allows non-logged-in users to view contests
         const response = await apiRequest('/contest');
         currentContests = response;
         displayContests();
     } catch (error) {
+        // Show error but don't block the UI for non-logged-in users
+        console.error('Failed to load contests:', error);
         showAlert('Failed to load contests: ' + error.message, 'danger');
     }
 }
@@ -580,9 +592,20 @@ async function submitCreateContest() {
     }
 }
 
+/**
+ * Display contests in the UI, hiding points for non-logged-in users.
+ * 
+ * This function shows contest information but hides scoring details
+ * (points, marks) for users who are not authenticated.
+ * 
+ * @param {string} category - Contest category ('current', 'upcoming', 'past')
+ */
 function displayContests(category = 'current') {
     const contestList = document.getElementById('contestList');
     const contests = currentContests[category] || [];
+    
+    // Check if user is logged in
+    const isLoggedIn = currentUser !== null;
     
     if (contests.length === 0) {
         contestList.innerHTML = `
@@ -619,9 +642,20 @@ function displayContests(category = 'current') {
     `).join('');
 }
 
+/**
+ * View contest details in a modal.
+ * 
+ * This function displays contest information but hides scoring details
+ * (points, marks) for non-logged-in users.
+ * 
+ * @param {number} contestId - ID of the contest to view
+ */
 async function viewContest(contestId) {
     try {
         const contest = await apiRequest(`/contest/${contestId}`);
+        
+        // Check if user is logged in to show/hide points
+        const isLoggedIn = currentUser !== null;
         
         // Create modal for contest details
         const modalHTML = `
@@ -643,10 +677,16 @@ async function viewContest(contestId) {
                                     ${contest.end_date ? `<p><strong>End Date:</strong> ${new Date(contest.end_date).toLocaleDateString()}</p>` : ''}
                                 </div>
                                 <div class="col-md-6">
-                                    <h6>Scoring</h6>
-                                    <p><strong>Accepted:</strong> ${contest.marks_setting_accepted} points</p>
-                                    <p><strong>Rejected:</strong> ${contest.marks_setting_rejected} points</p>
-                                    <p><strong>Submissions:</strong> ${contest.submission_count}</p>
+                                    ${isLoggedIn ? `
+                                        <h6>Scoring</h6>
+                                        <p><strong>Accepted:</strong> ${contest.marks_setting_accepted} points</p>
+                                        <p><strong>Rejected:</strong> ${contest.marks_setting_rejected} points</p>
+                                        <p><strong>Submissions:</strong> ${contest.submission_count}</p>
+                                    ` : `
+                                        <h6>Information</h6>
+                                        <p><strong>Submissions:</strong> ${contest.submission_count}</p>
+                                        <p class="text-muted"><small>Login to view scoring details</small></p>
+                                    `}
                                 </div>
                             </div>
                             ${contest.description ? `<div class="mt-3"><h6>Description</h6><p>${contest.description}</p></div>` : ''}
@@ -688,30 +728,277 @@ async function viewContest(contestId) {
     }
 }
 
-async function submitToContest(contestId) {
-    const articleTitle = prompt('Enter article title:');
-    const articleLink = prompt('Enter article URL:');
+/**
+ * Show the article submission modal.
+ * 
+ * This function creates and displays a beautiful Bootstrap modal for submitting
+ * an article to a contest. The modal includes form fields for article title and URL.
+ * 
+ * @param {number} contestId - The ID of the contest to submit to
+ */
+function showSubmitArticleModal(contestId) {
+    // Create modal HTML with Bootstrap styling
+    const modalHTML = `
+        <div class="modal fade" id="submitArticleModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Article
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="submitArticleForm">
+                            <div class="mb-3">
+                                <label for="articleTitle" class="form-label">
+                                    <i class="fas fa-heading me-2 text-primary"></i>Article Title <span class="text-danger">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="articleTitle" 
+                                    placeholder="Enter the title of your article"
+                                    required
+                                    autofocus
+                                >
+                                <div class="form-text">Enter a descriptive title for your article</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="articleUrl" class="form-label">
+                                    <i class="fas fa-link me-2 text-primary"></i>Article URL <span class="text-danger">*</span>
+                                </label>
+                                <input 
+                                    type="url" 
+                                    class="form-control" 
+                                    id="articleUrl" 
+                                    placeholder="https://example.com/article"
+                                    required
+                                >
+                                <div class="form-text">Enter the full URL of your article (must start with http:// or https://)</div>
+                            </div>
+                            
+                            <div id="submitArticleError" class="alert alert-danger d-none" role="alert"></div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" id="submitArticleBtn" onclick="processArticleSubmission(${contestId})">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Article
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
     
-    if (!articleTitle || !articleLink) {
-        showAlert('Please provide both title and link', 'warning');
+    // Remove existing modal if it exists
+    const existingModal = document.getElementById('submitArticleModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add new modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Get modal element after it's added to DOM
+    const submitModalElement = document.getElementById('submitArticleModal');
+    
+    // Listen for when modal is shown to blur background
+    submitModalElement.addEventListener('shown.bs.modal', function() {
+        // Add class to body to trigger blur CSS
+        document.body.classList.add('submit-modal-open');
+        
+        // Also blur other modals directly via JavaScript for extra assurance
+        const allModals = document.querySelectorAll('.modal');
+        allModals.forEach(m => {
+            if (m.id !== 'submitArticleModal') {
+                // Blur any modal that is not the submit article modal
+                m.style.filter = 'blur(5px)';
+                m.style.transition = 'filter 0.3s ease';
+                // Also blur all content inside those modals
+                const modalContent = m.querySelector('.modal-content');
+                if (modalContent) {
+                    modalContent.style.filter = 'blur(5px)';
+                }
+            }
+        });
+    });
+    
+    // Show modal
+    const modal = new bootstrap.Modal(submitModalElement);
+    modal.show();
+    
+    // Clear form when modal is hidden
+    const modalElement = document.getElementById('submitArticleModal');
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        const form = document.getElementById('submitArticleForm');
+        if (form) {
+            form.reset();
+        }
+        const errorDiv = document.getElementById('submitArticleError');
+        if (errorDiv) {
+            errorDiv.classList.add('d-none');
+        }
+        
+        // Remove blur class from body
+        document.body.classList.remove('submit-modal-open');
+        
+        // Remove blur from other modals when this one closes
+        const allModals = document.querySelectorAll('.modal');
+        allModals.forEach(m => {
+            if (m.id !== 'submitArticleModal') {
+                m.style.filter = '';
+                const modalContent = m.querySelector('.modal-content');
+                if (modalContent) {
+                    modalContent.style.filter = '';
+                }
+            }
+        });
+    });
+    
+    // Allow form submission on Enter key
+    const form = document.getElementById('submitArticleForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            processArticleSubmission(contestId);
+        });
+    }
+}
+
+/**
+ * Process article submission to a contest.
+ * 
+ * This function validates the form data, sends the submission to the backend,
+ * and handles success/error responses. It shows a success message when the
+ * submission is successful.
+ * 
+ * @param {number} contestId - The ID of the contest to submit to
+ */
+async function processArticleSubmission(contestId) {
+    // Get form elements
+    const titleInput = document.getElementById('articleTitle');
+    const urlInput = document.getElementById('articleUrl');
+    const submitBtn = document.getElementById('submitArticleBtn');
+    const errorDiv = document.getElementById('submitArticleError');
+    const form = document.getElementById('submitArticleForm');
+    
+    // Hide previous errors
+    if (errorDiv) {
+        errorDiv.classList.add('d-none');
+        errorDiv.textContent = '';
+    }
+    
+    // Get and trim input values
+    const articleTitle = titleInput ? titleInput.value.trim() : '';
+    const articleLink = urlInput ? urlInput.value.trim() : '';
+    
+    // Validate title
+    if (!articleTitle) {
+        if (errorDiv) {
+            errorDiv.textContent = 'Please enter an article title';
+            errorDiv.classList.remove('d-none');
+        }
+        if (titleInput) {
+            titleInput.focus();
+        }
         return;
     }
     
-    try {
-        const response = await apiRequest(`/contest/${contestId}/submit`, {
-            method: 'POST',
-            body: JSON.stringify({
-                article_title: articleTitle,
-                article_link: articleLink
-            }),
-        });
-        
-        showAlert('Submission created successfully!', 'success');
-        loadContests(); // Refresh contests
-        
-    } catch (error) {
-        showAlert('Failed to submit: ' + error.message, 'danger');
+    // Validate URL
+    if (!articleLink) {
+        if (errorDiv) {
+            errorDiv.textContent = 'Please enter an article URL';
+            errorDiv.classList.remove('d-none');
+        }
+        if (urlInput) {
+            urlInput.focus();
+        }
+        return;
     }
+    
+    // Validate URL format - must start with http:// or https://
+    if (!articleLink.startsWith('http://') && !articleLink.startsWith('https://')) {
+        if (errorDiv) {
+            errorDiv.textContent = 'Article URL must start with http:// or https://';
+            errorDiv.classList.remove('d-none');
+        }
+        if (urlInput) {
+            urlInput.focus();
+        }
+        return;
+    }
+    
+    // Show loading state
+    if (submitBtn) {
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+        
+        try {
+            // Send submission to backend API
+            const response = await apiRequest(`/contest/${contestId}/submit`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    article_title: articleTitle,
+                    article_link: articleLink
+                }),
+            });
+            
+            // Close the submission modal
+            const submitModal = document.getElementById('submitArticleModal');
+            if (submitModal) {
+                const modalInstance = bootstrap.Modal.getInstance(submitModal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+            
+            // Close the contest modal if it's open
+            const contestModal = document.getElementById('contestModal');
+            if (contestModal) {
+                const modalInstance = bootstrap.Modal.getInstance(contestModal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+            
+            // Show success message
+            showAlert('Article submitted successfully!', 'success');
+            
+            // Refresh contest list to show updated submission count
+            loadContests();
+            
+        } catch (error) {
+            // Submission failed - show error message
+            if (errorDiv) {
+                errorDiv.textContent = 'Failed to submit article: ' + error.message;
+                errorDiv.classList.remove('d-none');
+            }
+            showAlert('Failed to submit article: ' + error.message, 'danger');
+            
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+}
+
+/**
+ * Submit an article to a contest (wrapper function for button onclick).
+ * 
+ * This function is called when the user clicks the "Submit Article" button.
+ * It opens the submission modal instead of using browser prompts.
+ * 
+ * @param {number} contestId - The ID of the contest to submit to
+ */
+function submitToContest(contestId) {
+    // Show the beautiful submission modal
+    showSubmitArticleModal(contestId);
 }
 
 // Dashboard Functions
@@ -824,18 +1111,37 @@ function showSection(sectionName) {
     }
 }
 
+/**
+ * Update UI elements based on authentication status.
+ * 
+ * This function shows/hides authentication-related UI elements
+ * and the "Create Contest" button based on whether user is logged in.
+ */
 function updateAuthUI() {
     const authButtons = document.getElementById('authButtons');
     const userMenu = document.getElementById('userMenu');
     const userName = document.getElementById('userName');
+    const createContestBtn = document.getElementById('createContestBtn');
     
     if (currentUser) {
+        // User is logged in - show user menu, hide login buttons
         authButtons.classList.add('hidden');
         userMenu.classList.remove('hidden');
         userName.textContent = currentUser.username;
+        
+        // Show "Create Contest" button for logged-in users
+        if (createContestBtn) {
+            createContestBtn.classList.remove('hidden');
+        }
     } else {
+        // User is not logged in - show login buttons, hide user menu
         authButtons.classList.remove('hidden');
         userMenu.classList.add('hidden');
+        
+        // Hide "Create Contest" button for non-logged-in users
+        if (createContestBtn) {
+            createContestBtn.classList.add('hidden');
+        }
     }
 }
 
