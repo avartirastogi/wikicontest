@@ -57,7 +57,7 @@ let currentContests = {  // Cached contest data organized by status
 function showAlert(message, type = 'info') {
     const alertContainer = document.getElementById('alertContainer');
     const alertId = 'alert-' + Date.now();
-    
+
     // Create alert HTML with Bootstrap classes
     const alertHTML = `
         <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
@@ -65,10 +65,10 @@ function showAlert(message, type = 'info') {
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     `;
-    
+
     // Insert alert at the end of the container
     alertContainer.insertAdjacentHTML('beforeend', alertHTML);
-    
+
     // Auto-dismiss after 5 seconds
     setTimeout(() => {
         const alert = document.getElementById(alertId);
@@ -118,7 +118,7 @@ function getCookie(name) {
     // Split all cookies into individual entries
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    
+
     // Return cookie value if found, null otherwise
     if (parts.length === 2) {
         return parts.pop().split(';').shift();
@@ -140,7 +140,7 @@ function getCookie(name) {
  */
 function formatDate(dateString) {
     if (!dateString) return 'No date';
-    
+
     try {
         // Parse the date and format it for display
         const date = new Date(dateString);
@@ -166,7 +166,7 @@ function formatDate(dateString) {
  */
 function isDatePast(dateString) {
     if (!dateString) return false;
-    
+
     try {
         const date = new Date(dateString);
         const today = new Date();
@@ -206,7 +206,7 @@ function isDatePast(dateString) {
 async function apiRequest(endpoint, options = {}) {
     // Construct full URL
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     // Default request options
     const defaultOptions = {
         headers: {
@@ -214,26 +214,26 @@ async function apiRequest(endpoint, options = {}) {
         },
         credentials: 'include', // Include cookies for JWT authentication
     };
-    
+
     // Add CSRF token if available for security
     const csrfToken = getCookie('csrf_access_token');
     if (csrfToken) {
         defaultOptions.headers['X-CSRF-TOKEN'] = csrfToken;
     }
-    
+
     // Merge default options with provided options
     const finalOptions = { ...defaultOptions, ...options };
-    
+
     try {
         // Make the API request
         const response = await fetch(url, finalOptions);
         const data = await response.json();
-        
+
         // Check if response indicates an error
         if (!response.ok) {
             throw new Error(data.error || 'Request failed');
         }
-        
+
         return data;
     } catch (error) {
         // Log error for debugging
@@ -268,19 +268,19 @@ async function login(email, password) {
             method: 'POST',
             body: JSON.stringify({ email, password }),
         });
-        
+
         // Update global user state with response data
         currentUser = {
             id: response.userId,
             username: response.username,
             email: email
         };
-        
+
         // Update UI to reflect authenticated state
         updateAuthUI();
         showAlert('Login successful!', 'success');
         showSection('dashboard');
-        
+
         return response;
     } catch (error) {
         // Show error message to user
@@ -311,11 +311,11 @@ async function register(username, email, password) {
             method: 'POST',
             body: JSON.stringify({ username, email, password }),
         });
-        
+
         // Show success message and redirect to login
         showAlert('Registration successful! Please login.', 'success');
         showSection('login');
-        
+
         return response;
     } catch (error) {
         // Show error message to user
@@ -342,15 +342,15 @@ async function logout() {
         await apiRequest('/user/logout', {
             method: 'POST',
         });
-        
+
         // Clear local user state
         currentUser = null;
-        
+
         // Update UI to reflect logged-out state
         updateAuthUI();
         showAlert('Logged out successfully!', 'info');
         showSection('home');
-        
+
     } catch (error) {
         // Show error message to user
         showAlert(error.message, 'danger');
@@ -373,14 +373,14 @@ async function checkAuth() {
     try {
         // Check authentication status with backend
         const response = await apiRequest('/cookie');
-        
+
         // Update global user state if authenticated
         currentUser = {
             id: response.userId,
             username: response.username,
             email: response.email
         };
-        
+
         // Update UI to reflect authenticated state
         updateAuthUI();
         return true;
@@ -421,7 +421,7 @@ async function createContest(contestData) {
             method: 'POST',
             body: JSON.stringify(contestData),
         });
-        
+
         showAlert('Contest created successfully!', 'success');
         loadContests(); // Refresh contests list
         return response;
@@ -431,8 +431,165 @@ async function createContest(contestData) {
     }
 }
 
+
+/**
+ * Display Autocomplete Results
+ * 
+ * @param {Array} users - Array of user objects with username
+ * @param {HTMLElement} container - Container element for results
+ * @param {Function} onSelect - Callback when user is selected
+ */
+function displayAutocompleteResults(users, container, onSelect) {
+    if (users.length === 0) {
+        container.innerHTML = `
+            <div style="padding: 10px; text-align: center; color: #6c757d;">
+                <i class="fas fa-search"></i> No users found
+            </div>
+        `;
+        container.style.display = 'block';
+        return;
+    }
+
+    // Clear previous content
+    container.innerHTML = '';
+
+    // Create and append each result item
+    users.forEach(user => {
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        item.style.cssText = `
+            padding: 10px; 
+            cursor: pointer; 
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        `;
+
+        item.innerHTML = `
+            <i class="fas fa-user me-2 text-primary"></i>
+            <strong>${user.username}</strong>
+        `;
+
+        // Add hover effects
+        item.addEventListener('mouseenter', () => {
+            item.style.backgroundColor = '#f8f9fa';
+        });
+
+        item.addEventListener('mouseleave', () => {
+            item.style.backgroundColor = 'white';
+        });
+
+        // Add click handler
+        item.addEventListener('click', () => {
+            onSelect(user.username);
+        });
+
+        container.appendChild(item);
+    });
+
+    container.style.display = 'block';
+}
+
+/**
+ * Enhanced Submit Create Contest
+ * 
+ * Yeh function existing submitCreateContest() function ko replace karega
+ * Is me jury members hidden input se read honge
+ */
+async function submitCreateContest() {
+    const form = document.getElementById('createContestForm');
+
+    // Get form values
+    const contestData = {
+        name: document.getElementById('contestName').value.trim(),
+        project_name: document.getElementById('projectName').value.trim(),
+        description: document.getElementById('contestDescription').value.trim(),
+        start_date: document.getElementById('startDate').value,
+        end_date: document.getElementById('endDate').value,
+        // Get jury members from hidden input (comma-separated)
+        jury_members: document.getElementById('juryMembers').value
+            .split(',')
+            .map(name => name.trim())
+            .filter(name => name),
+        marks_setting_accepted: parseInt(document.getElementById('marksAccepted').value) || 0,
+        marks_setting_rejected: parseInt(document.getElementById('marksRejected').value) || 0,
+        code_link: document.getElementById('codeLink').value.trim() || null
+    };
+
+    // Validate required fields
+    if (!contestData.name) {
+        showAlert('Contest name is required', 'warning');
+        return;
+    }
+
+    if (!contestData.project_name) {
+        showAlert('Project name is required', 'warning');
+        return;
+    }
+
+    if (!contestData.start_date) {
+        showAlert('Start date is required', 'warning');
+        return;
+    }
+
+    if (!contestData.end_date) {
+        showAlert('End date is required', 'warning');
+        return;
+    }
+
+    if (contestData.jury_members.length === 0) {
+        showAlert('At least one jury member is required', 'warning');
+        return;
+    }
+
+    // Validate date logic
+    if (new Date(contestData.start_date) >= new Date(contestData.end_date)) {
+        showAlert('End date must be after start date', 'warning');
+        return;
+    }
+
+    try {
+        await createContest(contestData);
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createContestModal'));
+        modal.hide();
+
+        // Clear form
+        form.reset();
+
+    } catch (error) {
+        // Error already handled in createContest function
+    }
+}
+// ============================================================================
+// JURY AUTOCOMPLETE - COMPLETE WORKING VERSION
+// Yeh code aapke app.js me add karo
+// ============================================================================
+
+// Global variable to store selected jury members
+let selectedJuryMembers = [];
+
+/**
+ * Search Users API Call
+ */
+async function searchUsers(query) {
+    if (!query || query.length < 2) {
+        return [];
+    }
+
+    try {
+        const response = await apiRequest(`/user/search?q=${encodeURIComponent(query)}&limit=10`);
+        return response.users || [];
+    } catch (error) {
+        console.error('User search error:', error);
+        return [];
+    }
+}
+
+/**
+ * Create Contest Modal with Jury Autocomplete
+ */
 function showCreateContest() {
-    // Create modal for contest creation
     const modalHTML = `
         <div class="modal fade" id="createContestModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -472,10 +629,52 @@ function showCreateContest() {
                                 </div>
                             </div>
                             
+                            <!-- JURY MEMBERS WITH AUTOCOMPLETE -->
                             <div class="mb-3">
-                                <label for="juryMembers" class="form-label">Jury Members * (comma-separated usernames)</label>
-                                <input type="text" class="form-control" id="juryMembers" placeholder="e.g., admin, user1, user2" required>
-                                <div class="form-text">Enter usernames separated by commas</div>
+                                <label for="juryInput" class="form-label">
+                                    Jury Members * 
+                                    <span class="badge bg-info text-dark">Type to search users</span>
+                                </label>
+                                
+                                <!-- Selected Jury Members Display -->
+                                <div id="selectedJuryMembers" class="mb-2" style="min-height: 40px; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 8px; background-color: #f8f9fa;">
+                                    <small class="text-muted">No jury members selected yet</small>
+                                </div>
+                                
+                                <!-- Jury Input with Autocomplete -->
+                                <div style="position: relative;">
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        id="juryInput" 
+                                        placeholder="Type username to search..."
+                                        autocomplete="off"
+                                    >
+                                    <!-- Autocomplete Dropdown -->
+                                    <div id="juryAutocomplete" 
+                                         style="position: absolute; 
+                                                top: 100%; 
+                                                left: 0; 
+                                                right: 0; 
+                                                background: white; 
+                                                border: 1px solid #dee2e6; 
+                                                border-top: none;
+                                                border-radius: 0 0 0.375rem 0.375rem;
+                                                max-height: 200px; 
+                                                overflow-y: auto; 
+                                                z-index: 1000;
+                                                display: none;
+                                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Type to search and click to add jury members. At least one member required.
+                                </div>
+                                
+                                <!-- Hidden input to store selected usernames -->
+                                <input type="hidden" id="juryMembers">
                             </div>
                             
                             <div class="row">
@@ -503,35 +702,216 @@ function showCreateContest() {
             </div>
         </div>
     `;
-    
+
     // Remove existing modal
     const existingModal = document.getElementById('createContestModal');
     if (existingModal) {
         existingModal.remove();
     }
-    
+
     // Add new modal
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
+
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('createContestModal'));
     modal.show();
-    
-    // Set default values
+
+    // Set default dates
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
-    
+
     document.getElementById('startDate').value = tomorrow.toISOString().split('T')[0];
     document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
-    document.getElementById('juryMembers').value = 'admin';
+
+    // Reset selected jury members
+    selectedJuryMembers = [];
+
+    // Initialize jury autocomplete
+    initializeJuryAutocomplete();
 }
+
+/**
+ * Initialize Jury Autocomplete
+ */
+function initializeJuryAutocomplete() {
+    const juryInput = document.getElementById('juryInput');
+    const juryAutocomplete = document.getElementById('juryAutocomplete');
+
+    if (!juryInput || !juryAutocomplete) {
+        console.error('Jury input elements not found');
+        return;
+    }
+
+    let searchTimeout = null;
+
+    // Input event handler
+    juryInput.addEventListener('input', async function (e) {
+        const query = e.target.value.trim();
+
+        // Clear previous timeout
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+
+        // Hide dropdown if query is too short
+        if (query.length < 2) {
+            juryAutocomplete.style.display = 'none';
+            return;
+        }
+
+        // Debounce search
+        searchTimeout = setTimeout(async () => {
+            try {
+                const users = await searchUsers(query);
+
+                // Filter out already selected users
+                const availableUsers = users.filter(
+                    user => !selectedJuryMembers.includes(user.username)
+                );
+
+                // Display results
+                displayJuryAutocomplete(availableUsers);
+
+            } catch (error) {
+                console.error('Autocomplete search error:', error);
+            }
+        }, 300);
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!juryInput.contains(e.target) && !juryAutocomplete.contains(e.target)) {
+            juryAutocomplete.style.display = 'none';
+        }
+    });
+}
+
+/**
+ * Display Autocomplete Results
+ */
+function displayJuryAutocomplete(users) {
+    const container = document.getElementById('juryAutocomplete');
+
+    if (!container) return;
+
+    // Clear previous results
+    container.innerHTML = '';
+
+    if (users.length === 0) {
+        container.innerHTML = `
+            <div style="padding: 10px; text-align: center; color: #6c757d;">
+                <i class="fas fa-search"></i> No users found
+            </div>
+        `;
+        container.style.display = 'block';
+        return;
+    }
+
+    // Create result items
+    users.forEach(user => {
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        item.style.cssText = `
+            padding: 10px; 
+            cursor: pointer; 
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        `;
+
+        item.innerHTML = `
+            <i class="fas fa-user me-2 text-primary"></i>
+            <strong>${user.username}</strong>
+        `;
+
+        // Hover effects
+        item.addEventListener('mouseenter', function () {
+            this.style.backgroundColor = '#f8f9fa';
+        });
+
+        item.addEventListener('mouseleave', function () {
+            this.style.backgroundColor = 'white';
+        });
+
+        // Click handler - ADD JURY MEMBER
+        item.addEventListener('click', function () {
+            addJuryMember(user.username);
+        });
+
+        container.appendChild(item);
+    });
+
+    container.style.display = 'block';
+}
+
+/**
+ * Add Jury Member
+ */
+function addJuryMember(username) {
+    if (!selectedJuryMembers.includes(username)) {
+        selectedJuryMembers.push(username);
+        updateJuryDisplay();
+
+        // Clear input and hide dropdown
+        const juryInput = document.getElementById('juryInput');
+        if (juryInput) {
+            juryInput.value = '';
+        }
+
+        const juryAutocomplete = document.getElementById('juryAutocomplete');
+        if (juryAutocomplete) {
+            juryAutocomplete.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Remove Jury Member
+ */
+function removeJuryMember(username) {
+    selectedJuryMembers = selectedJuryMembers.filter(u => u !== username);
+    updateJuryDisplay();
+}
+
+/**
+ * Update Jury Members Display
+ */
+function updateJuryDisplay() {
+    const selectedDisplay = document.getElementById('selectedJuryMembers');
+    const hiddenInput = document.getElementById('juryMembers');
+
+    if (!selectedDisplay) return;
+
+    if (selectedJuryMembers.length === 0) {
+        selectedDisplay.innerHTML = '<small class="text-muted">No jury members selected yet</small>';
+        if (hiddenInput) {
+            hiddenInput.value = '';
+        }
+        return;
+    }
+
+    selectedDisplay.innerHTML = selectedJuryMembers.map(username => `
+        <span class="badge bg-primary me-2 mb-2" style="font-size: 0.9rem; cursor: pointer;">
+            ${username}
+            <i class="fas fa-times ms-1" onclick="removeJuryMember('${username}')"></i>
+        </span>
+    `).join('');
+
+    // Update hidden input
+    if (hiddenInput) {
+        hiddenInput.value = selectedJuryMembers.join(',');
+    }
+}
+
+/**
+ * Submit Create Contest
+ */
 
 async function submitCreateContest() {
     const form = document.getElementById('createContestForm');
-    
+
     // Get form values
     const contestData = {
         name: document.getElementById('contestName').value.trim(),
@@ -539,54 +919,54 @@ async function submitCreateContest() {
         description: document.getElementById('contestDescription').value.trim(),
         start_date: document.getElementById('startDate').value,
         end_date: document.getElementById('endDate').value,
-        jury_members: document.getElementById('juryMembers').value.split(',').map(name => name.trim()).filter(name => name),
+        jury_members: selectedJuryMembers,
         marks_setting_accepted: parseInt(document.getElementById('marksAccepted').value) || 0,
         marks_setting_rejected: parseInt(document.getElementById('marksRejected').value) || 0,
         code_link: document.getElementById('codeLink').value.trim() || null
     };
-    
+
     // Validate required fields
     if (!contestData.name) {
         showAlert('Contest name is required', 'warning');
         return;
     }
-    
+
     if (!contestData.project_name) {
         showAlert('Project name is required', 'warning');
         return;
     }
-    
+
     if (!contestData.start_date) {
         showAlert('Start date is required', 'warning');
         return;
     }
-    
+
     if (!contestData.end_date) {
         showAlert('End date is required', 'warning');
         return;
     }
-    
+
     if (contestData.jury_members.length === 0) {
         showAlert('At least one jury member is required', 'warning');
         return;
     }
-    
+
     // Validate date logic
     if (new Date(contestData.start_date) >= new Date(contestData.end_date)) {
         showAlert('End date must be after start date', 'warning');
         return;
     }
-    
+
     try {
         await createContest(contestData);
-        
+
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('createContestModal'));
         modal.hide();
-        
+
         // Clear form
         form.reset();
-        
+
     } catch (error) {
         // Error already handled in createContest function
     }
@@ -603,10 +983,10 @@ async function submitCreateContest() {
 function displayContests(category = 'current') {
     const contestList = document.getElementById('contestList');
     const contests = currentContests[category] || [];
-    
+
     // Check if user is logged in
     const isLoggedIn = currentUser !== null;
-    
+
     if (contests.length === 0) {
         contestList.innerHTML = `
             <div class="col-12">
@@ -618,7 +998,7 @@ function displayContests(category = 'current') {
         `;
         return;
     }
-    
+
     contestList.innerHTML = contests.map(contest => `
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card h-100">
@@ -653,10 +1033,10 @@ function displayContests(category = 'current') {
 async function viewContest(contestId) {
     try {
         const contest = await apiRequest(`/contest/${contestId}`);
-        
+
         // Check if user is logged in to show/hide points
         const isLoggedIn = currentUser !== null;
-        
+
         // Create modal for contest details
         const modalHTML = `
             <div class="modal fade" id="contestModal" tabindex="-1">
@@ -709,20 +1089,20 @@ async function viewContest(contestId) {
                 </div>
             </div>
         `;
-        
+
         // Remove existing modal
         const existingModal = document.getElementById('contestModal');
         if (existingModal) {
             existingModal.remove();
         }
-        
+
         // Add new modal
         document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
+
         // Show modal
         const modal = new bootstrap.Modal(document.getElementById('contestModal'));
         modal.show();
-        
+
     } catch (error) {
         showAlert('Failed to load contest details: ' + error.message, 'danger');
     }
@@ -794,24 +1174,24 @@ function showSubmitArticleModal(contestId) {
             </div>
         </div>
     `;
-    
+
     // Remove existing modal if it exists
     const existingModal = document.getElementById('submitArticleModal');
     if (existingModal) {
         existingModal.remove();
     }
-    
+
     // Add new modal to page
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
+
     // Get modal element after it's added to DOM
     const submitModalElement = document.getElementById('submitArticleModal');
-    
+
     // Listen for when modal is shown to blur background
-    submitModalElement.addEventListener('shown.bs.modal', function() {
+    submitModalElement.addEventListener('shown.bs.modal', function () {
         // Add class to body to trigger blur CSS
         document.body.classList.add('submit-modal-open');
-        
+
         // Also blur other modals directly via JavaScript for extra assurance
         const allModals = document.querySelectorAll('.modal');
         allModals.forEach(m => {
@@ -827,14 +1207,14 @@ function showSubmitArticleModal(contestId) {
             }
         });
     });
-    
+
     // Show modal
     const modal = new bootstrap.Modal(submitModalElement);
     modal.show();
-    
+
     // Clear form when modal is hidden
     const modalElement = document.getElementById('submitArticleModal');
-    modalElement.addEventListener('hidden.bs.modal', function() {
+    modalElement.addEventListener('hidden.bs.modal', function () {
         const form = document.getElementById('submitArticleForm');
         if (form) {
             form.reset();
@@ -843,10 +1223,10 @@ function showSubmitArticleModal(contestId) {
         if (errorDiv) {
             errorDiv.classList.add('d-none');
         }
-        
+
         // Remove blur class from body
         document.body.classList.remove('submit-modal-open');
-        
+
         // Remove blur from other modals when this one closes
         const allModals = document.querySelectorAll('.modal');
         allModals.forEach(m => {
@@ -859,11 +1239,11 @@ function showSubmitArticleModal(contestId) {
             }
         });
     });
-    
+
     // Allow form submission on Enter key
     const form = document.getElementById('submitArticleForm');
     if (form) {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function (e) {
             e.preventDefault();
             processArticleSubmission(contestId);
         });
@@ -886,17 +1266,17 @@ async function processArticleSubmission(contestId) {
     const submitBtn = document.getElementById('submitArticleBtn');
     const errorDiv = document.getElementById('submitArticleError');
     const form = document.getElementById('submitArticleForm');
-    
+
     // Hide previous errors
     if (errorDiv) {
         errorDiv.classList.add('d-none');
         errorDiv.textContent = '';
     }
-    
+
     // Get and trim input values
     const articleTitle = titleInput ? titleInput.value.trim() : '';
     const articleLink = urlInput ? urlInput.value.trim() : '';
-    
+
     // Validate title
     if (!articleTitle) {
         if (errorDiv) {
@@ -908,7 +1288,7 @@ async function processArticleSubmission(contestId) {
         }
         return;
     }
-    
+
     // Validate URL
     if (!articleLink) {
         if (errorDiv) {
@@ -920,7 +1300,7 @@ async function processArticleSubmission(contestId) {
         }
         return;
     }
-    
+
     // Validate URL format - must start with http:// or https://
     if (!articleLink.startsWith('http://') && !articleLink.startsWith('https://')) {
         if (errorDiv) {
@@ -932,13 +1312,13 @@ async function processArticleSubmission(contestId) {
         }
         return;
     }
-    
+
     // Show loading state
     if (submitBtn) {
         const originalText = submitBtn.innerHTML;
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
-        
+
         try {
             // Send submission to backend API
             const response = await apiRequest(`/contest/${contestId}/submit`, {
@@ -948,7 +1328,7 @@ async function processArticleSubmission(contestId) {
                     article_link: articleLink
                 }),
             });
-            
+
             // Close the submission modal
             const submitModal = document.getElementById('submitArticleModal');
             if (submitModal) {
@@ -957,7 +1337,7 @@ async function processArticleSubmission(contestId) {
                     modalInstance.hide();
                 }
             }
-            
+
             // Close the contest modal if it's open
             const contestModal = document.getElementById('contestModal');
             if (contestModal) {
@@ -966,13 +1346,13 @@ async function processArticleSubmission(contestId) {
                     modalInstance.hide();
                 }
             }
-            
+
             // Show success message
             showAlert('Article submitted successfully!', 'success');
-            
+
             // Refresh contest list to show updated submission count
             loadContests();
-            
+
         } catch (error) {
             // Submission failed - show error message
             if (errorDiv) {
@@ -980,7 +1360,7 @@ async function processArticleSubmission(contestId) {
                 errorDiv.classList.remove('d-none');
             }
             showAlert('Failed to submit article: ' + error.message, 'danger');
-            
+
             // Re-enable submit button
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
@@ -1008,7 +1388,7 @@ async function loadDashboard() {
         showSection('login');
         return;
     }
-    
+
     try {
         const response = await apiRequest('/user/dashboard');
         displayDashboard(response);
@@ -1019,7 +1399,7 @@ async function loadDashboard() {
 
 function displayDashboard(data) {
     const dashboardContent = document.getElementById('dashboardContent');
-    
+
     dashboardContent.innerHTML = `
         <div class="row">
             <div class="col-md-4 mb-4">
@@ -1053,8 +1433,8 @@ function displayDashboard(data) {
                 <h4>Recent Submissions</h4>
                 <div class="card">
                     <div class="card-body">
-                        ${data.submissions_by_contest.length > 0 ? 
-                            data.submissions_by_contest.map(contest => `
+                        ${data.submissions_by_contest.length > 0 ?
+            data.submissions_by_contest.map(contest => `
                                 <div class="mb-3">
                                     <h6>${contest.contest_name}</h6>
                                     ${contest.submissions.map(submission => `
@@ -1065,8 +1445,8 @@ function displayDashboard(data) {
                                     `).join('')}
                                 </div>
                             `).join('') :
-                            '<p class="text-muted">No submissions yet.</p>'
-                        }
+            '<p class="text-muted">No submissions yet.</p>'
+        }
                     </div>
                 </div>
             </div>
@@ -1075,15 +1455,15 @@ function displayDashboard(data) {
                 <h4>Contest Scores</h4>
                 <div class="card">
                     <div class="card-body">
-                        ${data.contest_wise_scores.length > 0 ? 
-                            data.contest_wise_scores.map(score => `
+                        ${data.contest_wise_scores.length > 0 ?
+            data.contest_wise_scores.map(score => `
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span>${score.contest_name}</span>
                                     <span class="badge bg-primary">${score.contest_score} points</span>
                                 </div>
                             `).join('') :
-                            '<p class="text-muted">No scores yet.</p>'
-                        }
+            '<p class="text-muted">No scores yet.</p>'
+        }
                     </div>
                 </div>
             </div>
@@ -1096,13 +1476,13 @@ function showSection(sectionName) {
     // Hide all sections
     const sections = document.querySelectorAll('.section');
     sections.forEach(section => section.classList.add('hidden'));
-    
+
     // Show selected section
     const targetSection = document.getElementById(sectionName + 'Section');
     if (targetSection) {
         targetSection.classList.remove('hidden');
     }
-    
+
     // Load section-specific data
     if (sectionName === 'contests') {
         loadContests();
@@ -1122,13 +1502,13 @@ function updateAuthUI() {
     const userMenu = document.getElementById('userMenu');
     const userName = document.getElementById('userName');
     const createContestBtn = document.getElementById('createContestBtn');
-    
+
     if (currentUser) {
         // User is logged in - show user menu, hide login buttons
         authButtons.classList.add('hidden');
         userMenu.classList.remove('hidden');
         userName.textContent = currentUser.username;
-        
+
         // Show "Create Contest" button for logged-in users
         if (createContestBtn) {
             createContestBtn.classList.remove('hidden');
@@ -1137,7 +1517,7 @@ function updateAuthUI() {
         // User is not logged in - show login buttons, hide user menu
         authButtons.classList.remove('hidden');
         userMenu.classList.add('hidden');
-        
+
         // Hide "Create Contest" button for non-logged-in users
         if (createContestBtn) {
             createContestBtn.classList.add('hidden');
@@ -1151,43 +1531,43 @@ function showContestCategory(category) {
         link.classList.remove('active');
     });
     event.target.classList.add('active');
-    
+
     // Display contests for category
     displayContests(category);
 }
 
 // Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Check authentication status
     checkAuth();
-    
+
     // Login form
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
-        
+
         try {
             await login(email, password);
         } catch (error) {
             // Error already handled in login function
         }
     });
-    
+
     // Register form
-    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+    document.getElementById('registerForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         const username = document.getElementById('registerUsername').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
-        
+
         try {
             await register(username, email, password);
         } catch (error) {
             // Error already handled in register function
         }
     });
-    
+
     // Show home section by default
     showSection('home');
 });

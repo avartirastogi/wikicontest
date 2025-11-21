@@ -533,3 +533,30 @@ def oauth_callback():
             'error': 'OAuth authentication failed',
             'details': str(e)
         }), 500
+@user_bp.route('/search', methods=['GET'])
+@handle_errors
+def search_users():
+    """
+    Search users by username (for autocomplete)
+    
+    Query parameters:
+        q: Search query string
+        limit: Maximum results to return (default: 10)
+    
+    Returns:
+        JSON response with list of matching usernames
+    """
+    query = request.args.get('q', '').strip()
+    limit = request.args.get('limit', 10, type=int)
+    
+    if not query or len(query) < 2:
+        return jsonify({'users': []}), 200
+    
+    # Search users whose username starts with or contains the query
+    users = User.query.filter(
+        User.username.ilike(f'%{query}%')
+    ).limit(limit).all()
+    
+    return jsonify({
+        'users': [{'username': user.username, 'id': user.id} for user in users]
+    }), 200
