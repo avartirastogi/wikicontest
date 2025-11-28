@@ -137,63 +137,59 @@
             pointer-events: none;
         }
         
-        /* Blur background ONLY when submit article modal is open */
-        /* Use a class-based approach for better browser compatibility */
-        body.submit-modal-open .container-fluid {
-            filter: blur(5px);
-            transition: filter 0.3s ease;
-            pointer-events: none;
+        /* Make entire page background white when submit article modal is open */
+        body.submit-modal-open {
+            background-color: #ffffff !important;
         }
         
-        /* Blur everything ONLY when submit article modal is open */
-        body.submit-modal-open .section,
-        body.submit-modal-open .card:not(.modal-content),
-        body.submit-modal-open .row:not(.modal-body .row):not(.modal-header .row):not(.modal-footer .row) {
-            filter: blur(5px);
-            transition: filter 0.3s ease;
+        /* Hide all background content when submit article modal is open */
+        body.submit-modal-open .container-fluid,
+        body.submit-modal-open .section:not(.modal),
+        body.submit-modal-open .card:not(.modal-content) {
+            opacity: 0;
+            visibility: hidden;
         }
         
-        /* Blur ALL other modals ONLY when submit article modal is open */
-        body.submit-modal-open .modal:not(#submitArticleModal) {
-            filter: blur(5px) !important;
-            transition: filter 0.3s ease;
+        /* Hide navbar when submit article modal is open for complete white background */
+        body.submit-modal-open nav {
+            opacity: 0;
+            visibility: hidden;
         }
         
-        /* Blur modal content of all modals except submit article modal - ONLY when submit modal is open */
-        body.submit-modal-open .modal:not(#submitArticleModal) .modal-content,
-        body.submit-modal-open .modal:not(#submitArticleModal) .modal-header,
-        body.submit-modal-open .modal:not(#submitArticleModal) .modal-body,
-        body.submit-modal-open .modal:not(#submitArticleModal) .modal-footer {
-            filter: blur(5px) !important;
-        }
-        
-        /* Keep navbar and alerts clear (not blurred) - even when submit modal is open */
-        body.submit-modal-open nav,
+        /* Keep alerts accessible - even when submit modal is open */
         body.submit-modal-open #alertContainer {
-            filter: none !important;
             pointer-events: auto;
+            z-index: 1060;
         }
         
-        /* Ensure submit article modal content itself is NEVER blurred */
-        #submitArticleModal,
-        #submitArticleModal *,
-        #submitArticleModal .modal-content,
-        #submitArticleModal .modal-header,
-        #submitArticleModal .modal-body,
-        #submitArticleModal .modal-footer {
-            filter: none !important;
-            pointer-events: auto !important;
-        }
-        
-        /* Normal modal backdrop - no special blur for other modals */
+        /* Normal modal backdrop - dark for other modals */
         .modal-backdrop {
             background-color: rgba(0, 0, 0, 0.5);
         }
         
-        /* Darker backdrop when submit article modal is open */
-        body.submit-modal-open .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(2px);
+        /* When submit article modal is open, make its backdrop white and above contest modal */
+        /* Bootstrap creates multiple backdrops for nested modals */
+        /* Contest modal backdrop is at z-index 1040, submit modal backdrop needs to be higher */
+        body.submit-modal-open .modal-backdrop:last-of-type {
+            background-color: #ffffff !important;
+            opacity: 1 !important;
+            z-index: 1060 !important;
+        }
+        
+        /* Hide or lower z-index of contest modal backdrop when submit modal is open */
+        body.submit-modal-open .modal-backdrop:not(:last-of-type) {
+            z-index: 1039 !important;
+        }
+        
+        /* Ensure submit article modal is above the white backdrop and contest modal */
+        /* Bootstrap modals use z-index 1055, so we need higher */
+        #submitArticleModal {
+            z-index: 1070 !important;
+        }
+        
+        /* Lower the contest modal z-index when submit modal is open */
+        body.submit-modal-open #contestModal {
+            z-index: 1055 !important;
         }
     </style>
 </head>

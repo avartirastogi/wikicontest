@@ -416,6 +416,13 @@ async function loadContests() {
 }
 
 async function createContest(contestData) {
+    // Check authentication before creating contest
+    if (!currentUser) {
+        showAlert('Please login to create a contest', 'warning');
+        showSectionInternal('login');
+        return;
+    }
+    
     try {
         const response = await apiRequest('/contest', {
             method: 'POST',
@@ -499,6 +506,9 @@ async function submitCreateContest() {
     const form = document.getElementById('createContestForm');
 
     // Get form values
+    const codeLinkElement = document.getElementById('codeLink');
+    const codeLinkValue = codeLinkElement ? codeLinkElement.value.trim() : '';
+    
     const contestData = {
         name: document.getElementById('contestName').value.trim(),
         project_name: document.getElementById('projectName').value.trim(),
@@ -512,7 +522,8 @@ async function submitCreateContest() {
             .filter(name => name),
         marks_setting_accepted: parseInt(document.getElementById('marksAccepted').value) || 0,
         marks_setting_rejected: parseInt(document.getElementById('marksRejected').value) || 0,
-        code_link: document.getElementById('codeLink').value.trim() || null
+        // Send null if code_link is empty (optional field)
+        code_link: codeLinkValue || null
     };
 
     // Validate required fields
@@ -588,8 +599,18 @@ async function searchUsers(query) {
 
 /**
  * Create Contest Modal with Jury Autocomplete
+ * 
+ * This function shows the create contest modal, but only if user is logged in.
+ * If not logged in, redirects to login page.
  */
 function showCreateContest() {
+    // Check authentication before showing create contest modal
+    if (!currentUser) {
+        showAlert('Please login to create a contest', 'warning');
+        showSectionInternal('login');
+        return;
+    }
+    
     const modalHTML = `
         <div class="modal fade" id="createContestModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -689,8 +710,9 @@ function showCreateContest() {
                             </div>
                             
                             <div class="mb-3">
-                                <label for="codeLink" class="form-label">Code Repository Link</label>
-                                <input type="url" class="form-control" id="codeLink" placeholder="https://github.com/...">
+                                <label for="codeLink" class="form-label">Code Repository Link <span class="text-muted">(Optional)</span></label>
+                                <input type="text" class="form-control" id="codeLink" placeholder="https://github.com/...">
+                                <div class="form-text">Leave empty if not applicable</div>
                             </div>
                         </form>
                     </div>
@@ -913,6 +935,9 @@ async function submitCreateContest() {
     const form = document.getElementById('createContestForm');
 
     // Get form values
+    const codeLinkElement = document.getElementById('codeLink');
+    const codeLinkValue = codeLinkElement ? codeLinkElement.value.trim() : '';
+    
     const contestData = {
         name: document.getElementById('contestName').value.trim(),
         project_name: document.getElementById('projectName').value.trim(),
@@ -922,7 +947,8 @@ async function submitCreateContest() {
         jury_members: selectedJuryMembers,
         marks_setting_accepted: parseInt(document.getElementById('marksAccepted').value) || 0,
         marks_setting_rejected: parseInt(document.getElementById('marksRejected').value) || 0,
-        code_link: document.getElementById('codeLink').value.trim() || null
+        // Send null if code_link is empty (optional field)
+        code_link: codeLinkValue || null
     };
 
     // Validate required fields
@@ -1187,25 +1213,10 @@ function showSubmitArticleModal(contestId) {
     // Get modal element after it's added to DOM
     const submitModalElement = document.getElementById('submitArticleModal');
 
-    // Listen for when modal is shown to blur background
+    // Listen for when modal is shown to apply white background
     submitModalElement.addEventListener('shown.bs.modal', function () {
-        // Add class to body to trigger blur CSS
+        // Add class to body to trigger white background CSS
         document.body.classList.add('submit-modal-open');
-
-        // Also blur other modals directly via JavaScript for extra assurance
-        const allModals = document.querySelectorAll('.modal');
-        allModals.forEach(m => {
-            if (m.id !== 'submitArticleModal') {
-                // Blur any modal that is not the submit article modal
-                m.style.filter = 'blur(5px)';
-                m.style.transition = 'filter 0.3s ease';
-                // Also blur all content inside those modals
-                const modalContent = m.querySelector('.modal-content');
-                if (modalContent) {
-                    modalContent.style.filter = 'blur(5px)';
-                }
-            }
-        });
     });
 
     // Show modal
@@ -1224,20 +1235,8 @@ function showSubmitArticleModal(contestId) {
             errorDiv.classList.add('d-none');
         }
 
-        // Remove blur class from body
+        // Remove white background class from body
         document.body.classList.remove('submit-modal-open');
-
-        // Remove blur from other modals when this one closes
-        const allModals = document.querySelectorAll('.modal');
-        allModals.forEach(m => {
-            if (m.id !== 'submitArticleModal') {
-                m.style.filter = '';
-                const modalContent = m.querySelector('.modal-content');
-                if (modalContent) {
-                    modalContent.style.filter = '';
-                }
-            }
-        });
     });
 
     // Allow form submission on Enter key
@@ -1377,15 +1376,24 @@ async function processArticleSubmission(contestId) {
  * @param {number} contestId - The ID of the contest to submit to
  */
 function submitToContest(contestId) {
+    // Check authentication before submitting article
+    if (!currentUser) {
+        showAlert('Please login to submit an article', 'warning');
+        showSectionInternal('login');
+        return;
+    }
+    
     // Show the beautiful submission modal
     showSubmitArticleModal(contestId);
 }
 
 // Dashboard Functions
 async function loadDashboard() {
+    // Authentication check is already done in showSection() before calling this function
+    // But we keep this check as a safety measure
     if (!currentUser) {
         showAlert('Please login to view dashboard', 'warning');
-        showSection('login');
+        showSectionInternal('login');
         return;
     }
 
@@ -1472,7 +1480,35 @@ function displayDashboard(data) {
 }
 
 // UI Functions
+// List of sections that require authentication
+const PROTECTED_SECTIONS = ['contests', 'dashboard', 'profile'];
+
+/**
+ * Show a section with authentication check.
+ * 
+ * If the section requires authentication and user is not logged in,
+ * redirects to login page with a message.
+ * 
+ * @param {string} sectionName - Name of the section to show
+ */
 function showSection(sectionName) {
+    // Check if section requires authentication
+    if (PROTECTED_SECTIONS.includes(sectionName) && !currentUser) {
+        showAlert('Please login to access this page', 'warning');
+        showSectionInternal('login');
+        return;
+    }
+
+    // Show the section
+    showSectionInternal(sectionName);
+}
+
+/**
+ * Internal function to show a section (without auth check).
+ * 
+ * @param {string} sectionName - Name of the section to show
+ */
+function showSectionInternal(sectionName) {
     // Hide all sections
     const sections = document.querySelectorAll('.section');
     sections.forEach(section => section.classList.add('hidden'));

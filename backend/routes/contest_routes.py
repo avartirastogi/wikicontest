@@ -114,8 +114,19 @@ def create_contest():
         return jsonify({'error': f'These jury members do not exist: {", ".join(missing_users)}'}), 400
     
     # Parse optional fields
-    code_link = data.get('code_link', '').strip() or None
-    description = data.get('description', '').strip() or None
+    # Handle code_link: can be None (from frontend), empty string, or a URL
+    code_link_value = data.get('code_link')
+    if code_link_value is None or code_link_value == '':
+        code_link = None
+    else:
+        code_link = str(code_link_value).strip() or None
+    
+    # Handle description: can be None, empty string, or text
+    description_value = data.get('description')
+    if description_value is None or description_value == '':
+        description = None
+    else:
+        description = str(description_value).strip() or None
     
     # Parse dates
     start_date = validate_date_string(data.get('start_date'))
