@@ -1,0 +1,475 @@
+/**
+ * Global Styles for WikiContest Application
+ * 
+ * This file contains global CSS styles that apply across the entire application.
+ * Uses Wikipedia/Wikimedia color palette:
+ * - Sea Blue: #006699 (primary)
+ * - Illuminating Emerald: #339966 (success)
+ * - Crimson Red: #990000 (danger/warning)
+ * - Outer Space: #484848 (text/dark)
+ */
+
+/* Wikipedia Color Variables - Light Mode (Default) */
+:root {
+  --wiki-primary: #006699;
+  --wiki-primary-hover: #005580;
+  --wiki-success: #339966;
+  --wiki-success-hover: #2d8555;
+  --wiki-danger: #990000;
+  --wiki-danger-hover: #7a0000;
+  --wiki-dark: #484848;
+  --wiki-light-bg: #f8f9fa;
+  --wiki-border: #dee2e6;
+  --wiki-text: #333333;
+  --wiki-text-muted: #6c757d;
+  --wiki-bg: #ffffff;
+  --wiki-card-bg: #ffffff;
+  --wiki-navbar-bg: #ffffff;
+  --wiki-modal-bg: #ffffff;
+  --wiki-input-bg: #ffffff;
+  --wiki-input-border: #dee2e6;
+  --wiki-hover-bg: rgba(0, 102, 153, 0.05);
+}
+
+/* Dark Mode Variables - Enhanced visibility */
+[data-theme="dark"] {
+  --wiki-primary: #5db8e6;
+  --wiki-primary-hover: #4da6cc;
+  --wiki-success: #7dd3a0;
+  --wiki-success-hover: #66cc99;
+  --wiki-danger: #e68080;
+  --wiki-danger-hover: #cc6666;
+  --wiki-dark: #f0f0f0;
+  --wiki-light-bg: #121212;
+  --wiki-border: #555555;
+  --wiki-text: #e8e8e8;
+  --wiki-text-muted: #b8b8b8;
+  --wiki-bg: #1a1a1a;
+  --wiki-card-bg: #2d2d2d;
+  --wiki-navbar-bg: #1f1f1f;
+  --wiki-modal-bg: #2d2d2d;
+  --wiki-input-bg: #3a3a3a;
+  --wiki-input-border: #555555;
+  --wiki-hover-bg: rgba(93, 184, 230, 0.2);
+}
+
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--wiki-text);
+  background-color: var(--wiki-light-bg);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Utility classes */
+.hidden {
+  display: none !important;
+}
+
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Link styles - Wikipedia blue */
+a {
+  color: var(--wiki-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--wiki-primary-hover);
+  text-decoration: underline;
+}
+
+/* Form styles */
+.form-control {
+  border-color: var(--wiki-input-border);
+  background-color: var(--wiki-input-bg);
+  color: var(--wiki-text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] .form-control {
+  border-width: 1px;
+  border-style: solid;
+}
+
+.form-control:focus {
+  border-color: var(--wiki-primary);
+  box-shadow: 0 0 0 0.2rem rgba(0, 102, 153, 0.25);
+  outline: none;
+  background-color: var(--wiki-input-bg);
+  color: var(--wiki-text);
+}
+
+[data-theme="dark"] .form-control:focus {
+  box-shadow: 0 0 0 0.2rem rgba(93, 184, 230, 0.3);
+}
+
+/* Placeholder text styling */
+.form-control::placeholder {
+  color: var(--wiki-text-muted);
+  opacity: 0.7;
+  transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  opacity: 0.6;
+}
+
+/* Date input color scheme */
+input[type="date"].form-control,
+input[type="datetime-local"].form-control,
+input[type="time"].form-control {
+  color-scheme: light;
+}
+
+[data-theme="dark"] input[type="date"].form-control,
+[data-theme="dark"] input[type="datetime-local"].form-control,
+[data-theme="dark"] input[type="time"].form-control {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] .form-control:focus {
+  box-shadow: 0 0 0 0.2rem rgba(93, 184, 230, 0.3);
+  border-color: var(--wiki-primary);
+}
+
+/* Button styles */
+.btn {
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.btn:focus {
+  box-shadow: 0 0 0 0.2rem rgba(0, 102, 153, 0.25);
+}
+
+.btn-outline-primary {
+  border-color: var(--wiki-primary);
+  color: var(--wiki-primary);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--wiki-primary);
+  border-color: var(--wiki-primary);
+  color: white;
+}
+
+.btn-outline-secondary {
+  border-color: var(--wiki-text-muted);
+  color: var(--wiki-text-muted);
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--wiki-text-muted);
+  border-color: var(--wiki-text-muted);
+  color: white;
+}
+
+/* Card styles - ensure proper card format */
+.card {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--wiki-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
+  background-color: var(--wiki-card-bg);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  border-color: var(--wiki-border);
+  border-width: 1px;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(72, 72, 72, 0.15);
+  transform: translateY(-2px);
+}
+
+[data-theme="dark"] .card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.card-body {
+  flex: 1 1 auto;
+  padding: 1.5rem;
+}
+
+/* Ensure cards maintain proper height in grid layouts */
+.card.h-100 {
+  height: 100% !important;
+}
+
+/* Status badge styles */
+.status-badge {
+  font-size: 0.8em;
+  padding: 0.3em 0.6em;
+  font-weight: 500;
+}
+
+/* Nav tabs styling - Wikipedia colors - subtle border */
+.nav-tabs {
+  border-bottom: 1px solid var(--wiki-border);
+  transition: border-color 0.3s ease;
+}
+
+[data-theme="dark"] .nav-tabs {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+.nav-tabs .nav-link {
+  color: var(--wiki-text);
+  border: none;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+}
+
+.nav-tabs .nav-link:hover {
+  color: var(--wiki-primary);
+  border-bottom-color: var(--wiki-primary);
+  background-color: var(--wiki-hover-bg);
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--wiki-primary);
+  background-color: transparent;
+  border-bottom-color: var(--wiki-primary);
+  font-weight: 600;
+}
+
+/* Alert styles - Enhanced visibility */
+.alert {
+  border-radius: 0.5rem;
+  border-left: 4px solid;
+  border-width: 1px;
+  border-style: solid;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-weight: 500;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] .alert {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border-width: 1px;
+}
+
+.alert-info {
+  background-color: rgba(0, 102, 153, 0.12);
+  border-color: var(--wiki-primary);
+  color: var(--wiki-primary);
+}
+
+[data-theme="dark"] .alert-info {
+  background-color: rgba(93, 184, 230, 0.25);
+  border-color: var(--wiki-primary);
+  color: var(--wiki-primary);
+  border-left-width: 4px;
+}
+
+.alert-success {
+  background-color: rgba(51, 153, 102, 0.12);
+  border-color: var(--wiki-success);
+  color: var(--wiki-success);
+}
+
+[data-theme="dark"] .alert-success {
+  background-color: rgba(125, 211, 160, 0.25);
+  border-color: var(--wiki-success);
+  color: var(--wiki-success);
+  border-left-width: 4px;
+}
+
+.alert-warning {
+  background-color: rgba(153, 0, 0, 0.12);
+  border-color: var(--wiki-danger);
+  color: var(--wiki-danger);
+}
+
+[data-theme="dark"] .alert-warning {
+  background-color: rgba(230, 128, 128, 0.25);
+  border-color: var(--wiki-danger);
+  color: var(--wiki-danger);
+  border-left-width: 4px;
+}
+
+.alert-danger {
+  background-color: rgba(153, 0, 0, 0.12);
+  border-color: var(--wiki-danger);
+  color: var(--wiki-danger);
+}
+
+[data-theme="dark"] .alert-danger {
+  background-color: rgba(230, 128, 128, 0.25);
+  border-color: var(--wiki-danger);
+  color: var(--wiki-danger);
+  border-left-width: 4px;
+}
+
+/* Alert close button visibility */
+.alert .btn-close {
+  filter: brightness(0.8);
+  opacity: 0.7;
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.alert .btn-close:hover {
+  opacity: 1;
+  filter: brightness(1);
+}
+
+[data-theme="dark"] .alert .btn-close {
+  filter: invert(1) brightness(1.5);
+  opacity: 0.9;
+}
+
+[data-theme="dark"] .alert .btn-close:hover {
+  opacity: 1;
+  filter: invert(1) brightness(2);
+}
+
+/* Table styles */
+.table {
+  color: var(--wiki-text);
+  transition: color 0.3s ease;
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--wiki-hover-bg);
+}
+
+.table thead th {
+  border-bottom: 2px solid var(--wiki-primary);
+  color: var(--wiki-dark);
+  font-weight: 600;
+  background-color: transparent;
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] .table thead th {
+  background-color: rgba(93, 184, 230, 0.1);
+}
+
+.table tbody td {
+  color: var(--wiki-text);
+  transition: color 0.3s ease;
+}
+
+.table tbody tr {
+  border-color: var(--wiki-border);
+  transition: border-color 0.3s ease;
+}
+
+/* Modal styles */
+.modal-content {
+  background-color: var(--wiki-modal-bg);
+  color: var(--wiki-text);
+  border-color: var(--wiki-border);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.modal-header {
+  background-color: var(--wiki-primary);
+  color: white;
+  border-bottom: none;
+}
+
+.modal-header .btn-close {
+  filter: invert(1);
+}
+
+[data-theme="dark"] .modal-header .btn-close {
+  filter: invert(1) brightness(2);
+}
+
+.modal-footer {
+  border-top: 1px solid var(--wiki-border);
+  background-color: var(--wiki-modal-bg);
+}
+
+/* Badge colors */
+.badge {
+  font-weight: 500;
+  padding: 0.35em 0.65em;
+}
+
+/* Animation for page transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Mobile-first responsive improvements */
+@media (max-width: 768px) {
+  /* Ensure containers have proper padding on mobile */
+  .container,
+  .container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Better card spacing on mobile */
+  .card {
+    margin-bottom: 1rem;
+  }
+  
+  /* Improve button touch targets */
+  .btn {
+    min-height: 44px; /* iOS recommended touch target */
+    padding: 0.5rem 1rem;
+  }
+  
+  /* Better form input sizing */
+  .form-control {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Extra small devices */
+  .container,
+  .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Smaller buttons on very small screens */
+  .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  /* Better text sizing */
+  body {
+    font-size: 0.95rem;
+  }
+  
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+  h4 { font-size: 1.1rem; }
+  h5 { font-size: 1rem; }
+  h6 { font-size: 0.9rem; }
+}
+

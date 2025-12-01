@@ -16,7 +16,25 @@ This guide will help you deploy the WikiContest Flask application to Wikimedia T
 2. SSH into Toolforge: `ssh <your-username>@login.toolforge.org`
 3. Switch to your tool user: `become wikicontest`
 
-### **Step 2: Prepare Your Application**
+### **Step 2: Build Vue.js Frontend**
+
+1. **Build the Vue.js frontend for production:**
+   ```bash
+   cd frontend
+   npm install
+   npm run build
+   ```
+   
+   This creates a `dist/` directory with optimized production files.
+
+2. **Verify the build:**
+   ```bash
+   ls -la dist/
+   ```
+   
+   You should see `index.html` and an `assets/` directory with JavaScript and CSS files.
+
+### **Step 3: Prepare Your Application**
 
 1. **Run the deployment script:**
    ```bash
@@ -28,14 +46,14 @@ This guide will help you deploy the WikiContest Flask application to Wikimedia T
 2. **Or manually create the structure:**
    ```bash
    mkdir -p $HOME/www/python/src
-   mkdir -p $HOME/www/python/src/templates
-   mkdir -p $HOME/www/python/src/static
    mkdir -p $HOME/www/python/src/models
    mkdir -p $HOME/www/python/src/routes
    mkdir -p $HOME/www/python/src/middleware
    ```
+   
+   **Note:** The Vue.js frontend is served from `frontend/dist/` directory, which Flask will automatically detect.
 
-### **Step 3: Set Up Virtual Environment**
+### **Step 4: Set Up Virtual Environment**
 
 1. **Start Kubernetes shell:**
    ```bash
@@ -59,7 +77,7 @@ This guide will help you deploy the WikiContest Flask application to Wikimedia T
    exit
    ```
 
-### **Step 4: Configure OAuth**
+### **Step 5: Configure OAuth**
 
 1. **Register OAuth consumer:**
    - Go to: https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration
@@ -101,20 +119,20 @@ This guide will help you deploy the WikiContest Flask application to Wikimedia T
    CONSUMER_SECRET = "your-consumer-secret-from-oauth-registration"
    ```
 
-### **Step 5: Set File Permissions**
+### **Step 6: Set File Permissions**
 
 ```bash
 # Make config file secure (only tool user can read)
 chmod u=rw,go= $HOME/www/python/src/config.toml
 ```
 
-### **Step 6: Start the Webservice**
+### **Step 7: Start the Webservice**
 
 ```bash
 webservice python3.13 start
 ```
 
-### **Step 7: Test Your Deployment**
+### **Step 8: Test Your Deployment**
 
 1. **Visit your tool:** https://wikicontest.toolforge.org/
 2. **Test API health:** https://wikicontest.toolforge.org/api/health
@@ -132,11 +150,6 @@ $HOME/
         │   ├── app.py                 # Main Flask application
         │   ├── config.toml            # Configuration file
         │   ├── requirements.txt       # Python dependencies
-        │   ├── templates/
-        │   │   ├── index.html         # Main page template
-        │   │   └── login.html         # Login page template
-        │   ├── static/
-        │   │   └── app.js             # Frontend JavaScript
         │   ├── models/
         │   │   ├── user.py            # User model
         │   │   ├── contest.py         # Contest model
@@ -149,6 +162,8 @@ $HOME/
         │       └── auth.py            # Authentication middleware
         └── venv/                      # Python virtual environment
 ```
+
+**Note:** The Vue.js frontend is built locally and deployed as static files. Flask serves the built files from `frontend/dist/` directory automatically.
 
 ## 🐛 **Troubleshooting**
 
@@ -238,8 +253,27 @@ python3 -c "from app import app, db; app.app_context().push(); print('Database O
 
 - [Toolforge Documentation](https://wikitech.wikimedia.org/wiki/Help:Toolforge)
 - [Flask Documentation](https://flask.palletsprojects.com/)
+- [Vue.js Documentation](https://vuejs.org/)
+- [Vite Documentation](https://vitejs.dev/)
 - [OAuth Documentation](https://www.mediawiki.org/wiki/OAuth)
 - [Toolforge Python Guide](https://wikitech.wikimedia.org/wiki/Help:Toolforge/Python)
+
+## 🎨 **Frontend Technology Stack**
+
+The WikiContest frontend uses:
+
+- **Vue.js 3** - Progressive JavaScript framework
+- **Vue Router** - Client-side routing
+- **Vite** - Modern build tool
+- **Axios** - HTTP client
+- **Bootstrap 5** - CSS framework
+
+The frontend is built locally using `npm run build` and the production files are served by Flask from the `frontend/dist/` directory. This approach:
+
+- Provides optimized production builds
+- Works seamlessly with Toolforge's Python webservice
+- Maintains compatibility with MediaWiki/Toolforge infrastructure
+- Allows for easy updates and deployments
 
 ## 🆘 **Getting Help**
 

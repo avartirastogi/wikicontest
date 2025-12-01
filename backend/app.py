@@ -77,7 +77,9 @@ def create_app():
     
     # JWT Cookie Configuration for secure token storage
     app.config['JWT_TOKEN_LOCATION'] = ['cookies']  # Store tokens in HTTP-only cookies
-    app.config['JWT_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+    app.config['JWT_COOKIE_SECURE'] = False  # False for localhost HTTP, True for production HTTPS
+    app.config['JWT_COOKIE_SAMESITE'] = 'Lax'  # Lax allows same-site cookies (works for localhost ports)
+    app.config['JWT_COOKIE_DOMAIN'] = None  # None allows cookie to work across localhost ports  # Set to True in production with HTTPS
     app.config['JWT_COOKIE_CSRF_PROTECT'] = True  # Enable CSRF protection
     app.config['JWT_CSRF_IN_COOKIES'] = True  # Include CSRF token in cookies
     
@@ -175,14 +177,21 @@ def check_cookie():
         JSON: User information if authenticated, error if not
     """
     from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+    from flask_jwt_extended.exceptions import JWTDecodeError, NoAuthorizationError
+    from models.user import User
     
     try:
         # Verify the JWT token from the cookie
-        verify_jwt_in_request()
+        # Use optional=False to ensure token MUST be present and valid
+        verify_jwt_in_request(optional=False)
         user_id = get_jwt_identity()
         
+        # Validate user_id exists and is valid
+        if not user_id:
+            return jsonify({'error': 'Invalid token'}), 401
+        
         # Get user details from database
-        user = User.query.get(user_id)
+        user = User.query.get(int(user_id))
         if not user:
             return jsonify({'error': 'User not found'}), 401
             
@@ -192,7 +201,17 @@ def check_cookie():
             'email': user.email
         }), 200
         
+    except (JWTDecodeError, NoAuthorizationError) as e:
+        # No token or invalid token - user is definitely not logged in
+        return jsonify({'error': 'You are not logged in'}), 401
     except Exception as e:
+        # Any other error - treat as not authenticated
+        # Log for debugging but don't expose error to client
+        try:
+            from flask import current_app
+            current_app.logger.debug(f'Cookie check failed: {str(e)}')
+        except:
+            pass
         return jsonify({'error': 'You are not logged in'}), 401
 
 # =============================================================================
@@ -204,20 +223,48 @@ def index():
     """
     Serve the main frontend page.
     
-    This route serves the main HTML file for the WikiContest frontend.
-    All frontend assets are served from the '../frontend' directory.
+    Serves the Vue.js application.
+    In development, serves from frontend directory (Vite dev server handles it).
+    In production, serves from frontend/dist directory (built Vue.js app).
     """
-    return send_from_directory('../frontend', 'index.html')
+    import os
+    # Check if dist directory exists (production build)
+    dist_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend', 'dist')
+    if os.path.exists(dist_path):
+        # Production - serve built Vue.js files
+        return send_from_directory(dist_path, 'index.html')
+    else:
+        # Development - serve Vue.js mount point (Vite dev server will handle it)
+        return send_from_directory('../frontend', 'index.html')
 
 @app.route('/<path:filename>')
 def serve_static(filename):
     """
     Serve static files from frontend directory.
     
-    This catch-all route serves static assets (CSS, JS, images) for the frontend.
-    It allows the Flask app to serve the entire frontend application.
+    In production, serves from frontend/dist directory (built Vue.js app).
+    In development, serves from frontend directory (Vite dev server handles Vue.js).
     """
-    return send_from_directory('../frontend', filename)
+    import os
+    # Skip API routes
+    if filename.startswith('api/'):
+        return jsonify({'error': 'Endpoint not found'}), 404
+    
+    # Check if dist directory exists (production build)
+    dist_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend', 'dist')
+    if os.path.exists(dist_path):
+        # Production - serve from dist
+        try:
+            return send_from_directory(dist_path, filename)
+        except:
+            # If file not found in dist, serve index.html (for Vue Router)
+            if not filename.startswith('api/'):
+                return send_from_directory(dist_path, 'index.html')
+            raise
+    else:
+        # Development - serve from frontend directory
+        # Vite dev server will handle Vue.js files, Flask serves other static files
+        return send_from_directory('../frontend', filename)
 
 # =============================================================================
 # SYSTEM ENDPOINTS

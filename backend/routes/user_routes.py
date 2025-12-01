@@ -153,7 +153,6 @@ def login():
         return jsonify({'error': 'Login failed'}), 500
 
 @user_bp.route('/logout', methods=['POST'])
-@require_auth
 @handle_errors
 def logout():
     """
@@ -161,6 +160,8 @@ def logout():
     
     This works for both regular users and OAuth users.
     It clears the JWT cookie and any OAuth session data.
+    
+    Note: Does not require authentication - allows logout even if token is invalid.
     
     Returns:
         JSON response with success message
@@ -171,7 +172,33 @@ def logout():
     
     # Clear JWT token cookie (works for both regular and OAuth users)
     response = make_response(jsonify({'message': 'Logout successful'}))
+    
+    # Unset JWT cookies
     unset_jwt_cookies(response)
+    
+    # Manually clear cookies to ensure they're removed across ports
+    # This is important for localhost:5000 -> localhost:5173 scenarios
+    response.set_cookie(
+        'access_token_cookie',
+        value='',
+        expires=0,
+        httponly=True,
+        samesite='Lax',
+        secure=False,
+        domain=None,  # None allows cookie to work across localhost ports
+        path='/'
+    )
+    response.set_cookie(
+        'csrf_access_token',
+        value='',
+        expires=0,
+        httponly=True,
+        samesite='Lax',
+        secure=False,
+        domain=None,
+        path='/'
+    )
+    
     return response, 200
 
 @user_bp.route('/dashboard', methods=['GET'])
@@ -597,10 +624,33 @@ def oauth_callback():
         session.pop('request_token', None)
         session.pop('request_secret', None)
         
+        # Determine redirect URL based on environment
+        # IMPORTANT: OAuth callback URL is fixed at http://localhost:5000/api/user/oauth/callback
+        # But we should always redirect to Vue.js dev server (localhost:5173) after OAuth
+        # This ensures the Vue.js app can process the oauth_success parameter
+        
+        # Check for frontend URL in environment variable (for production)
+        frontend_url = current_app.config.get('FRONTEND_URL')
+        
+        if frontend_url:
+            # Production: use configured frontend URL
+            redirect_url = f"{frontend_url}/?oauth_success=true"
+            use_external = True
+        else:
+            # Development: Always redirect to Vue.js dev server
+            # This ensures the Vue.js app loads properly and can process OAuth callback
+            redirect_url = 'http://localhost:5173/?oauth_success=true'
+            use_external = True
+        
         # Create response with redirect to frontend
-        response = make_response(redirect('/'))
+        # Always use external redirect (full URL) to ensure proper cookie handling
+        response = make_response(redirect(redirect_url, code=302))
         
         # Set JWT token in HTTP-only cookie
+        # Important: For cross-port cookies (localhost:5000 -> localhost:5173)
+        # The cookie needs to work across different ports on localhost
+        # Flask-JWT-Extended's set_access_cookies handles this automatically
+        # with the JWT_COOKIE_SECURE=False and proper CORS configuration
         set_access_cookies(response, access_token_jwt)
         
         return response

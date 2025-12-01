@@ -1,6 +1,6 @@
 # WikiContest Platform
 
-A web platform for hosting and participating in collaborative online competitions. Built with Flask (Python) backend and vanilla JavaScript frontend.
+A web platform for hosting and participating in collaborative online competitions. Built with Flask (Python) backend and Vue.js 3 frontend.
 
 ##  What This App Does
 
@@ -71,16 +71,45 @@ A web platform for hosting and participating in collaborative online competition
    ```
 
 8. **Run the application**
+
+   **Option A: Development Mode (Recommended)**
+   
+   Run both servers in separate terminals:
+   
+   Terminal 1 - Flask Backend:
    ```bash
    python app.py
    ```
+   
+   Terminal 2 - Vue.js Frontend:
+   ```bash
+   cd ../frontend
+   npm install  # Only needed first time
+   npm run dev
+   ```
+   
+   Access at: `http://localhost:5173` (Vue.js dev server proxies API to Flask)
+   
+   **Option B: Production Build (Single Server)**
+   
+   Build Vue.js first, then run Flask:
+   ```bash
+   cd ../frontend
+   npm install  # Only needed first time
+   npm run build
+   cd ../backend
+   python app.py
+   ```
+   
+   Access at: `http://localhost:5000` (Flask serves built Vue.js files)
 
 9. **Open in browser**
-   ```
-   http://localhost:5000
-   ```
+   - Development: `http://localhost:5173` (with Vue.js dev server)
+   - Production: `http://localhost:5000` (Flask serves built files)
 
 **Quick Testing Option**: If you want to skip MySQL setup, edit `.env` and change `DATABASE_URL` to `sqlite:///wikicontest.db`
+
+**Frontend Development**: For the best development experience, run the Vue.js dev server (`npm run dev` in `frontend/` directory) alongside Flask. The dev server proxies API requests to Flask automatically.
 
 ## 🔧 Configuration
 
@@ -148,10 +177,26 @@ wikicontest/
 │   ├── models/       # Database models
 │   ├── routes/        # API endpoints
 │   └── middleware/    # Authentication
-└── frontend/         # Frontend files
-    ├── index.html    # Main page
-    └── app.js        # JavaScript
+└── frontend/         # Vue.js frontend
+    ├── src/          # Source files
+    │   ├── views/    # Page components
+    │   ├── components/ # Reusable components
+    │   ├── router/   # Vue Router
+    │   ├── store/    # State management
+    │   └── services/ # API service
+    ├── package.json  # Dependencies
+    └── vite.config.js # Build configuration
 ```
+
+## Frontend Technology
+
+The frontend uses **Vue.js 3** with:
+- Vue Router for client-side routing
+- Vite for fast development and optimized builds
+- Bootstrap 5 for styling
+- Axios for API communication
+
+See `docs/VUE_FRONTEND_SETUP.md` for frontend setup instructions.
 
 ##  Contributing
 
