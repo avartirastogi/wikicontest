@@ -1,19 +1,50 @@
 <template>
-  <div class="container py-5">
-    <h2 class="mb-4">Profile</h2>
-    <div v-if="currentUser" class="card">
-      <div class="card-body">
-        <h5 class="card-title">User Information</h5>
-        <p><strong>Username:</strong> {{ currentUser.username }}</p>
-        <p><strong>Email:</strong> {{ currentUser.email }}</p>
-        <p><strong>User ID:</strong> {{ currentUser.id }}</p>
+  <div class="profile-container">
+
+    <h2 class="page-title">Your Profile</h2>
+
+    <transition name="fade-scale">
+
+      <div v-if="currentUser" class="profile-card">
+
+        <div class="profile-header">
+          <div class="avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <h3>{{ currentUser.username }}</h3>
+          <p class="tagline">Wikimedia Contributor</p>
+        </div>
+
+        <div class="info-section">
+          <div class="info-item">
+            <i class="fas fa-user-circle"></i>
+            <span><strong>Username</strong> : {{ currentUser.username }}</span>
+          </div>
+
+          <div class="info-item">
+            <i class="fas fa-envelope"></i>
+            <span><strong>Email</strong> : {{ currentUser.email }}</span>
+          </div>
+
+          <div class="info-item">
+            <i class="fas fa-id-card"></i>
+            <span><strong>User ID</strong> : {{ currentUser.id }}</span>
+          </div>
+        </div>
+
       </div>
-    </div>
-    <div v-else class="alert alert-warning">
-      Please login to view your profile.
-    </div>
+
+      <div v-else class="alert-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        Please login to view your profile.
+      </div>
+
+    </transition>
+
   </div>
 </template>
+
+
 
 <script>
 import { computed } from 'vue'
@@ -33,135 +64,195 @@ export default {
 </script>
 
 <style scoped>
-/* Profile Page Styling with Wikipedia Colors */
+/* ===============================
+   Modern Profile Page UI
+   =============================== */
 
-/* Page header */
-h2 {
-  color: var(--wiki-dark);
-  font-weight: 700;
-  margin-bottom: 2rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 3px solid var(--wiki-primary);
-  transition: color 0.3s ease, border-color 0.3s ease;
+.profile-container {
+  max-width: 700px;
+  margin: auto;
+  padding: 3rem 1rem;
+  animation: fadeUp 0.8s ease-out;
 }
 
-/* Card styling */
-.card {
-  border: 1px solid var(--wiki-border);
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background-color: var(--wiki-card-bg);
-  transition: all 0.3s ease;
+/* ===============================
+   Page Title
+   =============================== */
+.page-title {
+  text-align: center;
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 2.8rem;
+  color: var(--seablue);
+  position: relative;
 }
 
-[data-theme="dark"] .card {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+.page-title::after {
+  content: "";
+  width: 80px;
+  height: 4px;
+  background: var(--emerald);
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50px;
+  animation: underlineGrow 1s ease-in-out forwards;
 }
 
-.card:hover {
-  box-shadow: 0 8px 20px rgba(0, 102, 153, 0.15);
-  border-color: var(--wiki-primary);
+/* Underline Animation */
+@keyframes underlineGrow {
+  from { width: 0; opacity: 0; }
+  to { width: 80px; opacity: 1; }
 }
 
-[data-theme="dark"] .card:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+/* ===============================
+   Profile Card – Glassmorphism
+   =============================== */
+.profile-card {
+  backdrop-filter: blur(14px);
+  background: rgba(255,255,255,0.13);
+  border-radius: 20px;
+  padding: 2.5rem;
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+  animation: floatCard 6s ease-in-out infinite alternate;
+  transition: 0.3s ease;
 }
 
-.card-body {
-  padding: 2rem;
+[data-theme="dark"] .profile-card {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
 }
 
-.card-title {
-  color: var(--wiki-primary);
-  font-weight: 600;
-  font-size: 1.5rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid rgba(0, 102, 153, 0.2);
-  transition: color 0.3s ease;
+/* Subtle float animation */
+@keyframes floatCard {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-8px); }
 }
 
-/* User information */
-p {
-  color: var(--wiki-text);
-  font-size: 1.1rem;
+/* ===============================
+   Profile Header with Avatar
+   =============================== */
+.profile-header {
+  text-align: center;
+  margin-bottom: 2.2rem;
+}
+
+.avatar {
+  width: 90px;
+  height: 90px;
+  margin: auto;
+  border-radius: 50%;
+  background: var(--seablue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 2.2rem;
   margin-bottom: 1rem;
-  padding: 0.5rem 0;
-  transition: color 0.3s ease;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  transition: 0.3s;
 }
 
-p strong {
-  color: var(--wiki-primary);
+.avatar:hover {
+  transform: scale(1.1);
+  background: var(--emerald);
+}
+
+.profile-header h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.tagline {
+  font-size: 1rem;
+  opacity: 0.75;
+  margin-top: 5px;
+}
+
+/* ===============================
+   User Info Section
+   =============================== */
+.info-section {
+  margin-top: 1rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 14px;
+  margin-bottom: 1rem;
+  background: rgba(255,255,255,0.25);
+  border: 1px solid rgba(0,0,0,0.07);
+  transition: 0.3s ease;
+}
+
+[data-theme="dark"] .info-item {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.info-item i {
+  font-size: 1.6rem;
+  margin-right: 1rem;
+  color: var(--seablue);
+  transition: 0.3s ease;
+}
+
+.info-item:hover {
+  transform: translateX(6px);
+  background: rgba(0,102,153,0.15);
+  border-color: var(--seablue);
+}
+
+.info-item:hover i {
+  color: var(--emerald);
+  transform: scale(1.2);
+}
+
+.info-item strong {
+  color: var(--seablue);
+  font-size: 1.1rem;
+}
+
+/* ===============================
+   Alert Message
+   =============================== */
+.alert-message {
+  background: rgba(153, 0, 0, 0.15);
+  color: var(--crimson);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border-left: 5px solid var(--crimson);
+  text-align: center;
+  font-size: 1.1rem;
   font-weight: 600;
-  display: inline-block;
-  min-width: 120px;
-  transition: color 0.3s ease;
+  animation: fadeUp 0.7s ease-out;
 }
 
-/* Alert styling */
-.alert-warning {
-  background-color: rgba(153, 0, 0, 0.1);
-  border: 1px solid var(--wiki-danger);
-  border-left: 4px solid var(--wiki-danger);
-  color: var(--wiki-danger);
-  border-radius: 0.5rem;
-  padding: 1rem 1.5rem;
-  font-weight: 500;
+.alert-message i {
+  margin-right: 8px;
+  font-size: 1.2rem;
 }
 
-[data-theme="dark"] .alert-warning {
-  background-color: rgba(204, 102, 102, 0.15);
+/* ===============================
+   Entrance Animation
+   =============================== */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  
-  h2 {
-    font-size: 1.75rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .card-body {
-    padding: 1.5rem;
-  }
-  
-  .card-title {
-    font-size: 1.25rem;
-  }
-  
-  p {
-    font-size: 1rem;
-  }
-  
-  p strong {
-    display: block;
-    margin-bottom: 0.25rem;
-    min-width: auto;
-  }
+/* Smooth fade + scale */
+.fade-scale-enter-active {
+  transition: .4s ease;
+}
+.fade-scale-enter-from {
+  opacity: 0;
+  transform: scale(0.95);
 }
 
-@media (max-width: 576px) {
-  h2 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  .card-body {
-    padding: 1.25rem;
-  }
-  
-  .card-title {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-  }
-  
-  p {
-    font-size: 0.95rem;
-  }
-}
 </style>
-

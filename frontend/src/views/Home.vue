@@ -1,49 +1,58 @@
 <template>
   <div>
-    <!-- Hero Section -->
-    <div class="hero-section text-center">
-      <div class="container">
-        <h1 class="display-4 mb-4">Welcome to WikiContest</h1>
-        <p class="lead mb-4">A platform for hosting and participating in collaborative online competitions</p>
-        <router-link class="btn btn-cta btn-lg me-3" to="/login">Browse Contests</router-link>
-        <router-link class="btn btn-outline-light btn-lg" to="/register">Get Started</router-link>
-      </div>
-    </div>
-    
-    <!-- Features Section -->
-    <div class="container py-5">
-      <div class="row">
-        <div class="col-12 col-sm-6 col-md-4 mb-3 mb-md-4">
-          <div class="card h-100 text-center">
-            <div class="card-body">
-              <i class="fas fa-users fa-3x text-primary mb-3"></i>
-              <h5 class="card-title">For Participants</h5>
-              <p class="card-text">Submit your articles and compete with others in various contests.</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-sm-6 col-md-4 mb-3 mb-md-4">
-          <div class="card h-100 text-center">
-            <div class="card-body">
-              <i class="fas fa-plus-circle fa-3x text-success mb-3"></i>
-              <h5 class="card-title">For Organizers</h5>
-              <p class="card-text">Create contests, set rules, and manage submissions easily.</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-sm-6 col-md-4 mb-3 mb-md-4">
-          <div class="card h-100 text-center">
-            <div class="card-body">
-              <i class="fas fa-gavel fa-3x text-warning mb-3"></i>
-              <h5 class="card-title">For Judges</h5>
-              <p class="card-text">Review submissions and maintain fair competition standards.</p>
-            </div>
-          </div>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+      <div class="hero-inner">
+        <h1 class="hero-title">WikiContest</h1>
+        <p class="hero-subtitle">Collaborate. Compete. Create Knowledge.</p>
+
+        <div class="hero-buttons">
+          <router-link class="btn-primary" to="/login">Browse Contests</router-link>
+          <router-link class="btn-secondary" to="/register">Get Started</router-link>
         </div>
       </div>
-    </div>
+
+      <!-- Animated Shapes -->
+      <div class="shape shape1"></div>
+      <div class="shape shape2"></div>
+      <div class="shape shape3"></div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features container py-5">
+      <div class="row g-4">
+
+        <div class="col-12 col-md-4">
+          <div class="feature-card">
+            <i class="fas fa-users icon"></i>
+            <h3>Participants</h3>
+            <p>Submit articles, collaborate, and compete in global contests.</p>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+          <div class="feature-card">
+            <i class="fas fa-plus-circle icon"></i>
+            <h3>Organizers</h3>
+            <p>Create contests, manage tasks, and engage communities.</p>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+          <div class="feature-card">
+            <i class="fas fa-gavel icon"></i>
+            <h3>Judges</h3>
+            <p>Review submissions and ensure fair evaluation.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </div>
 </template>
+
 
 <script>
 export default {
@@ -52,210 +61,265 @@ export default {
 </script>
 
 <style scoped>
-/* Home Page Styling with Wikipedia Colors */
 
-/* Hero section */
-.hero-section {
-  background: linear-gradient(135deg, #006699 0%, #339966 100%);
-  color: white;
-  padding: 100px 0;
+/* ======= COLOR VARIABLES ======= */
+:root {
+  --crimson: #990000;
+  --emerald: #2ecc71;
+  --seablue: #2980b9;
+  --outerspace: #303030;
+  --white: #ffffff;
+}
+
+/* ===== HERO SECTION ===== */
+.hero {
   position: relative;
+  padding: 60px 0px 60px;
+  text-align: center;
   overflow: hidden;
+  color: #fff;
+  margin-top: 10px;
+
+  /* Smooth modern gradient */
+  background: linear-gradient(135deg, #0e4d92, #1e9c6c, #0e4d92);
+  background-size: 280% 280%;
+  animation: gradientSlide 16s ease infinite;
 }
 
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
-  opacity: 0.3;
-}
-
-.hero-section .container {
+/* Glass center layer */
+.hero-inner {
   position: relative;
-  z-index: 1;
+  z-index: 50;
+  padding: 2rem 2.5rem;
+
+  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.05);
+
+  animation: fadeUp 1.2s ease forwards;
+  opacity: 0;
 }
 
-.hero-section h1 {
-  font-weight: 700;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-  margin-bottom: 1.5rem;
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(25px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.hero-section .lead {
-  font-size: 1.25rem;
-  opacity: 0.95;
-  margin-bottom: 2rem;
+@keyframes gradientSlide {
+  0% { background-position: 0% 40%; }
+  50% { background-position: 100% 60%; }
+  100% { background-position: 0% 40%; }
 }
 
-/* Button styling */
-.btn-cta {
-  background: #339966;
-  border: none;
-  color: white;
-  font-weight: 500;
-  padding: 0.75rem 2rem;
+/* HERO TEXT */
+.hero-title {
+  font-size: 3.4rem;
+  font-weight: 800;
+  letter-spacing: .5px;
+  text-shadow: 0 8px 25px rgba(0,0,0,0.35);
+}
+
+.hero-subtitle {
+  font-size: 1.3rem;
+  margin-top: 12px;
+  opacity: 0.9;
+}
+
+/* ===== Buttons - micro interaction ===== */
+.hero-buttons {
+  margin-top: 2.4rem;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 13px 36px;
   font-size: 1.1rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 50px;
+  font-weight: 600;
+  display: inline-block;
+  transition: 0.3s ease;
+  transform-origin: center;
 }
 
-.btn-cta:hover {
-  background: #2d8555;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+/* 3D soft hover */
+.btn-primary:hover,
+.btn-secondary:hover {
+  transform: translateY(-4px) scale(1.03);
+  filter: drop-shadow(0 6px 15px rgba(0,0,0,0.25));
+}
+
+.btn-primary {
+  background: #2ecc71;
   color: white;
 }
 
-.btn-outline-light {
+.btn-secondary {
   border: 2px solid white;
   color: white;
-  font-weight: 500;
-  padding: 0.75rem 2rem;
-  font-size: 1.1rem;
-  transition: all 0.2s ease;
 }
 
-.btn-outline-light:hover {
+.btn-secondary:hover {
   background: white;
-  color: #006699;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  color: #0e4d92;
 }
 
-/* Features section */
-.card {
-  border: 1px solid var(--wiki-border);
-  border-radius: 0.75rem;
-  transition: all 0.3s ease;
-  height: 100%;
-  overflow: hidden;
-  background-color: var(--wiki-card-bg);
+/* ===== Floating Parallax Shapes ===== */
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.35;
+  animation: floaty infinite ease-in-out alternate;
 }
 
-[data-theme="dark"] .card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+@keyframes floaty {
+  0% { transform: translateY(0) translateX(0) scale(1); }
+  100% { transform: translateY(-60px) translateX(60px) scale(1.2); }
 }
 
-.card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(0, 102, 153, 0.15);
-  border-color: var(--wiki-primary);
+/* Modern blob positions */
+.shape1 {
+  width: 330px; height: 330px;
+  top: -100px; left: -60px;
+  background: #2ecc71;
+  animation-duration: 13s;
 }
 
-[data-theme="dark"] .card:hover {
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+.shape2 {
+  width: 420px; height: 420px;
+  bottom: -120px; right: -40px;
+  background: #0e4d92;
+  animation-duration: 18s;
 }
 
-.card-body {
+.shape3 {
+  width: 250px; height: 250px;
+  top: 40%; left: -30px;
+  background: #8e44ad;
+  animation-duration: 16s;
+}
+
+/* BONUS: Ambient particles */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.12;
+  animation: particleMove 20s linear infinite;
+}
+
+@keyframes particleMove {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-160px); }
+}
+
+/* ===== FEATURES SECTION ===== */
+/* FEATURE CARDS — Enhanced, Equal Height, Equal Width */
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+}
+
+/* Perfect same-size cards */
+.feature-card {
+  background: #fff;
+  border-radius: 20px;
   padding: 2rem;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+
+  /* Ensures equal height for all cards */
+  min-height: 200px;
+
+  /* Flex layout to auto center content */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+
+  border-top: 6px solid var(--seablue);
+
+  box-shadow: 0 5px 18px rgba(0,0,0,0.1);
+  transition: all .35s ease;
 }
 
-.card-title {
-  color: var(--wiki-dark);
-  font-weight: 600;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  transition: color 0.3s ease;
+/* Hover effect */
+.feature-card:hover {
+  transform: translateY(-12px) scale(1.03);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.18);
+  border-top-color: var(--emerald);
 }
 
-.card-text {
-  color: var(--wiki-text-muted);
-  line-height: 1.6;
-  transition: color 0.3s ease;
+/* Icons */
+.icon {
+  font-size: 3.2rem;
+  margin-bottom: 15px;
+  color: var(--seablue);
+  transition: 0.3s ease;
 }
 
-/* Icon styling */
-.text-primary {
-  color: var(--wiki-primary) !important;
+/* Icon hover animation */
+.feature-card:hover .icon {
+  color: var(--emerald);
+  transform: scale(1.18);
 }
 
-.text-success {
-  color: var(--wiki-success) !important;
+/* Title inside card */
+.feature-card h3 {
+  font-size: 1.45rem;
+  margin-bottom: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--outerspace);
 }
 
-.text-warning {
-  color: var(--wiki-danger) !important;
+/* Description text */
+.feature-card p {
+  font-size: 1.05rem;
+  opacity: 0.9;
+  line-height: 1.5rem;
+  color: #505050;
+  padding: 0 0.5rem;
 }
 
-.fa-3x {
-  margin-bottom: 1rem;
-  transition: transform 0.3s ease;
+/* RESPONSIVE TUNING */
+@media (max-width: 992px) {
+  .feature-card {
+    min-height: 280px;
+  }
 }
 
-.card:hover .fa-3x {
-  transform: scale(1.1);
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  
-  .hero-section {
-    padding: 60px 0;
-  }
-  
-  .hero-section h1 {
-    font-size: 2rem;
-  }
-  
-  .hero-section .lead {
-    font-size: 1rem;
-  }
-  
-  .btn-cta,
-  .btn-outline-light {
-    display: block;
-    width: 100%;
-    margin-bottom: 1rem;
-  }
-  
-  .card-body {
-    padding: 1.5rem;
-  }
-  
-  /* Better spacing for mobile */
-  .row {
-    margin-left: -0.5rem;
-    margin-right: -0.5rem;
-  }
-  
-  .row > * {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+  .feature-card {
+    min-height: 260px;
+    padding: 1.7rem;
   }
 }
 
 @media (max-width: 576px) {
-  .hero-section {
-    padding: 40px 0;
+  .features {
+    gap: 1.5rem;
   }
-  
-  .hero-section h1 {
-    font-size: 1.75rem;
-  }
-  
-  .hero-section .lead {
-    font-size: 0.9rem;
-  }
-  
-  .card-body {
-    padding: 1.25rem;
-  }
-  
-  .fa-3x {
-    font-size: 2rem !important;
-  }
-  
-  .card-title {
-    font-size: 1.1rem;
+
+  .feature-card {
+    min-height: 240px;
+    padding: 1.5rem;
   }
 }
-</style>
 
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-title { font-size: 2.5rem; }
+  .hero-inner { padding: 1.4rem; }
+  .hero-buttons { flex-direction: column; }
+}
+
+</style>

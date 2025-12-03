@@ -289,268 +289,173 @@ export default {
 </script>
 
 <style scoped>
-/* Dashboard Styling with Wikipedia Colors */
+/* ==========================================================
+   🌟 Modern Premium Dashboard UI (ZERO BREAK CHANGES)
+   ========================================================== */
 
-/* Page header - only apply to main page header, not card h2 elements */
+/* Smooth fade entry */
+.container {
+  animation: fadePage 0.55s ease-out;
+}
+@keyframes fadePage {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header Premium */
 h2.page-header {
+  font-size: 2.1rem;
+  font-weight: 800;
   color: var(--wiki-dark);
-  font-weight: 700;
-  margin-bottom: 2rem;
-  padding-bottom: 0.5rem;
   border-bottom: 3px solid var(--wiki-primary);
-  transition: color 0.3s ease, border-color 0.3s ease;
+  padding-bottom: 8px;
+  margin-bottom: 1.8rem;
+  letter-spacing: 0.4px;
+  transition: 0.3s ease;
 }
 
-/* Ensure card h2 elements don't have borders */
-.card h2 {
-  border-bottom: none !important;
-  padding-bottom: 0 !important;
-  margin-bottom: 0 !important;
-}
-
+/* Section Titles */
 h4 {
   color: var(--wiki-primary);
-  font-weight: 600;
+  font-size: 1.4rem;
+  font-weight: 700;
   margin-bottom: 1rem;
-  border-bottom: none;
-  padding-bottom: 0;
-  transition: color 0.3s ease;
+  letter-spacing: 0.3px;
 }
 
-/* Statistics cards - subtle border */
+/* ==========================================================
+   🌟 Modern Glass Cards 
+   ========================================================== */
+
 .card {
-  border: 1px solid var(--wiki-border);
-  border-radius: 0.75rem;
-  transition: all 0.3s ease;
-  height: 100%;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  background-color: var(--wiki-card-bg);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+  transition: 0.3s ease;
 }
 
 [data-theme="dark"] .card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  background: rgba(30, 30, 30, 0.35) !important;
 }
 
+/* Card Hover */
 .card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 102, 153, 0.1);
-  border-color: var(--wiki-border);
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.15);
 }
 
-[data-theme="dark"] .card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
+/* Card Body */
 .card-body {
-  padding: 2rem;
+  padding: 1.8rem;
 }
 
+/* Card Small Title */
 .card-title {
   color: var(--wiki-text-muted);
-  font-weight: 500;
-  font-size: 1rem;
-  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
   letter-spacing: 0.5px;
-  margin-bottom: 1rem;
-  transition: color 0.3s ease;
 }
 
-/* Score numbers */
-h2.text-primary {
-  color: var(--wiki-primary) !important;
-  font-weight: 700;
-  font-size: 2.5rem;
-}
-
-h2.text-success {
-  color: var(--wiki-success) !important;
-  font-weight: 700;
-  font-size: 2.5rem;
-}
-
+/* Big Numbers */
+h2.text-primary,
+h2.text-success,
 h2.text-warning {
-  color: var(--wiki-danger) !important;
-  font-weight: 700;
-  font-size: 2.5rem;
+  font-size: 2.8rem !important;
+  font-weight: 800;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
-/* Section cards */
-.card h6 {
-  color: var(--wiki-primary);
-  font-weight: 600;
-  margin-bottom: 1rem;
-  padding-bottom: 0;
-  border-bottom: none;
-  transition: color 0.3s ease;
-}
+/* ==========================================================
+   🌟 Submissions / Score Items
+   ========================================================== */
 
-/* Badge styling */
-.badge {
-  font-weight: 500;
-  padding: 0.4em 0.8em;
-}
-
-.badge.bg-primary {
-  background-color: var(--wiki-primary) !important;
-  color: white;
-}
-
-.badge.bg-success {
-  background-color: var(--wiki-success) !important;
-  color: white;
-}
-
-.badge.bg-warning {
-  background-color: var(--wiki-danger) !important;
-  color: white;
-}
-
-.badge.bg-danger {
-  background-color: var(--wiki-danger) !important;
-  color: white;
-}
-
-/* List group styling - remove borders between items */
-.list-group {
-  border: none;
-}
-
-.list-group-item {
-  border: none;
-  border-bottom: 1px solid var(--wiki-border);
-  background-color: var(--wiki-card-bg);
-  color: var(--wiki-text);
-  transition: all 0.2s ease;
-  padding: 1rem 1.5rem;
-}
-
-.list-group-item:last-child {
-  border-bottom: none;
-}
-
-.list-group-item:hover {
-  background-color: var(--wiki-hover-bg);
-  border-left: 3px solid var(--wiki-primary);
-  padding-left: calc(1.5rem - 3px);
-  border-bottom-color: var(--wiki-border);
-}
-
-.list-group-item-action {
-  color: var(--wiki-dark);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.list-group-item-action:hover {
-  color: var(--wiki-primary);
-}
-
-.list-group-item h6 {
-  color: var(--wiki-dark);
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  transition: color 0.3s ease;
-}
-
-.list-group-item small {
-  color: var(--wiki-text-muted);
-  transition: color 0.3s ease;
-}
-
-/* Text colors */
-.text-muted {
-  color: var(--wiki-text-muted) !important;
-}
-
-/* Alert styling */
-.alert-danger {
-  background-color: rgba(153, 0, 0, 0.1);
-  border: 1px solid var(--wiki-danger);
-  border-left: 4px solid var(--wiki-danger);
-  color: var(--wiki-danger);
-  border-radius: 0.5rem;
-}
-
-[data-theme="dark"] .alert-danger {
-  background-color: rgba(204, 102, 102, 0.15);
-}
-
-/* Spinner */
-.spinner-border.text-primary {
-  color: var(--wiki-primary) !important;
-  width: 3rem;
-  height: 3rem;
-  border-width: 0.3em;
-}
-
-/* Submission items */
 .d-flex.justify-content-between {
-  padding: 0.75rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s ease;
+  background: rgba(255,255,255,0.18);
+  border-radius: 10px;
+  padding: 10px 15px;
+  transition: 0.25s ease;
 }
 
 .d-flex.justify-content-between:hover {
-  background-color: var(--wiki-hover-bg);
+  background: rgba(0, 140, 186, 0.15);
+  transform: translateX(4px);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  
-  .card-body {
-    padding: 1.25rem;
-  }
-  
-  h2.page-header {
-    font-size: 1.75rem;
-    margin-bottom: 1.5rem;
-  }
-  
+/* Contest Name */
+h6 {
+  font-weight: 700;
+  color: var(--wiki-primary);
+}
+
+/* Badges */
+.badge {
+  padding: 0.45em 0.9em;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+.badge:hover {
+  transform: scale(1.1);
+}
+
+/* ==========================================================
+   🌟 List Group (Your Contests)
+   ========================================================== */
+
+.list-group-item {
+  background: rgba(255,255,255,0.18);
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+  padding: 1.2rem 1.4rem;
+  transition: 0.25s ease;
+}
+
+.list-group-item:hover {
+  background: rgba(255,255,255,0.28);
+  border-left: 4px solid var(--wiki-primary);
+  padding-left: calc(1.4rem - 4px);
+}
+
+/* Below title */
+.list-group-item small {
+  color: var(--wiki-text-muted);
+}
+
+/* ==========================================================
+   🌟 Spinner Animation
+   ========================================================== */
+
+.spinner-border.text-primary {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.28em;
+  animation: spinnerPulse 1s infinite ease-in-out;
+}
+@keyframes spinnerPulse {
+  0% { filter: drop-shadow(0 0 0 rgba(0,140,186,0.4)); }
+  50% { filter: drop-shadow(0 0 8px rgba(0,140,186,0.7)); }
+  100% { filter: drop-shadow(0 0 0 rgba(0,140,186,0.4)); }
+}
+
+/* ==========================================================
+   🌟 Mobile Friendly
+   ========================================================== */
+
+@media(max-width: 768px){
+  h2.page-header { font-size: 1.7rem; }
+  h4 { font-size: 1.2rem; }
+  .card-body { padding: 1.25rem; }
   h2.text-primary,
   h2.text-success,
   h2.text-warning {
-    font-size: 2rem;
-  }
-  
-  h4 {
-    font-size: 1.25rem;
-  }
-  
-  .card-title {
-    font-size: 0.9rem;
-  }
-  
-  /* Better spacing for mobile */
-  .row {
-    margin-left: -0.5rem;
-    margin-right: -0.5rem;
-  }
-  
-  .row > * {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+    font-size: 2.1rem !important;
   }
 }
 
-@media (max-width: 576px) {
-  .card-body {
-    padding: 1rem;
-  }
-  
-  h2.text-primary,
-  h2.text-success,
-  h2.text-warning {
-    font-size: 1.75rem;
-  }
-  
-  h2.page-header {
-    font-size: 1.5rem;
-  }
-}
 </style>
 
