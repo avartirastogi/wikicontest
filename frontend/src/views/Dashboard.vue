@@ -163,13 +163,6 @@
       {{ error }}
     </div>
 
-    <!-- Contest Details Modal -->
-    <ContestModal 
-      :contest="selectedContest"
-      @submit-article="handleSubmitArticle"
-      @contest-deleted="handleContestDeleted"
-    />
-
     <!-- Submit Article Modal -->
     <SubmitArticleModal
       v-if="submittingToContestId"
@@ -180,25 +173,25 @@
 </template>
 
 <script>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useStore } from '../store'
 import api from '../services/api'
 import { showAlert } from '../utils/alerts'
-import ContestModal from '../components/ContestModal.vue'
+import { slugify } from '../utils/slugify'
 import SubmitArticleModal from '../components/SubmitArticleModal.vue'
 
 export default {
   name: 'Dashboard',
   components: {
-    ContestModal,
     SubmitArticleModal
   },
   setup() {
+    const router = useRouter()
     const store = useStore()
     const dashboardData = ref(null)
     const loading = ref(true)
     const error = ref(null)
-    const selectedContest = ref(null)
     const submittingToContestId = ref(null)
 
     // Load dashboard data
@@ -253,48 +246,49 @@ export default {
       }
     }
 
-    // View contest details - opens modal
-    const viewContest = async (contestId) => {
-      try {
-        const contest = await api.get(`/contest/${contestId}`)
-        selectedContest.value = contest
-        
-        // Wait for Vue to render the modal component
-        await nextTick()
-        
-        // Small delay to ensure modal is fully rendered
-        await new Promise(resolve => setTimeout(resolve, 100))
-        
-        // Show modal using Bootstrap
-        const modalElement = document.getElementById('contestModal')
-        if (modalElement) {
-          // Check if modal instance already exists
-          let modal = bootstrap.Modal.getInstance(modalElement)
-          if (!modal) {
-            // Create new modal instance
-            modal = new bootstrap.Modal(modalElement, {
-              backdrop: true,
-              keyboard: true
-            })
-          }
-          // Show the modal
-          modal.show()
-        } else {
-          console.error('Modal element not found!')
-          // Try one more time after a longer delay
-          setTimeout(() => {
-            const retryElement = document.getElementById('contestModal')
-            if (retryElement) {
-              const modal = new bootstrap.Modal(retryElement)
-              modal.show()
+    // View contest details - navigate to full page view
+    const viewContest = (contestId) => {
+      // Find the contest object from dashboard data
+      let contestData = null
+      
+      // Check in created contests
+      if (dashboardData.value?.created_contests) {
+        contestData = dashboardData.value.created_contests.find(c => c.id === contestId)
+      }
+      
+      // If not found, try to get from store (all contests)
+      if (!contestData) {
+        const allContests = store.getContestsByCategory('current')
+          .concat(store.getContestsByCategory('upcoming'))
+          .concat(store.getContestsByCategory('past'))
+        contestData = allContests.find(c => c.id === contestId)
+      }
+      
+      // If still not found, try to fetch it
+      if (!contestData) {
+        // Fallback: fetch contest by ID to get the name
+        api.get(`/contest/${contestId}`)
+          .then(contest => {
+            if (contest && contest.name) {
+              const contestSlug = slugify(contest.name)
+              router.push({ name: 'ContestView', params: { name: contestSlug } })
             } else {
-              showAlert('Failed to open contest details. Please refresh the page.', 'warning')
+              showAlert('Contest not found', 'danger')
             }
-          }, 200)
-        }
-      } catch (error) {
-        console.error('Error loading contest:', error)
-        showAlert('Failed to load contest details: ' + error.message, 'danger')
+          })
+          .catch(error => {
+            console.error('Error loading contest:', error)
+            showAlert('Failed to load contest details: ' + error.message, 'danger')
+          })
+        return
+      }
+      
+      // If we have the contest data, navigate to full page
+      if (contestData && contestData.name) {
+        const contestSlug = slugify(contestData.name)
+        router.push({ name: 'ContestView', params: { name: contestSlug } })
+      } else {
+        showAlert('Contest not found', 'danger')
       }
     }
 
@@ -323,12 +317,6 @@ export default {
       loadDashboard()
     }
 
-    // Handle contest deleted
-    const handleContestDeleted = () => {
-      selectedContest.value = null
-      // Reload dashboard to remove deleted contest
-      loadDashboard()
-    }
 
     // Load data on mount
     onMounted(() => {
@@ -339,15 +327,13 @@ export default {
       dashboardData,
       loading,
       error,
-      selectedContest,
       submittingToContestId,
       getStatusColor,
       getStatusBadgeColor,
       formatDate,
       viewContest,
       handleSubmitArticle,
-      handleArticleSubmitted,
-      handleContestDeleted
+      handleArticleSubmitted
     }
   }
 }

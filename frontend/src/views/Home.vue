@@ -10,7 +10,7 @@
           <p class="hero-description">A professional platform for managing Wikipedia article contests and fostering collaborative knowledge creation.</p>
 
           <div class="hero-buttons">
-            <router-link class="btn btn-primary btn-lg" to="/login">Browse Contests</router-link>
+            <router-link class="btn btn-primary btn-lg" to="/contests">Browse Contests</router-link>
             <router-link class="btn btn-outline-primary btn-lg" to="/register">Get Started</router-link>
           </div>
         </div>

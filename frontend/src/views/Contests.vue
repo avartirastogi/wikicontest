@@ -60,7 +60,7 @@
           v-for="contest in currentContests" 
           :key="contest.id"
           class="contest-item"
-          @click="viewContest(contest.id)"
+          @click="viewContest(contest)"
         >
           <!-- Contest Card Layout -->
           <div class="contest-card">
@@ -69,7 +69,7 @@
               <div class="contest-title-section">
                 <span 
                   class="contest-title-link"
-                  @click.stop="viewContest(contest.id)"
+                  @click.stop="viewContest(contest)"
                 >
                   {{ contest.name }}
                 </span>
@@ -119,14 +119,6 @@
       </div>
     </div>
 
-    <!-- Contest Details Modal -->
-    <!-- Always render modal so Bootstrap can find it, but pass null when no contest selected -->
-    <ContestModal 
-      :contest="selectedContest"
-      @submit-article="handleSubmitArticle"
-      @contest-deleted="handleContestDeleted"
-    />
-
     <!-- Submit Article Modal -->
     <SubmitArticleModal
       v-if="submittingToContestId"
@@ -143,26 +135,25 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useStore } from '../store'
 import { showAlert } from '../utils/alerts'
-import api from '../services/api'
+import { slugify } from '../utils/slugify'
 import CreateContestModal from '../components/CreateContestModal.vue'
-import ContestModal from '../components/ContestModal.vue'
 import SubmitArticleModal from '../components/SubmitArticleModal.vue'
 
 export default {
   name: 'Contests',
   components: {
     CreateContestModal,
-    ContestModal,
     SubmitArticleModal
   },
   setup() {
+    const router = useRouter()
     const store = useStore()
     const activeCategory = ref('current')
     const loading = ref(false)
-    const selectedContest = ref(null)
     const submittingToContestId = ref(null)
     const createContestModal = ref(null)
 
@@ -259,51 +250,23 @@ export default {
       return icons[status] || 'fas fa-question-circle'
     }
 
-    // View contest details
-    const viewContest = async (contestId) => {
-      try {
-        const contest = await api.get(`/contest/${contestId}`)
-        selectedContest.value = contest
-        
-        // Wait for Vue to render the modal component
-        // Use nextTick to ensure DOM is updated
-        await nextTick()
-        
-        // Small delay to ensure modal is fully rendered
-        await new Promise(resolve => setTimeout(resolve, 100))
-        
-        // Show modal using Bootstrap
-        const modalElement = document.getElementById('contestModal')
-        if (modalElement) {
-          // Check if modal instance already exists
-          let modal = bootstrap.Modal.getInstance(modalElement)
-          if (!modal) {
-            // Create new modal instance
-            modal = new bootstrap.Modal(modalElement, {
-              backdrop: true,
-              keyboard: true
-            })
-          }
-          // Show the modal
-          modal.show()
-          console.log('Modal shown for contest:', contest.name)
-        } else {
-          console.error('Modal element not found! Contest:', contest)
-          // Try one more time after a longer delay
-          setTimeout(() => {
-            const retryElement = document.getElementById('contestModal')
-            if (retryElement) {
-              const modal = new bootstrap.Modal(retryElement)
-              modal.show()
-            } else {
-              showAlert('Failed to open contest details. Please refresh the page.', 'warning')
-            }
-          }, 200)
-        }
-      } catch (error) {
-        console.error('Error loading contest:', error)
-        showAlert('Failed to load contest details: ' + error.message, 'danger')
+    // View contest details - navigate to full page using contest name
+    const viewContest = (contest) => {
+      // If contest is an object, use it directly; otherwise find it by ID
+      let contestData = contest
+      if (typeof contest === 'number' || typeof contest === 'string') {
+        // If passed ID, find the contest object
+        contestData = currentContests.value.find(c => c.id === parseInt(contest))
       }
+      
+      if (!contestData || !contestData.name) {
+        showAlert('Contest not found', 'danger')
+        return
+      }
+      
+      // Create URL-friendly slug from contest name
+      const contestSlug = slugify(contestData.name)
+      router.push({ name: 'ContestView', params: { name: contestSlug } })
     }
 
     // Show create contest modal
@@ -351,12 +314,6 @@ export default {
       store.loadContests()
     }
 
-    // Handle contest deleted
-    const handleContestDeleted = () => {
-      selectedContest.value = null
-      // Reload contests to remove deleted contest
-      store.loadContests()
-    }
 
     // Load contests on mount
     onMounted(async () => {
@@ -375,7 +332,6 @@ export default {
       currentContests,
       loading,
       isAuthenticated,
-      selectedContest,
       submittingToContestId,
       createContestModal,
       setActiveCategory,
@@ -389,8 +345,7 @@ export default {
       showCreateContestModal,
       handleContestCreated,
       handleSubmitArticle,
-      handleArticleSubmitted,
-      handleContestDeleted
+      handleArticleSubmitted
     }
   }
 }

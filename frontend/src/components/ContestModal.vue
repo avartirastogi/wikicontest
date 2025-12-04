@@ -23,9 +23,9 @@
               <p><strong>Submissions:</strong> {{ contest.submission_count }}</p>
             </div>
           </div>
-          <div v-if="contest.description" class="mt-3">
+          <div v-if="contest.description" class="mt-3 description-section">
             <h6>Description</h6>
-            <p>{{ contest.description }}</p>
+            <p class="description-text">{{ contest.description }}</p>
           </div>
           <div v-if="contest.jury_members && contest.jury_members.length > 0" class="mt-3 jury-section">
             <h6>Jury Members</h6>
@@ -712,6 +712,24 @@ export default {
 
 [data-theme="dark"] .jury-section h6 {
   color: #ffffff !important;
+}
+
+/* Description section - preserve formatting and line breaks */
+.description-section {
+  margin-top: 1.5rem;
+}
+
+.description-text {
+  white-space: pre-line; /* Preserves line breaks and wraps text */
+  line-height: 1.6;
+  margin-bottom: 0;
+  color: var(--wiki-text);
+  word-wrap: break-word; /* Break long words if needed */
+  transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .description-text {
+  color: var(--wiki-text);
 }
 
 /* Badge styling */

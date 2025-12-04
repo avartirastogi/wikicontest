@@ -14,6 +14,7 @@ import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Contests from '../views/Contests.vue'
+import ContestView from '../views/ContestView.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Profile from '../views/Profile.vue'
 
@@ -39,6 +40,14 @@ const routes = [
     name: 'Contests',
     component: Contests,
     // Require authentication to view contests
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/contest/:name',
+    name: 'ContestView',
+    component: ContestView,
+    // Require authentication to view contest details
+    // name parameter is the slugified contest name (e.g., "price-sanford")
     meta: { requiresAuth: true }
   },
   {

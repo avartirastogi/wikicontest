@@ -2,11 +2,11 @@
   <div class="modal fade" id="submitArticleModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
+        <div class="modal-header">
           <h5 class="modal-title">
             <i class="fas fa-paper-plane me-2"></i>Submit Article
           </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <form @submit.prevent="handleSubmit">
@@ -144,7 +144,7 @@ export default {
 <style scoped>
 /* Submit Article Modal Styling with Wikipedia Colors */
 
-/* Modal header - solid color, no gradient */
+/* Modal header - solid color, no gradient - matches theme */
 .modal-header {
   background-color: var(--wiki-primary);
   color: white;
@@ -156,11 +156,17 @@ export default {
 .modal-title {
   font-weight: 600;
   font-size: 1.5rem;
+  color: white;
 }
 
 .modal-header .btn-close {
   filter: invert(1) brightness(1.2);
   opacity: 0.9;
+  transition: opacity 0.2s ease;
+}
+
+.modal-header .btn-close:hover {
+  opacity: 1;
 }
 
 /* Form styling */
@@ -258,11 +264,26 @@ export default {
   border-color: #6c757d;
 }
 
-/* Modal footer */
+/* Modal body - matches theme */
+.modal-body {
+  padding: 1.5rem;
+  background-color: var(--wiki-modal-bg);
+  color: var(--wiki-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Modal footer - matches theme */
 .modal-footer {
   border-top: 1px solid var(--wiki-border);
   padding: 1rem 1.5rem;
   background-color: var(--wiki-modal-bg);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Modal content - ensures proper background */
+.modal-content {
+  background-color: var(--wiki-modal-bg);
+  border-color: var(--wiki-border);
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 

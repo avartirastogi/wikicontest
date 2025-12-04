@@ -198,6 +198,52 @@ def get_contest_by_id(id):
     
     return jsonify(contest.to_dict()), 200
 
+@contest_bp.route('/name/<name>', methods=['GET'])
+@require_auth
+@handle_errors
+def get_contest_by_name(name):
+    """
+    Get a specific contest by name (slugified)
+    Requires authentication - users must be logged in to view contest details.
+    
+    Args:
+        name: Contest name in slug format (e.g., "price-sanford")
+    
+    Returns:
+        JSON response with contest data
+    """
+    import re
+    
+    # Get all contests and find the one matching the slug
+    # This approach handles various name formats and special characters
+    contests = Contest.query.all()
+    contest = None
+    
+    # Normalize the input slug (lowercase, remove extra hyphens)
+    normalized_slug = re.sub(r'[-\s]+', '-', name.lower().strip())
+    
+    for c in contests:
+        # Create slug from contest name (same logic as frontend slugify)
+        contest_slug = c.name.lower().strip()
+        # Replace spaces with hyphens
+        contest_slug = re.sub(r'\s+', '-', contest_slug)
+        # Remove special characters except hyphens
+        contest_slug = re.sub(r'[^\w\-]+', '', contest_slug)
+        # Replace multiple hyphens with single hyphen
+        contest_slug = re.sub(r'\-\-+', '-', contest_slug)
+        # Remove leading/trailing hyphens
+        contest_slug = contest_slug.strip('-')
+        
+        # Compare normalized slugs
+        if contest_slug == normalized_slug:
+            contest = c
+            break
+    
+    if not contest:
+        return jsonify({'error': 'Contest not found'}), 404
+    
+    return jsonify(contest.to_dict()), 200
+
 @contest_bp.route('/<int:id>/leaderboard', methods=['GET'])
 @require_auth
 @handle_errors
