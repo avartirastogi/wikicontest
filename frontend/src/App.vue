@@ -3,9 +3,11 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container">
+        <!-- Left: WikiContest -->
         <router-link class="navbar-brand" to="/">
-          <i class="fas fa-trophy me-2"></i>WikiContest
+          WikiContest
         </router-link>
+        
         <button 
           class="navbar-toggler" 
           type="button" 
@@ -14,18 +16,25 @@
         >
           <span class="navbar-toggler-icon"></span>
         </button>
+        
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav me-auto">
+          <!-- Middle: Navigation Links (Centered) -->
+          <ul class="navbar-nav mx-auto">
             <li class="nav-item">
+              <!-- Home link - will show active indicator when on exact / route -->
               <router-link class="nav-link" to="/">Home</router-link>
             </li>
             <li class="nav-item" v-if="isAuthenticated">
+              <!-- Contests link - shows active indicator when on /contests page -->
               <router-link class="nav-link" to="/contests">Contests</router-link>
             </li>
             <li class="nav-item" v-if="isAuthenticated">
+              <!-- Dashboard link - shows active indicator when on /dashboard page -->
               <router-link class="nav-link" to="/dashboard">Dashboard</router-link>
             </li>
           </ul>
+          
+          <!-- Right: Theme Toggle and Login/User Menu -->
           <ul class="navbar-nav">
             <!-- Theme Toggle Button - Always visible -->
             <li class="nav-item me-2">
@@ -216,172 +225,235 @@ export default {
   --transition: 0.25s ease;
 }
 
-/* Typography Upgrade */
+/* Typography Upgrade - Using Google Fonts Inter */
 body, button, input {
-  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-family: 'Inter', "Segoe UI", system-ui, sans-serif;
   letter-spacing: 0.2px;
 }
 
 /* =======================
-   NAVBAR (Enhanced UI)
+   NAVBAR - Professional Design
    ======================= */
 .navbar {
-  background: var(--nav-bg-light) !important;
-  border-bottom: 1px solid var(--border-light);
-  backdrop-filter: blur(12px);
-  padding: 0.6rem 0;
-  transition: background var(--transition), border var(--transition);
+  background: var(--wiki-navbar-bg) !important;
+  border-bottom: 1px solid var(--wiki-border);
+  padding: 0.75rem 0;
+  transition: background 0.3s ease, border-color 0.3s ease;
   z-index: 1000 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 [data-theme="dark"] .navbar {
-  background: rgba(20,20,20,0.85) !important;
-  border-bottom: 1px solid var(--border-dark);
+  background: var(--wiki-navbar-bg) !important;
+  border-bottom: 1px solid var(--wiki-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Brand logo */
+/* Brand logo - professional styling */
 .navbar-brand {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--seablue) !important;
-  letter-spacing: -0.5px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: var(--transition);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--wiki-primary) !important;
+  letter-spacing: -0.02em;
+  transition: color 0.2s ease;
+  text-decoration: none !important;
 }
 
 .navbar-brand:hover {
-  color: var(--emerald) !important;
-  transform: translateY(-1px);
+  color: var(--wiki-primary-hover) !important;
+  text-decoration: none !important;
 }
 
-/* Navigation links */
+/* Dark mode - WikiContest in white, no underline */
+[data-theme="dark"] .navbar-brand {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+[data-theme="dark"] .navbar-brand:hover {
+  color: #e0e0e0 !important;
+  text-decoration: none !important;
+}
+
+/* Navigation links - clean professional style */
 .nav-link {
-  font-weight: 600;
-  color: var(--outerspace) !important;
-  padding: 0.6rem 1rem !important;
-  border-radius: 6px;
-  transition: var(--transition);
+  font-weight: 500;
+  color: var(--wiki-text) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  position: relative;
 }
 
 [data-theme="dark"] .nav-link {
-  color: #e6e6e6 !important;
+  color: var(--wiki-text) !important;
 }
 
 .nav-link:hover {
-  background: var(--hover-bg-light);
-  color: var(--seablue) !important;
+  background: var(--wiki-hover-bg);
+  color: var(--wiki-primary) !important;
 }
 
 [data-theme="dark"] .nav-link:hover {
-  background: var(--hover-bg-dark);
+  background: var(--wiki-hover-bg);
+}
+
+/* Active navigation link indicator - shows which page user is on */
+.nav-link.router-link-active,
+.nav-link.router-link-exact-active {
+  color: var(--wiki-primary) !important;
+  font-weight: 600;
+  /* Add bottom border as active indicator */
+  border-bottom: 2px solid var(--wiki-primary);
+  padding-bottom: calc(0.5rem - 2px); /* Adjust padding to account for border */
+}
+
+/* Active link in dark mode */
+[data-theme="dark"] .nav-link.router-link-active,
+[data-theme="dark"] .nav-link.router-link-exact-active {
+  color: var(--wiki-primary) !important;
+  border-bottom-color: var(--wiki-primary);
+}
+
+/* Optional: Add subtle background for active link */
+.nav-link.router-link-active,
+.nav-link.router-link-exact-active {
+  background: var(--wiki-hover-bg);
 }
 
 /* =======================
-   Buttons Upgrade
+   Buttons - Professional Style
    ======================= */
 .btn-primary {
-  background: var(--seablue);
-  border: none;
-  font-weight: 600;
-  transition: var(--transition);
+  background: var(--wiki-primary);
+  border: 1px solid var(--wiki-primary);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-radius: 4px;
 }
 
 .btn-primary:hover {
-  background: #00527a;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 102, 153, 0.35);
+  background: var(--wiki-primary-hover);
+  border-color: var(--wiki-primary-hover);
+  box-shadow: 0 2px 4px rgba(0, 102, 153, 0.2);
 }
 
 .btn-outline-primary {
-  border-color: var(--seablue);
-  color: var(--seablue);
-  font-weight: 600;
+  border-color: var(--wiki-primary);
+  color: var(--wiki-primary);
+  font-weight: 500;
+  border-radius: 4px;
 }
 
 .btn-outline-primary:hover {
-  background: var(--seablue);
+  background: var(--wiki-primary);
+  border-color: var(--wiki-primary);
   color: #fff;
 }
 
-/* Theme Toggle Button */
+/* Theme Toggle Button - professional */
 .theme-toggle {
-  border-radius: 10px;
-  transition: var(--transition);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  border: 1px solid var(--wiki-border);
+  background-color: transparent;
+  color: var(--wiki-text);
 }
 
 .theme-toggle:hover {
-  background: var(--hover-bg-light);
+  background: var(--wiki-hover-bg);
+  border-color: var(--wiki-primary);
+  color: var(--wiki-primary);
 }
 
 [data-theme="dark"] .theme-toggle:hover {
-  background: var(--hover-bg-dark);
+  background: var(--wiki-hover-bg);
 }
 
 /* =======================
-   Dropdown Menu (Modern)
+   Dropdown Menu - Professional
    ======================= */
 .dropdown-menu {
-  border-radius: 12px;
-  padding: 0.4rem 0;
-  border: 1px solid var(--border-light);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-  background: #fff;
+  border-radius: 4px;
+  padding: 0.25rem 0;
+  border: 1px solid var(--wiki-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: var(--wiki-card-bg);
   z-index: 2000 !important;
 }
 
 [data-theme="dark"] .dropdown-menu {
-  background: #1d1d1d;
-  border: 1px solid var(--border-dark);
+  background: var(--wiki-card-bg);
+  border: 1px solid var(--wiki-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .dropdown-item {
-  padding: 0.65rem 1.3rem;
-  font-weight: 500;
-  transition: var(--transition);
+  padding: 0.5rem 1rem;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  color: var(--wiki-text);
 }
 
 .dropdown-item:hover {
-  background: var(--hover-bg-light);
-  color: var(--seablue);
+  background: var(--wiki-hover-bg);
+  color: var(--wiki-primary);
 }
 
 [data-theme="dark"] .dropdown-item:hover {
-  background: var(--hover-bg-dark);
+  background: var(--wiki-hover-bg);
 }
 
-/* Logout item special */
+/* Logout item special - MediaWiki red */
+.dropdown-item.text-danger {
+  color: var(--wiki-danger) !important;
+}
+
 .dropdown-item.text-danger:hover {
-  background: rgba(153,0,0,0.08);
+  background: rgba(153, 0, 0, 0.1);
+  color: #990000 !important;
+}
+
+/* Ensure proper MediaWiki red in dark mode */
+[data-theme="dark"] .dropdown-item.text-danger {
+  color: #990000 !important;
+}
+
+[data-theme="dark"] .dropdown-item.text-danger:hover {
+  background: rgba(153, 0, 0, 0.15);
+  color: #990000 !important;
 }
 
 /* =======================
-   Global Card UI Upgrade
+   Global Card UI - Professional
    ======================= */
 .card {
-  box-shadow: 0 2px 8px rgba(72, 72, 72, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   border: 1px solid var(--wiki-border);
   background-color: var(--wiki-card-bg);
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 4px;
 }
 
 [data-theme="dark"] .card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(72, 72, 72, 0.15);
+  border-color: var(--wiki-primary);
+  box-shadow: 0 2px 8px rgba(0, 102, 153, 0.1);
 }
 
 [data-theme="dark"] .card:hover {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .card-title {
   color: var(--wiki-dark);
   font-weight: 600;
+  font-size: 1.1rem;
 }
 
 /* =======================

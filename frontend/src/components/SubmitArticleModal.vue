@@ -144,13 +144,13 @@ export default {
 <style scoped>
 /* Submit Article Modal Styling with Wikipedia Colors */
 
-/* Modal header */
+/* Modal header - solid color, no gradient */
 .modal-header {
-  background: linear-gradient(135deg, var(--wiki-primary) 0%, var(--wiki-primary-hover) 100%);
+  background-color: var(--wiki-primary);
   color: white;
   border-bottom: none;
   padding: 1.25rem 1.5rem;
-  transition: background 0.3s ease;
+  transition: background-color 0.2s ease;
 }
 
 .modal-title {
@@ -175,8 +175,14 @@ export default {
   color: var(--wiki-primary) !important;
 }
 
+/* Text danger - MediaWiki red */
 .form-label .text-danger {
   color: var(--wiki-danger) !important;
+}
+
+/* Ensure proper MediaWiki red in dark mode */
+[data-theme="dark"] .form-label .text-danger {
+  color: #990000 !important;
 }
 
 .form-control {

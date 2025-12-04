@@ -68,19 +68,20 @@ export default {
   flex-direction: column;
 }
 
-/* Alert styling with enhanced dark mode visibility */
+/* Alert styling - professional */
 /* Add margin-bottom to prevent overlapping alerts */
 .alert {
   min-width: 280px;
   max-width: 380px;
   margin-bottom: 0.75rem;
   padding: 0.75rem 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-width: 1px;
   border-style: solid;
+  border-radius: 4px;
   font-weight: 500;
   font-size: 0.9rem;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 /* Remove margin from last alert to avoid extra space at bottom */
@@ -105,7 +106,7 @@ export default {
 }
 
 [data-theme="dark"] .alert {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   border-width: 1px;
 }
 

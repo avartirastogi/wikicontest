@@ -233,18 +233,18 @@ export default {
   align-items: center;
 }
 
-/* Card styling */
+/* Card styling - professional */
 .card {
   border: 1px solid var(--wiki-border);
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   background-color: var(--wiki-card-bg);
   overflow: hidden;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 [data-theme="dark"] .card {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .card-body {
@@ -294,8 +294,7 @@ export default {
 .btn-primary:hover {
   background-color: var(--wiki-primary-hover);
   border-color: var(--wiki-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 102, 153, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 102, 153, 0.2);
 }
 
 .btn-primary:disabled {
@@ -315,17 +314,16 @@ export default {
   background-color: var(--wiki-primary);
   border-color: var(--wiki-primary);
   color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 102, 153, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 102, 153, 0.2);
 }
 
-/* Alert styling */
+/* Alert styling - professional */
 .alert-info {
   background-color: rgba(0, 102, 153, 0.1);
   border: 1px solid var(--wiki-primary);
   border-left: 4px solid var(--wiki-primary);
   color: var(--wiki-primary);
-  border-radius: 0.5rem;
+  border-radius: 4px;
 }
 
 [data-theme="dark"] .alert-info {

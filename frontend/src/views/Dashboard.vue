@@ -67,7 +67,7 @@
                   </div>
                 </div>
               </div>
-              <p v-else class="text-muted">No submissions yet.</p>
+              <p v-else class="text-muted no-submissions">No submissions yet.</p>
             </div>
           </div>
         </div>
@@ -87,34 +87,70 @@
                   <span class="badge bg-primary">{{ score.contest_score }} points</span>
                 </div>
               </div>
-              <p v-else class="text-muted">No scores yet.</p>
+              <p v-else class="text-muted no-scores">No scores yet.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Created Contests List -->
-      <div v-if="dashboardData.created_contests?.length > 0" class="row mt-4">
+      <!-- Created Contests Table -->
+      <div class="row mt-4">
         <div class="col-12">
           <h4 class="mb-3">Your Contests</h4>
           <div class="card">
-            <div class="card-body">
-              <div class="list-group">
-                <div
-                  v-for="contest in dashboardData.created_contests"
-                  :key="contest.id"
-                  class="list-group-item list-group-item-action"
-                  @click="viewContest(contest.id)"
-                  style="cursor: pointer;"
-                >
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                      <h6 class="mb-1">{{ contest.name }}</h6>
-                      <small class="text-muted">{{ contest.project_name }}</small>
-                    </div>
-                    <span class="badge bg-primary">{{ contest.status }}</span>
-                  </div>
-                </div>
+            <div class="card-body p-0">
+              <!-- Table with contests -->
+              <div v-if="dashboardData.created_contests?.length > 0" class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th scope="col">Contest Name</th>
+                      <th scope="col">Project</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Submissions</th>
+                      <th scope="col">Created Date</th>
+                      <th scope="col">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="contest in dashboardData.created_contests"
+                      :key="contest.id"
+                      @click="viewContest(contest.id)"
+                      class="table-row-clickable"
+                    >
+                      <td>
+                        <strong>{{ contest.name }}</strong>
+                      </td>
+                      <td>{{ contest.project_name || 'N/A' }}</td>
+                      <td>
+                        <span 
+                          class="badge"
+                          :class="`bg-${getStatusBadgeColor(contest.status)}`"
+                        >
+                          {{ contest.status || 'Unknown' }}
+                        </span>
+                      </td>
+                      <td>{{ contest.submission_count || 0 }}</td>
+                      <td>{{ formatDate(contest.created_at) }}</td>
+                      <td>
+                        <button 
+                          class="btn btn-sm btn-outline-primary"
+                          @click.stop="viewContest(contest.id)"
+                        >
+                          <i class="fas fa-eye me-1"></i>View
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <!-- Empty state message -->
+              <div v-else class="text-center py-5 px-3">
+                <p class="text-muted mb-0 no-contests">
+                  <i class="fas fa-info-circle me-2"></i>
+                  No contests created yet.
+                </p>
               </div>
             </div>
           </div>
@@ -188,6 +224,33 @@ export default {
         'pending': 'warning'
       }
       return statusColors[status] || 'secondary'
+    }
+
+    // Get status badge color for contest status
+    const getStatusBadgeColor = (status) => {
+      const statusColors = {
+        'current': 'success',
+        'active': 'success',
+        'upcoming': 'warning',
+        'past': 'secondary',
+        'completed': 'info'
+      }
+      return statusColors[status?.toLowerCase()] || 'primary'
+    }
+
+    // Format date for display
+    const formatDate = (dateString) => {
+      if (!dateString) return 'N/A'
+      try {
+        const date = new Date(dateString)
+        return date.toLocaleDateString('en-US', { 
+          year: 'numeric',
+          month: 'short', 
+          day: 'numeric'
+        })
+      } catch (e) {
+        return dateString
+      }
     }
 
     // View contest details - opens modal
@@ -279,6 +342,8 @@ export default {
       selectedContest,
       submittingToContestId,
       getStatusColor,
+      getStatusBadgeColor,
+      formatDate,
       viewContest,
       handleSubmitArticle,
       handleArticleSubmitted,
@@ -290,170 +355,333 @@ export default {
 
 <style scoped>
 /* ==========================================================
-   🌟 Modern Premium Dashboard UI (ZERO BREAK CHANGES)
+   Professional Dashboard UI - Clean Design
    ========================================================== */
 
-/* Smooth fade entry */
-.container {
-  animation: fadePage 0.55s ease-out;
-}
-@keyframes fadePage {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Page header - professional styling */
+h2.page-header {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--wiki-dark);
+  border-bottom: 2px solid var(--wiki-primary);
+  padding-bottom: 0.5rem;
+  margin-bottom: 2rem;
+  letter-spacing: -0.01em;
 }
 
-/* Header Premium */
-h2.page-header {
-  font-size: 2.1rem;
-  font-weight: 800;
-  color: var(--wiki-dark);
-  border-bottom: 3px solid var(--wiki-primary);
-  padding-bottom: 8px;
-  margin-bottom: 1.8rem;
-  letter-spacing: 0.4px;
-  transition: 0.3s ease;
+/* Ensure page header is visible in dark mode */
+[data-theme="dark"] h2.page-header {
+  color: #ffffff !important; /* White text for page header */
 }
 
 /* Section Titles */
 h4 {
-  color: var(--wiki-primary);
-  font-size: 1.4rem;
-  font-weight: 700;
+  color: var(--wiki-dark);
+  font-size: 1.25rem;
+  font-weight: 600;
   margin-bottom: 1rem;
-  letter-spacing: 0.3px;
+  letter-spacing: -0.01em;
+}
+
+/* Ensure section titles are visible in dark mode */
+[data-theme="dark"] h4 {
+  color: #ffffff !important; /* White text for section titles */
 }
 
 /* ==========================================================
-   🌟 Modern Glass Cards 
+   Professional Cards
    ========================================================== */
 
 .card {
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.25);
-  background: rgba(255, 255, 255, 0.16) !important;
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.08);
-  transition: 0.3s ease;
+  border-radius: 4px;
+  border: 1px solid var(--wiki-border);
+  background-color: var(--wiki-card-bg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 [data-theme="dark"] .card {
-  background: rgba(30, 30, 30, 0.35) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Card Hover */
+/* Card hover - subtle */
 .card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 18px 40px rgba(0,0,0,0.15);
+  border-color: var(--wiki-primary);
+  box-shadow: 0 2px 8px rgba(0, 102, 153, 0.1);
+}
+
+[data-theme="dark"] .card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Card Body */
 .card-body {
-  padding: 1.8rem;
+  padding: 1.5rem;
 }
 
-/* Card Small Title */
+/* Card title */
 .card-title {
   color: var(--wiki-text-muted);
-  font-weight: 600;
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* Big Numbers */
+/* Ensure card titles are visible in dark mode */
+[data-theme="dark"] .card-title {
+  color: #b8b8b8 !important; /* Light gray for card titles in dark mode */
+}
+
+/* Statistics numbers - professional */
 h2.text-primary,
 h2.text-success,
 h2.text-warning {
-  font-size: 2.8rem !important;
-  font-weight: 800;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  font-size: 2.5rem !important;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Ensure text colors are visible in dark mode - maintain original colors */
+[data-theme="dark"] h2.text-primary {
+  color: #006699 !important; /* Original blue color */
+}
+
+[data-theme="dark"] h2.text-success {
+  color: #339966 !important; /* Original green color */
+}
+
+[data-theme="dark"] h2.text-warning {
+  color: #ffc107 !important; /* Original yellow/amber color */
 }
 
 /* ==========================================================
-   🌟 Submissions / Score Items
+   Submissions / Score Items - Clean Design
    ========================================================== */
 
 .d-flex.justify-content-between {
-  background: rgba(255,255,255,0.18);
-  border-radius: 10px;
-  padding: 10px 15px;
-  transition: 0.25s ease;
+  background-color: var(--wiki-light-bg);
+  border: 1px solid var(--wiki-border);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .d-flex.justify-content-between {
+  background-color: rgba(93, 184, 230, 0.05);
+}
+
+/* Ensure text in submission/score items is visible in dark mode */
+[data-theme="dark"] .d-flex.justify-content-between span {
+  color: #ffffff !important; /* White text for submission/score items */
 }
 
 .d-flex.justify-content-between:hover {
-  background: rgba(0, 140, 186, 0.15);
-  transform: translateX(4px);
+  background-color: var(--wiki-hover-bg);
+  border-color: var(--wiki-primary);
 }
 
 /* Contest Name */
 h6 {
-  font-weight: 700;
-  color: var(--wiki-primary);
+  font-weight: 600;
+  color: var(--wiki-dark);
+  margin: 0;
+  font-size: 1rem;
 }
 
-/* Badges */
-.badge {
-  padding: 0.45em 0.9em;
-  border-radius: 10px;
-  font-weight: 500;
-  transition: 0.2s ease;
+/* Ensure contest names are visible in dark mode */
+[data-theme="dark"] h6 {
+  color: #ffffff !important; /* White text for contest names */
 }
-.badge:hover {
-  transform: scale(1.1);
+
+/* Badges - professional */
+.badge {
+  padding: 0.35em 0.7em;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+/* Ensure badge colors are visible in dark mode - maintain original colors */
+[data-theme="dark"] .badge.bg-primary {
+  background-color: #006699 !important; /* Original blue color */
+  color: #ffffff !important; /* White text */
+}
+
+[data-theme="dark"] .badge.bg-success {
+  background-color: #339966 !important; /* Original green color */
+  color: #ffffff !important; /* White text */
+}
+
+[data-theme="dark"] .badge.bg-warning {
+  background-color: #ffc107 !important; /* Original yellow/amber color */
+  color: #000000 !important; /* Dark text on bright background */
+}
+
+[data-theme="dark"] .badge.bg-danger {
+  background-color: #990000 !important; /* Original red color */
+  color: #ffffff !important; /* White text */
 }
 
 /* ==========================================================
-   🌟 List Group (Your Contests)
+   Table - Professional
    ========================================================== */
 
-.list-group-item {
-  background: rgba(255,255,255,0.18);
-  border: none;
-  border-bottom: 1px solid rgba(255,255,255,0.25);
-  padding: 1.2rem 1.4rem;
-  transition: 0.25s ease;
+.table {
+  margin-bottom: 0;
+  color: var(--wiki-dark);
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-.list-group-item:hover {
-  background: rgba(255,255,255,0.28);
-  border-left: 4px solid var(--wiki-primary);
-  padding-left: calc(1.4rem - 4px);
-}
-
-/* Below title */
-.list-group-item small {
+.table thead th {
+  background-color: var(--wiki-light-bg);
+  border-bottom: 2px solid var(--wiki-border);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
   color: var(--wiki-text-muted);
+  padding: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+[data-theme="dark"] .table thead th {
+  background-color: rgba(93, 184, 230, 0.1);
+  border-bottom-color: var(--wiki-border);
+  color: #ffffff !important; /* White text for table headers */
+}
+
+.table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--wiki-border);
+  background-color: var(--wiki-card-bg);
+}
+
+[data-theme="dark"] .table tbody td {
+  background-color: var(--wiki-card-bg);
+  color: #ffffff !important; /* White text for better visibility */
+}
+
+/* Ensure table text is visible in dark mode */
+[data-theme="dark"] .table tbody td strong {
+  color: #ffffff !important; /* White text for contest names */
+}
+
+/* Ensure all table cell text is visible */
+[data-theme="dark"] .table tbody td span {
+  color: #ffffff !important; /* White text for all spans in table cells */
+}
+
+.table tbody tr {
+  transition: all 0.2s ease;
+  background-color: var(--wiki-card-bg);
+}
+
+.table-row-clickable {
+  cursor: pointer;
+}
+
+.table-row-clickable:hover {
+  background-color: var(--wiki-hover-bg);
+}
+
+.table-row-clickable:hover td {
+  background-color: var(--wiki-hover-bg);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Table responsive wrapper */
+.table-responsive {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Table buttons */
+.table .btn-sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 4px;
+}
+
+.table .btn-outline-primary {
+  border-color: var(--wiki-primary);
+  color: var(--wiki-primary);
+  transition: all 0.2s ease;
+}
+
+.table .btn-outline-primary:hover {
+  background-color: var(--wiki-primary);
+  border-color: var(--wiki-primary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 102, 153, 0.2);
+}
+
+/* Ensure button colors are visible in dark mode - maintain original colors */
+[data-theme="dark"] .table .btn-outline-primary {
+  border-color: #006699 !important; /* Original blue color */
+  color: #006699 !important; /* Original blue color */
+}
+
+[data-theme="dark"] .table .btn-outline-primary:hover {
+  background-color: #006699 !important; /* Original blue color */
+  border-color: #006699 !important; /* Original blue color */
+  color: white !important;
 }
 
 /* ==========================================================
-   🌟 Spinner Animation
+   Spinner - Professional
    ========================================================== */
 
 .spinner-border.text-primary {
   width: 3rem;
   height: 3rem;
-  border-width: 0.28em;
-  animation: spinnerPulse 1s infinite ease-in-out;
-}
-@keyframes spinnerPulse {
-  0% { filter: drop-shadow(0 0 0 rgba(0,140,186,0.4)); }
-  50% { filter: drop-shadow(0 0 8px rgba(0,140,186,0.7)); }
-  100% { filter: drop-shadow(0 0 0 rgba(0,140,186,0.4)); }
+  border-width: 0.25em;
+  color: var(--wiki-primary);
 }
 
 /* ==========================================================
-   🌟 Mobile Friendly
+   Responsive Design
    ========================================================== */
 
+/* Ensure text-muted elements are visible in dark mode */
+[data-theme="dark"] .text-muted {
+  color: #b8b8b8 !important; /* Light gray for muted text in dark mode */
+}
+
+[data-theme="dark"] .no-submissions,
+[data-theme="dark"] .no-scores,
+[data-theme="dark"] .no-contests {
+  color: #b8b8b8 !important; /* Light gray for empty state messages */
+}
+
 @media(max-width: 768px){
-  h2.page-header { font-size: 1.7rem; }
-  h4 { font-size: 1.2rem; }
-  .card-body { padding: 1.25rem; }
+  h2.page-header {
+    font-size: 1.75rem;
+  }
+  
+  h4 {
+    font-size: 1.125rem;
+  }
+  
+  .card-body {
+    padding: 1.25rem;
+  }
+  
   h2.text-primary,
   h2.text-success,
   h2.text-warning {
-    font-size: 2.1rem !important;
+    font-size: 2rem !important;
   }
 }
 

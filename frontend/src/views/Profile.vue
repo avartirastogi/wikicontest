@@ -65,71 +65,43 @@ export default {
 
 <style scoped>
 /* ===============================
-   Modern Profile Page UI
+   Professional Profile Page UI
    =============================== */
 
 .profile-container {
   max-width: 700px;
   margin: auto;
   padding: 3rem 1rem;
-  animation: fadeUp 0.8s ease-out;
 }
 
 /* ===============================
-   Page Title
+   Page Title - Professional
    =============================== */
 .page-title {
   text-align: center;
-  font-size: 2.4rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  margin-bottom: 2.8rem;
-  color: var(--seablue);
-  position: relative;
-}
-
-.page-title::after {
-  content: "";
-  width: 80px;
-  height: 4px;
-  background: var(--emerald);
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-radius: 50px;
-  animation: underlineGrow 1s ease-in-out forwards;
-}
-
-/* Underline Animation */
-@keyframes underlineGrow {
-  from { width: 0; opacity: 0; }
-  to { width: 80px; opacity: 1; }
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 2rem;
+  color: var(--wiki-dark);
+  border-bottom: 2px solid var(--wiki-primary);
+  padding-bottom: 0.5rem;
 }
 
 /* ===============================
-   Profile Card – Glassmorphism
+   Profile Card - Professional
    =============================== */
 .profile-card {
-  backdrop-filter: blur(14px);
-  background: rgba(255,255,255,0.13);
-  border-radius: 20px;
-  padding: 2.5rem;
-  border: 1px solid rgba(255,255,255,0.25);
-  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-  animation: floatCard 6s ease-in-out infinite alternate;
-  transition: 0.3s ease;
+  background-color: var(--wiki-card-bg);
+  border-radius: 4px;
+  padding: 2rem;
+  border: 1px solid var(--wiki-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 [data-theme="dark"] .profile-card {
-  background: rgba(0,0,0,0.25);
-  border: 1px solid rgba(255,255,255,0.12);
-}
-
-/* Subtle float animation */
-@keyframes floatCard {
-  0% { transform: translateY(0px); }
-  100% { transform: translateY(-8px); }
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* ===============================
@@ -141,35 +113,36 @@ export default {
 }
 
 .avatar {
-  width: 90px;
-  height: 90px;
+  width: 80px;
+  height: 80px;
   margin: auto;
   border-radius: 50%;
-  background: var(--seablue);
+  background: var(--wiki-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 2.2rem;
+  font-size: 2rem;
   margin-bottom: 1rem;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-  transition: 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 102, 153, 0.2);
+  transition: background-color 0.2s ease;
 }
 
 .avatar:hover {
-  transform: scale(1.1);
-  background: var(--emerald);
+  background: var(--wiki-primary-hover);
 }
 
 .profile-header h3 {
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--wiki-dark);
+  margin-bottom: 0.25rem;
 }
 
 .tagline {
-  font-size: 1rem;
-  opacity: 0.75;
-  margin-top: 5px;
+  font-size: 0.95rem;
+  color: var(--wiki-text-muted);
+  margin-top: 0.25rem;
 }
 
 /* ===============================
@@ -183,76 +156,72 @@ export default {
   display: flex;
   align-items: center;
   padding: 1rem;
-  border-radius: 14px;
-  margin-bottom: 1rem;
-  background: rgba(255,255,255,0.25);
-  border: 1px solid rgba(0,0,0,0.07);
-  transition: 0.3s ease;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+  background-color: var(--wiki-light-bg);
+  border: 1px solid var(--wiki-border);
+  transition: all 0.2s ease;
 }
 
 [data-theme="dark"] .info-item {
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.15);
+  background-color: rgba(93, 184, 230, 0.05);
+  border-color: var(--wiki-border);
 }
 
 .info-item i {
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   margin-right: 1rem;
-  color: var(--seablue);
-  transition: 0.3s ease;
+  color: var(--wiki-primary);
+  transition: color 0.2s ease;
 }
 
 .info-item:hover {
-  transform: translateX(6px);
-  background: rgba(0,102,153,0.15);
-  border-color: var(--seablue);
+  background-color: var(--wiki-hover-bg);
+  border-color: var(--wiki-primary);
 }
 
 .info-item:hover i {
-  color: var(--emerald);
-  transform: scale(1.2);
+  color: var(--wiki-primary-hover);
 }
 
 .info-item strong {
-  color: var(--seablue);
-  font-size: 1.1rem;
+  color: var(--wiki-dark);
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 /* ===============================
-   Alert Message
+   Alert Message - Professional
    =============================== */
 .alert-message {
-  background: rgba(153, 0, 0, 0.15);
-  color: var(--crimson);
-  padding: 1.5rem;
-  border-radius: 12px;
-  border-left: 5px solid var(--crimson);
+  background-color: rgba(153, 0, 0, 0.1);
+  color: var(--wiki-danger);
+  padding: 1.25rem;
+  border-radius: 4px;
+  border-left: 4px solid var(--wiki-danger);
+  border: 1px solid var(--wiki-danger);
   text-align: center;
-  font-size: 1.1rem;
-  font-weight: 600;
-  animation: fadeUp 0.7s ease-out;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .alert-message {
+  background-color: rgba(230, 128, 128, 0.15);
 }
 
 .alert-message i {
   margin-right: 8px;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 /* ===============================
-   Entrance Animation
+   Transitions - Subtle
    =============================== */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Smooth fade + scale */
 .fade-scale-enter-active {
-  transition: .4s ease;
+  transition: opacity 0.3s ease;
 }
 .fade-scale-enter-from {
   opacity: 0;
-  transform: scale(0.95);
 }
 
 </style>
