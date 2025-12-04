@@ -23,11 +23,11 @@
               <p><strong>Submissions:</strong> {{ contest.submission_count }}</p>
             </div>
           </div>
-          <div v-if="contest.description" class="mt-3">
+          <div v-if="contest.description" class="mt-3 description-section">
             <h6>Description</h6>
-            <p>{{ contest.description }}</p>
+            <p class="description-text">{{ contest.description }}</p>
           </div>
-          <div v-if="contest.jury_members && contest.jury_members.length > 0" class="mt-3">
+          <div v-if="contest.jury_members && contest.jury_members.length > 0" class="mt-3 jury-section">
             <h6>Jury Members</h6>
             <p>{{ contest.jury_members.join(', ') }}</p>
           </div>
@@ -642,13 +642,13 @@ export default {
 <style scoped>
 /* Contest Modal Styling with Wikipedia Colors */
 
-/* Modal header with Wikipedia blue */
+/* Modal header - solid color, no gradient */
 .modal-header {
-  background: linear-gradient(135deg, var(--wiki-primary) 0%, var(--wiki-primary-hover) 100%);
+  background-color: var(--wiki-primary);
   color: white;
   border-bottom: none;
   padding: 1.25rem 1.5rem;
-  transition: background 0.3s ease;
+  transition: background-color 0.2s ease;
 }
 
 .modal-title {
@@ -681,6 +681,7 @@ export default {
 }
 
 [data-theme="dark"] .modal-body h6 {
+  color: #ffffff !important; /* White text for better visibility in dark mode */
   border-bottom-color: rgba(93, 184, 230, 0.3);
 }
 
@@ -694,6 +695,41 @@ export default {
   color: var(--wiki-dark);
   font-weight: 600;
   transition: color 0.3s ease;
+}
+
+/* Jury section - white text for visibility */
+.jury-section p {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .jury-section p {
+  color: #ffffff !important;
+}
+
+.jury-section h6 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .jury-section h6 {
+  color: #ffffff !important;
+}
+
+/* Description section - preserve formatting and line breaks */
+.description-section {
+  margin-top: 1.5rem;
+}
+
+.description-text {
+  white-space: pre-line; /* Preserves line breaks and wraps text */
+  line-height: 1.6;
+  margin-bottom: 0;
+  color: var(--wiki-text);
+  word-wrap: break-word; /* Break long words if needed */
+  transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .description-text {
+  color: var(--wiki-text);
 }
 
 /* Badge styling */
@@ -712,7 +748,13 @@ export default {
 }
 
 .badge.bg-warning {
-  background-color: var(--wiki-danger) !important;
+  background-color: var(--wiki-warning) !important;
+  color: #000000 !important; /* Dark text on bright warning background for better readability */
+}
+
+[data-theme="dark"] .badge.bg-warning {
+  background-color: var(--wiki-warning) !important;
+  color: #000000 !important; /* Dark text on bright orange background for maximum contrast */
 }
 
 .badge.bg-danger {
@@ -796,14 +838,28 @@ export default {
 .btn-danger {
   background-color: var(--wiki-danger);
   border-color: var(--wiki-danger);
+  color: white;
   transition: all 0.2s ease;
 }
 
 .btn-danger:hover {
   background-color: var(--wiki-danger-hover);
   border-color: var(--wiki-danger-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(153, 0, 0, 0.3);
+  color: white;
+  box-shadow: 0 2px 4px rgba(153, 0, 0, 0.2);
+}
+
+/* Ensure proper MediaWiki red in dark mode */
+[data-theme="dark"] .btn-danger {
+  background-color: #990000;
+  border-color: #990000;
+  color: white;
+}
+
+[data-theme="dark"] .btn-danger:hover {
+  background-color: #7a0000;
+  border-color: #7a0000;
+  color: white;
 }
 
 .btn-secondary {

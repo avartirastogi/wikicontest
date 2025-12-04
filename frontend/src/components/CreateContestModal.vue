@@ -72,8 +72,8 @@
               </label>
               
               <!-- Selected Jury Members Display -->
-              <div class="mb-2 p-2 border rounded bg-light" style="min-height: 40px;">
-                <small v-if="selectedJury.length === 0" class="text-muted">No jury members selected yet</small>
+              <div class="mb-2 p-2 border rounded bg-light jury-selection-box" style="min-height: 40px;">
+                <small v-if="selectedJury.length === 0" class="jury-placeholder-text">No jury members selected yet</small>
                 <span 
                   v-for="username in selectedJury" 
                   :key="username"
@@ -105,7 +105,7 @@
                 <div 
                   v-if="jurySearchResults.length > 0 && jurySearchQuery.length >= 2"
                   class="jury-autocomplete position-absolute w-100 border rounded-bottom"
-                  style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+                  style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
                 >
                   <div
                     v-for="user in jurySearchResults"
@@ -353,13 +353,13 @@ export default {
 <style scoped>
 /* Create Contest Modal Styling with Wikipedia Colors */
 
-/* Modal header */
+/* Modal header - solid color, no gradient */
 .modal-header {
-  background: linear-gradient(135deg, var(--wiki-primary) 0%, var(--wiki-primary-hover) 100%);
+  background-color: var(--wiki-primary);
   color: white;
   border-bottom: none;
   padding: 1.25rem 1.5rem;
-  transition: background 0.3s ease;
+  transition: background-color 0.2s ease;
 }
 
 .modal-title {
@@ -433,6 +433,18 @@ textarea.form-control {
   opacity: 0.6;
 }
 
+/* Jury input placeholder - more visible */
+#juryInput::placeholder {
+  color: #666666 !important;
+  opacity: 1 !important;
+  font-weight: 500;
+}
+
+[data-theme="dark"] #juryInput::placeholder {
+  color: #ffffff !important;
+  opacity: 0.9 !important;
+}
+
 /* Date input styling */
 input[type="date"].form-control {
   color-scheme: light;
@@ -467,18 +479,28 @@ input[type="date"].form-control {
   color: #f0f0f0 !important;
 }
 
-/* Jury members display */
+/* Jury members display - professional */
 .bg-light {
   background-color: var(--wiki-hover-bg) !important;
   border-color: var(--wiki-primary) !important;
   border: 1px solid var(--wiki-border);
-  border-radius: 0.5rem;
+  border-radius: 4px;
   padding: 1rem;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 [data-theme="dark"] .bg-light {
   background-color: rgba(93, 184, 230, 0.1) !important;
+}
+
+/* Jury selection box text - more visible */
+.jury-selection-box .jury-placeholder-text {
+  color: #333333 !important;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .jury-selection-box .jury-placeholder-text {
+  color: #ffffff !important;
 }
 
 .badge.bg-primary {
@@ -490,21 +512,20 @@ input[type="date"].form-control {
 
 .badge.bg-primary:hover {
   background-color: var(--wiki-primary-hover) !important;
-  transform: scale(1.05);
 }
 
-/* Autocomplete dropdown */
+/* Autocomplete dropdown - professional */
 .jury-autocomplete {
   border: 1px solid var(--wiki-border);
   border-top: none;
-  border-radius: 0 0 0.5rem 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   background-color: var(--wiki-card-bg);
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 [data-theme="dark"] .jury-autocomplete {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .jury-autocomplete .p-2 {
@@ -531,8 +552,7 @@ input[type="date"].form-control {
 .btn-primary:hover {
   background-color: var(--wiki-primary-hover);
   border-color: var(--wiki-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 102, 153, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 102, 153, 0.2);
 }
 
 .btn-primary:disabled {

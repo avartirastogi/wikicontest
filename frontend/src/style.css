@@ -17,6 +17,8 @@
   --wiki-success-hover: #2d8555;
   --wiki-danger: #990000;
   --wiki-danger-hover: #7a0000;
+  --wiki-warning: #ffc107; /* Amber/yellow for warning badges in light mode */
+  --wiki-warning-hover: #e0a800;
   --wiki-dark: #484848;
   --wiki-light-bg: #f8f9fa;
   --wiki-border: #dee2e6;
@@ -31,14 +33,17 @@
   --wiki-hover-bg: rgba(0, 102, 153, 0.05);
 }
 
-/* Dark Mode Variables - Enhanced visibility */
+/* Dark Mode Variables - Professional colors matching MediaWiki standards */
+/* Primary color stays the same MediaWiki blue in both themes */
 [data-theme="dark"] {
-  --wiki-primary: #5db8e6;
-  --wiki-primary-hover: #4da6cc;
+  --wiki-primary: #006699;
+  --wiki-primary-hover: #005580;
   --wiki-success: #7dd3a0;
   --wiki-success-hover: #66cc99;
-  --wiki-danger: #e68080;
-  --wiki-danger-hover: #cc6666;
+  --wiki-danger: #990000;
+  --wiki-danger-hover: #7a0000;
+  --wiki-warning: #ffa500; /* Bright orange for better visibility in dark mode */
+  --wiki-warning-hover: #ff8c00;
   --wiki-dark: #f0f0f0;
   --wiki-light-bg: #121212;
   --wiki-border: #555555;
@@ -50,7 +55,7 @@
   --wiki-modal-bg: #2d2d2d;
   --wiki-input-bg: #3a3a3a;
   --wiki-input-border: #555555;
-  --wiki-hover-bg: rgba(93, 184, 230, 0.2);
+  --wiki-hover-bg: rgba(0, 102, 153, 0.2);
 }
 
 /* Reset and base styles */
@@ -58,14 +63,18 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.6;
   color: var(--wiki-text);
   background-color: var(--wiki-light-bg);
   transition: background-color 0.3s ease, color 0.3s ease;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Utility classes */
@@ -154,6 +163,32 @@ input[type="time"].form-control {
   box-shadow: 0 0 0 0.2rem rgba(0, 102, 153, 0.25);
 }
 
+/* Primary button - always uses MediaWiki blue in both themes */
+.btn-primary {
+  background-color: var(--wiki-primary);
+  border-color: var(--wiki-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--wiki-primary-hover);
+  border-color: var(--wiki-primary-hover);
+  color: white;
+}
+
+/* Ensure MediaWiki blue in dark mode */
+[data-theme="dark"] .btn-primary {
+  background-color: #006699 !important;
+  border-color: #006699 !important;
+  color: white !important;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+  background-color: #005580 !important;
+  border-color: #005580 !important;
+  color: white !important;
+}
+
 .btn-outline-primary {
   border-color: var(--wiki-primary);
   color: var(--wiki-primary);
@@ -176,31 +211,60 @@ input[type="time"].form-control {
   color: white;
 }
 
-/* Card styles - ensure proper card format */
+/* Danger button - MediaWiki red */
+.btn-danger {
+  background-color: var(--wiki-danger);
+  border-color: var(--wiki-danger);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background-color: var(--wiki-danger-hover);
+  border-color: var(--wiki-danger-hover);
+  color: white;
+  box-shadow: 0 2px 4px rgba(153, 0, 0, 0.2);
+}
+
+/* Ensure proper MediaWiki red in dark mode - no lightening */
+[data-theme="dark"] .btn-danger {
+  background-color: #990000 !important;
+  border-color: #990000 !important;
+  color: white !important;
+}
+
+[data-theme="dark"] .btn-danger:hover {
+  background-color: #7a0000 !important;
+  border-color: #7a0000 !important;
+  color: white !important;
+}
+
+/* Card styles - professional clean design */
 .card {
-  border-radius: 0.75rem;
+  border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--wiki-border);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
   background-color: var(--wiki-card-bg);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 [data-theme="dark"] .card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   border-color: var(--wiki-border);
   border-width: 1px;
 }
 
 .card:hover {
-  box-shadow: 0 4px 12px rgba(72, 72, 72, 0.15);
-  transform: translateY(-2px);
+  border-color: var(--wiki-primary);
+  box-shadow: 0 2px 8px rgba(0, 102, 153, 0.1);
 }
 
 [data-theme="dark"] .card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-color: var(--wiki-primary);
 }
 
 .card-body {
@@ -278,7 +342,7 @@ input[type="time"].form-control {
 [data-theme="dark"] .alert-info {
   background-color: rgba(93, 184, 230, 0.25);
   border-color: var(--wiki-primary);
-  color: var(--wiki-primary);
+  color: #ffffff; /* White text for better visibility in dark mode */
   border-left-width: 4px;
 }
 
@@ -406,6 +470,36 @@ input[type="time"].form-control {
 .badge {
   font-weight: 500;
   padding: 0.35em 0.65em;
+}
+
+/* Primary badge - blue background with white text */
+.badge.bg-primary {
+  background-color: var(--wiki-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Success badge - green background with white text */
+.badge.bg-success {
+  background-color: var(--wiki-success) !important;
+  color: #ffffff !important;
+}
+
+/* Warning badge - use brighter color for better visibility */
+.badge.bg-warning {
+  background-color: var(--wiki-warning) !important;
+  color: #000000 !important; /* Dark text on bright warning background */
+}
+
+/* Danger badge - red background with white text */
+.badge.bg-danger {
+  background-color: var(--wiki-danger) !important;
+  color: #ffffff !important;
+}
+
+/* Dark mode badge adjustments - ensure all badges are visible */
+[data-theme="dark"] .badge.bg-warning {
+  background-color: var(--wiki-warning) !important;
+  color: #000000 !important; /* Dark text on bright orange background for maximum contrast */
 }
 
 /* Animation for page transitions */

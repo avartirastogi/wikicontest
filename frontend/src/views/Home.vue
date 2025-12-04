@@ -1,22 +1,20 @@
 <template>
   <div>
 
-    <!-- HERO SECTION -->
+    <!-- HERO SECTION - Professional Clean Design -->
     <section class="hero">
-      <div class="hero-inner">
-        <h1 class="hero-title">WikiContest</h1>
-        <p class="hero-subtitle">Collaborate. Compete. Create Knowledge.</p>
+      <div class="container">
+        <div class="hero-content">
+          <h1 class="hero-title">WikiContest</h1>
+          <p class="hero-subtitle">Collaborate. Compete. Create Knowledge.</p>
+          <p class="hero-description">A professional platform for managing Wikipedia article contests and fostering collaborative knowledge creation.</p>
 
-        <div class="hero-buttons">
-          <router-link class="btn-primary" to="/login">Browse Contests</router-link>
-          <router-link class="btn-secondary" to="/register">Get Started</router-link>
+          <div class="hero-buttons">
+            <router-link class="btn btn-primary btn-lg" to="/contests">Browse Contests</router-link>
+            <router-link class="btn btn-outline-primary btn-lg" to="/register">Get Started</router-link>
+          </div>
         </div>
       </div>
-
-      <!-- Animated Shapes -->
-      <div class="shape shape1"></div>
-      <div class="shape shape2"></div>
-      <div class="shape shape3"></div>
     </section>
 
     <!-- FEATURES -->
@@ -62,264 +60,226 @@ export default {
 
 <style scoped>
 
-/* ======= COLOR VARIABLES ======= */
-:root {
-  --crimson: #990000;
-  --emerald: #2ecc71;
-  --seablue: #2980b9;
-  --outerspace: #303030;
-  --white: #ffffff;
-}
+/* ==========================================================
+   Professional Hero Section - Clean & Minimal
+   ========================================================== */
 
-/* ===== HERO SECTION ===== */
+/* Hero section - professional solid background */
 .hero {
-  position: relative;
-  padding: 60px 0px 60px;
+  background-color: var(--wiki-primary);
+  color: #ffffff;
+  padding: 5rem 0;
+  margin-top: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .hero {
+  background-color: #1a2332;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Hero content container */
+.hero-content {
   text-align: center;
-  overflow: hidden;
-  color: #fff;
-  margin-top: 10px;
-
-  /* Smooth modern gradient */
-  background: linear-gradient(135deg, #0e4d92, #1e9c6c, #0e4d92);
-  background-size: 280% 280%;
-  animation: gradientSlide 16s ease infinite;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
-/* Glass center layer */
-.hero-inner {
-  position: relative;
-  z-index: 50;
-  padding: 2rem 2.5rem;
-
-  backdrop-filter: blur(12px);
-  background: rgba(255,255,255,0.05);
-
-  animation: fadeUp 1.2s ease forwards;
-  opacity: 0;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(25px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes gradientSlide {
-  0% { background-position: 0% 40%; }
-  50% { background-position: 100% 60%; }
-  100% { background-position: 0% 40%; }
-}
-
-/* HERO TEXT */
+/* Hero title - professional typography */
 .hero-title {
-  font-size: 3.4rem;
-  font-weight: 800;
-  letter-spacing: .5px;
-  text-shadow: 0 8px 25px rgba(0,0,0,0.35);
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  letter-spacing: -0.02em;
 }
 
+/* Hero subtitle */
 .hero-subtitle {
-  font-size: 1.3rem;
-  margin-top: 12px;
-  opacity: 0.9;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  color: rgba(255, 255, 255, 0.95);
 }
 
-/* ===== Buttons - micro interaction ===== */
-.hero-buttons {
-  margin-top: 2.4rem;
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 13px 36px;
+/* Hero description */
+.hero-description {
   font-size: 1.1rem;
-  border-radius: 50px;
-  font-weight: 600;
-  display: inline-block;
-  transition: 0.3s ease;
-  transform-origin: center;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* 3D soft hover */
-.btn-primary:hover,
-.btn-secondary:hover {
-  transform: translateY(-4px) scale(1.03);
-  filter: drop-shadow(0 6px 15px rgba(0,0,0,0.25));
-}
-
-.btn-primary {
-  background: #2ecc71;
-  color: white;
-}
-
-.btn-secondary {
-  border: 2px solid white;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: white;
-  color: #0e4d92;
-}
-
-/* ===== Floating Parallax Shapes ===== */
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.35;
-  animation: floaty infinite ease-in-out alternate;
-}
-
-@keyframes floaty {
-  0% { transform: translateY(0) translateX(0) scale(1); }
-  100% { transform: translateY(-60px) translateX(60px) scale(1.2); }
-}
-
-/* Modern blob positions */
-.shape1 {
-  width: 330px; height: 330px;
-  top: -100px; left: -60px;
-  background: #2ecc71;
-  animation-duration: 13s;
-}
-
-.shape2 {
-  width: 420px; height: 420px;
-  bottom: -120px; right: -40px;
-  background: #0e4d92;
-  animation-duration: 18s;
-}
-
-.shape3 {
-  width: 250px; height: 250px;
-  top: 40%; left: -30px;
-  background: #8e44ad;
-  animation-duration: 16s;
-}
-
-/* BONUS: Ambient particles */
-.hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
-  background-size: 28px 28px;
-  opacity: 0.12;
-  animation: particleMove 20s linear infinite;
-}
-
-@keyframes particleMove {
-  0% { transform: translateY(0px); }
-  100% { transform: translateY(-160px); }
-}
-
-/* ===== FEATURES SECTION ===== */
-/* FEATURE CARDS — Enhanced, Equal Height, Equal Width */
-.features {
+/* Hero buttons container */
+.hero-buttons {
   display: flex;
-  flex-wrap: wrap;
+  gap: 1rem;
   justify-content: center;
-  gap: 2rem;
+  flex-wrap: wrap;
 }
 
-/* Perfect same-size cards */
+/* Professional button styling */
+.hero-buttons .btn {
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.hero-buttons .btn-primary {
+  background-color: #ffffff;
+  color: var(--wiki-primary);
+  border: 1px solid #ffffff;
+}
+
+.hero-buttons .btn-primary:hover {
+  background-color: rgba(255, 255, 255, 0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hero-buttons .btn-outline-primary {
+  background-color: transparent;
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.hero-buttons .btn-outline-primary:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+/* ==========================================================
+   Features Section - Professional Card Design
+   ========================================================== */
+
+.features {
+  background-color: var(--wiki-light-bg);
+  padding: 4rem 0;
+}
+
+[data-theme="dark"] .features {
+  background-color: var(--wiki-bg);
+}
+
+/* Professional feature cards */
 .feature-card {
-  background: #fff;
-  border-radius: 20px;
+  background-color: var(--wiki-card-bg);
+  border: 1px solid var(--wiki-border);
+  border-radius: 6px;
   padding: 2rem;
   text-align: center;
-  width: 100%;
   height: 100%;
-
-  /* Ensures equal height for all cards */
-  min-height: 200px;
-
-  /* Flex layout to auto center content */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-
-  border-top: 6px solid var(--seablue);
-
-  box-shadow: 0 5px 18px rgba(0,0,0,0.1);
-  transition: all .35s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-/* Hover effect */
+[data-theme="dark"] .feature-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Subtle hover effect */
 .feature-card:hover {
-  transform: translateY(-12px) scale(1.03);
-  box-shadow: 0 18px 40px rgba(0,0,0,0.18);
-  border-top-color: var(--emerald);
+  border-color: var(--wiki-primary);
+  box-shadow: 0 4px 12px rgba(0, 102, 153, 0.12);
+  transform: translateY(-2px);
 }
 
-/* Icons */
+[data-theme="dark"] .feature-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Professional icon styling */
 .icon {
-  font-size: 3.2rem;
-  margin-bottom: 15px;
-  color: var(--seablue);
-  transition: 0.3s ease;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--wiki-primary);
+  transition: color 0.2s ease;
 }
 
-/* Icon hover animation */
 .feature-card:hover .icon {
-  color: var(--emerald);
-  transform: scale(1.18);
+  color: var(--wiki-primary-hover);
 }
 
-/* Title inside card */
+/* Card title */
 .feature-card h3 {
-  font-size: 1.45rem;
-  margin-bottom: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  color: var(--outerspace);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--wiki-dark);
+  letter-spacing: -0.01em;
 }
 
-/* Description text */
+/* Card description */
 .feature-card p {
-  font-size: 1.05rem;
-  opacity: 0.9;
-  line-height: 1.5rem;
-  color: #505050;
-  padding: 0 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--wiki-text-muted);
+  margin: 0;
 }
 
-/* RESPONSIVE TUNING */
-@media (max-width: 992px) {
-  .feature-card {
-    min-height: 280px;
-  }
-}
+/* ==========================================================
+   Responsive Design
+   ========================================================== */
 
 @media (max-width: 768px) {
-  .feature-card {
-    min-height: 260px;
-    padding: 1.7rem;
+  .hero {
+    padding: 3.5rem 0;
   }
-}
 
-@media (max-width: 576px) {
+  .hero-title {
+    font-size: 2.25rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.25rem;
+  }
+
+  .hero-description {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-buttons .btn {
+    width: 100%;
+  }
+
   .features {
-    gap: 1.5rem;
+    padding: 3rem 0;
   }
 
   .feature-card {
-    min-height: 240px;
     padding: 1.5rem;
   }
 }
 
+@media (max-width: 576px) {
+  .hero-title {
+    font-size: 1.875rem;
+  }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .hero-title { font-size: 2.5rem; }
-  .hero-inner { padding: 1.4rem; }
-  .hero-buttons { flex-direction: column; }
+  .hero-subtitle {
+    font-size: 1.125rem;
+  }
+
+  .feature-card {
+    padding: 1.25rem;
+  }
+
+  .icon {
+    font-size: 2rem;
+  }
 }
 
 </style>
