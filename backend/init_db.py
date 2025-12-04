@@ -24,9 +24,9 @@ def create_tables():
     with app.app_context():
         try:
             db.create_all()
-            print("✅ Database tables created successfully!")
+            print("[OK] Database tables created successfully!")
         except Exception as e:
-            print(f"❌ Error creating tables: {e}")
+            print(f"[ERROR] Error creating tables: {e}")
             return False
     
     return True
@@ -44,11 +44,11 @@ def reset_database():
     with app.app_context():
         try:
             db.drop_all()
-            print("✅ Dropped all tables")
+            print("[OK] Dropped all tables")
             db.create_all()
-            print("✅ Recreated all tables")
+            print("[OK] Recreated all tables")
         except Exception as e:
-            print(f"❌ Error resetting database: {e}")
+            print(f"[ERROR] Error resetting database: {e}")
             return False
     
     return True
@@ -66,15 +66,15 @@ def main():
         
         if command == 'reset':
             if reset_database():
-                print("✅ Database reset completed!")
+                print("[OK] Database reset completed!")
             else:
-                print("❌ Database reset failed!")
+                print("[ERROR] Database reset failed!")
                 sys.exit(1)
         elif command == 'seed':
             if create_tables() and seed_sample_data():
-                print("✅ Database initialization with sample data completed!")
+                print("[OK] Database initialization with sample data completed!")
             else:
-                print("❌ Database initialization failed!")
+                print("[ERROR] Database initialization failed!")
                 sys.exit(1)
         else:
             print(f"Unknown command: {command}")
@@ -83,9 +83,9 @@ def main():
     else:
         # Default: just create tables
         if create_tables():
-            print("✅ Database initialization completed!")
+            print("[OK] Database initialization completed!")
         else:
-            print("❌ Database initialization failed!")
+            print("[ERROR] Database initialization failed!")
             sys.exit(1)
 
 if __name__ == '__main__':

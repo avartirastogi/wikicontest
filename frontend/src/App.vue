@@ -190,141 +190,175 @@ export default {
  * Outer Space: #484848 (text/dark)
  */
 
+/* ================================
+   WIKIMEDIA UI UPGRADE – PREMIUM
+   ================================ */
+
+/* --- Brand Colors --- */
 :root {
-  --bs-primary: #006699;
-  --bs-primary-rgb: 0, 102, 153;
+  --crimson: #990000;
+  --emerald: #339966;
+  --seablue: #006699;
+  --outerspace: #484848;
+
+  /* UI Shades */
+  --nav-bg-light: #ffffff;
+  --nav-bg-dark: #1b1b1b;
+  --hover-bg-light: rgba(0,0,0,0.05);
+  --hover-bg-dark: rgba(255,255,255,0.1);
+
+  --text-dark: #2b2b2b;
+  --text-light: #f1f1f1;
+
+  --border-light: rgba(0,0,0,0.12);
+  --border-dark: rgba(255,255,255,0.15);
+
+  --transition: 0.25s ease;
 }
 
-/* Navbar styling with Wikipedia colors - subtle border */
+/* Typography Upgrade */
+body, button, input {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0.2px;
+}
+
+/* =======================
+   NAVBAR (Enhanced UI)
+   ======================= */
 .navbar {
-  background-color: var(--wiki-navbar-bg) !important;
-  border-bottom: 1px solid var(--wiki-border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  background: var(--nav-bg-light) !important;
+  border-bottom: 1px solid var(--border-light);
+  backdrop-filter: blur(12px);
+  padding: 0.6rem 0;
+  transition: background var(--transition), border var(--transition);
+  z-index: 1000 !important;
 }
 
 [data-theme="dark"] .navbar {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
+  background: rgba(20,20,20,0.85) !important;
+  border-bottom: 1px solid var(--border-dark);
 }
 
+/* Brand logo */
 .navbar-brand {
-  font-weight: bold;
-  color: var(--wiki-dark) !important;
-  font-size: 1.5rem;
-  transition: color 0.2s ease;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--seablue) !important;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition);
 }
 
 .navbar-brand:hover {
-  color: var(--wiki-primary) !important;
+  color: var(--emerald) !important;
+  transform: translateY(-1px);
 }
 
-.navbar-brand i {
-  color: #006699;
-}
-
+/* Navigation links */
 .nav-link {
-  color: var(--wiki-dark) !important;
-  font-weight: 500;
-  transition: color 0.2s ease, background-color 0.2s ease;
-  padding: 0.5rem 1rem !important;
+  font-weight: 600;
+  color: var(--outerspace) !important;
+  padding: 0.6rem 1rem !important;
+  border-radius: 6px;
+  transition: var(--transition);
+}
+
+[data-theme="dark"] .nav-link {
+  color: #e6e6e6 !important;
 }
 
 .nav-link:hover {
-  color: var(--wiki-primary) !important;
-  background-color: var(--wiki-hover-bg);
-  border-radius: 0.25rem;
+  background: var(--hover-bg-light);
+  color: var(--seablue) !important;
 }
 
-/* Theme toggle button */
-.theme-toggle {
-  min-width: 40px;
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+[data-theme="dark"] .nav-link:hover {
+  background: var(--hover-bg-dark);
 }
 
-.theme-toggle i {
-  font-size: 1.1rem;
-}
-
-/* Primary button - Wikipedia blue */
+/* =======================
+   Buttons Upgrade
+   ======================= */
 .btn-primary {
-  background: var(--wiki-primary);
+  background: var(--seablue);
   border: none;
-  color: white;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  transition: var(--transition);
 }
 
 .btn-primary:hover {
-  background: var(--wiki-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 102, 153, 0.3);
+  background: #00527a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 102, 153, 0.35);
 }
 
-.btn-primary:active {
-  transform: translateY(0);
+.btn-outline-primary {
+  border-color: var(--seablue);
+  color: var(--seablue);
+  font-weight: 600;
 }
 
-/* CTA button - Wikipedia green */
-.btn-cta {
-  background: #339966;
-  border: none;
-  color: white;
+.btn-outline-primary:hover {
+  background: var(--seablue);
+  color: #fff;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  border-radius: 10px;
+  transition: var(--transition);
+}
+
+.theme-toggle:hover {
+  background: var(--hover-bg-light);
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background: var(--hover-bg-dark);
+}
+
+/* =======================
+   Dropdown Menu (Modern)
+   ======================= */
+.dropdown-menu {
+  border-radius: 12px;
+  padding: 0.4rem 0;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  background: #fff;
+  z-index: 2000 !important;
+}
+
+[data-theme="dark"] .dropdown-menu {
+  background: #1d1d1d;
+  border: 1px solid var(--border-dark);
+}
+
+.dropdown-item {
+  padding: 0.65rem 1.3rem;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 }
 
-.btn-cta:hover {
-  background: #2d8555;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(51, 153, 102, 0.3);
-  color: white;
+.dropdown-item:hover {
+  background: var(--hover-bg-light);
+  color: var(--seablue);
 }
 
-/* Text colors */
-.text-primary {
-  color: var(--wiki-primary) !important;
+[data-theme="dark"] .dropdown-item:hover {
+  background: var(--hover-bg-dark);
 }
 
-.text-success {
-  color: var(--wiki-success) !important;
+/* Logout item special */
+.dropdown-item.text-danger:hover {
+  background: rgba(153,0,0,0.08);
 }
 
-.text-warning {
-  color: var(--wiki-danger) !important;
-}
-
-/* Badge colors */
-.badge.bg-primary {
-  background-color: var(--wiki-primary) !important;
-  color: white;
-}
-
-.badge.bg-success {
-  background-color: var(--wiki-success) !important;
-  color: white;
-}
-
-.badge.bg-warning {
-  background-color: var(--wiki-danger) !important;
-  color: white;
-}
-
-.badge.bg-danger {
-  background-color: var(--wiki-danger) !important;
-  color: white;
-}
-
-.badge.bg-info {
-  background-color: var(--wiki-primary) !important;
-  color: white;
-}
-
-/* Card styling */
+/* =======================
+   Global Card UI Upgrade
+   ======================= */
 .card {
   box-shadow: 0 2px 8px rgba(72, 72, 72, 0.1);
   border: 1px solid var(--wiki-border);
@@ -350,160 +384,16 @@ export default {
   font-weight: 600;
 }
 
-/* Hero section */
-.hero-section {
-  background: linear-gradient(135deg, #006699 0%, #339966 100%);
-  color: white;
-  padding: 100px 0;
-  position: relative;
-  overflow: hidden;
-}
-
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
-  opacity: 0.3;
-}
-
-.hero-section .container {
-  position: relative;
-  z-index: 1;
-}
-
-.hero-section h1 {
-  font-weight: 700;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.hero-section .lead {
-  font-size: 1.25rem;
-  opacity: 0.95;
-}
-
-/* Dropdown menu styling */
-.dropdown-menu {
-  min-width: 200px;
-  border: 1px solid var(--wiki-border);
-  background-color: var(--wiki-card-bg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-radius: 0.5rem;
-  padding: 0.5rem 0;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-[data-theme="dark"] .dropdown-menu {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.dropdown-item {
-  padding: 0.5rem 1.5rem;
-  transition: all 0.2s ease;
-  color: var(--wiki-dark);
-}
-
-.dropdown-item:hover {
-  background-color: var(--wiki-hover-bg);
-  color: var(--wiki-primary);
-}
-
-.dropdown-item.text-danger {
-  color: var(--wiki-danger) !important;
-}
-
-.dropdown-item.text-danger:hover {
-  background-color: rgba(153, 0, 0, 0.1);
-  color: var(--wiki-danger) !important;
-}
-
-[data-theme="dark"] .dropdown-item.text-danger:hover {
-  background-color: rgba(204, 102, 102, 0.2);
-}
-
-.dropdown-item i {
-  width: 20px;
-  text-align: center;
-}
-
-.dropdown-divider {
-  margin: 0.5rem 0;
-  border-color: var(--wiki-border);
-}
-
-/* Spinner colors */
-.spinner-border.text-primary {
-  color: var(--wiki-primary) !important;
-}
-
-/* List group styling */
-.list-group-item {
-  border-color: var(--wiki-border);
-  background-color: var(--wiki-card-bg);
-  color: var(--wiki-text);
-  transition: all 0.2s ease;
-}
-
-.list-group-item:hover {
-  background-color: var(--wiki-hover-bg);
-  border-left: 3px solid var(--wiki-primary);
-  padding-left: calc(1rem - 3px);
-}
-
-.list-group-item-action {
-  color: var(--wiki-dark);
-}
-
-.list-group-item-action:hover {
-  color: var(--wiki-primary);
-}
-
-/* Mobile responsive improvements */
+/* =======================
+   Responsive Enhancements
+   ======================= */
 @media (max-width: 768px) {
-  /* Navbar improvements */
   .navbar-brand {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
   }
-  
-  .navbar-nav {
-    margin-top: 1rem;
-  }
-  
-  .nav-link {
-    padding: 0.75rem 1rem !important;
-  }
-  
-  /* Better button spacing in navbar */
-  .navbar-nav .btn {
-    margin: 0.25rem 0;
-    width: 100%;
-    text-align: center;
-  }
-  
-  /* Dropdown menu full width on mobile */
+
   .dropdown-menu {
     width: 100%;
-    margin-top: 0.5rem;
-  }
-  
-  /* Better container padding */
-  .container-fluid {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .navbar-brand {
-    font-size: 1.1rem;
-  }
-  
-  .navbar-nav .btn {
-    font-size: 0.9rem;
-    padding: 0.5rem 0.75rem;
   }
 }
 </style>
