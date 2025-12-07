@@ -8,8 +8,9 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from database import db
+from models.base_model import BaseModel
 
-class User(db.Model):
+class User(BaseModel):
     """
     User model representing users in the WikiContest platform
 
@@ -173,20 +174,6 @@ class User(db.Model):
             return True
 
         return False
-
-    def save(self):
-        """
-        Save user to database
-        """
-        db.session.add(self)
-        db.session.commit()
-
-    def delete(self):
-        """
-        Delete user from database
-        """
-        db.session.delete(self)
-        db.session.commit()
 
     def __repr__(self):
         """String representation of User instance"""

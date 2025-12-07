@@ -37,18 +37,21 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h6>Submissions</h6>
               <button
-                v-if="loadingSubmissions"
+                v-if="loadingSubmissions || refreshingMetadata"
                 class="btn btn-sm btn-outline-secondary"
                 disabled
               >
-                <span class="spinner-border spinner-border-sm me-2"></span>Loading...
+                <span class="spinner-border spinner-border-sm me-2"></span>{{ loadingSubmissions ? 'Loading...' : 'Refreshing...' }}
               </button>
               <button
                 v-else
-                class="btn btn-sm btn-outline-primary"
-                @click="loadSubmissions"
+                class="btn btn-sm btn-outline-light"
+                @click="refreshMetadata"
+                :disabled="submissions.length === 0"
+                title="Refresh article metadata (word count, author, etc.) from MediaWiki and reload submissions"
+                style="color: white; border-color: white;"
               >
-                <i class="fas fa-sync-alt me-1"></i>Refresh
+                <i class="fas fa-database me-1"></i>Refresh Metadata
               </button>
             </div>
 
@@ -216,6 +219,7 @@ export default {
     // State for submissions
     const submissions = ref([])
     const loadingSubmissions = ref(false)
+    const refreshingMetadata = ref(false)
 
     // State for delete operation
     const deletingContest = ref(false)
@@ -348,31 +352,61 @@ export default {
       console.log('=== End Delete Permission Check ===')
     }
 
+    // Format date for display in Indian Standard Time (IST)
+    // Converts UTC dates from backend to IST timezone for display
     const formatDate = (dateString) => {
       if (!dateString) return 'No date'
       try {
-        return new Date(dateString).toLocaleDateString('en-US', {
+        // Ensure the date string is treated as UTC
+        // If it doesn't end with 'Z', append it to indicate UTC timezone
+        // This fixes the issue where naive UTC datetimes were being interpreted as local time
+        let utcDateString = dateString
+        if (!dateString.endsWith('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
+          // If no timezone indicator, assume it's UTC and append 'Z'
+          utcDateString = dateString + 'Z'
+        }
+        
+        // Convert to IST (Indian Standard Time) timezone
+        // IST is UTC+5:30, timezone identifier is 'Asia/Kolkata'
+        return new Date(utcDateString).toLocaleString('en-IN', {
+          timeZone: 'Asia/Kolkata',
           year: 'numeric',
           month: 'long',
           day: 'numeric',
           hour: '2-digit',
-          minute: '2-digit'
+          minute: '2-digit',
+          hour12: true
         })
       } catch (e) {
         return dateString
       }
     }
 
-    // Format date in short format (for article creation date)
+    // Format date with full date and time in IST (for article creation date)
+    // Shows complete date and time information including time in IST timezone
     const formatDateShort = (dateString) => {
       if (!dateString) return ''
       try {
-        // Handle MediaWiki timestamp format (e.g., "2024-01-15T10:30:00Z")
-        const date = new Date(dateString)
-        return date.toLocaleDateString('en-US', {
+        // Ensure the date string is treated as UTC
+        // If it doesn't end with 'Z', append it to indicate UTC timezone
+        // This fixes the issue where naive UTC datetimes were being interpreted as local time
+        let utcDateString = dateString
+        if (!dateString.endsWith('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
+          // If no timezone indicator, assume it's UTC and append 'Z'
+          utcDateString = dateString + 'Z'
+        }
+        
+        // Convert to IST (Indian Standard Time) timezone
+        // IST is UTC+5:30, timezone identifier is 'Asia/Kolkata'
+        // Show full date and time with month name, day, year, hour, and minute
+        return new Date(utcDateString).toLocaleString('en-IN', {
+          timeZone: 'Asia/Kolkata',
           year: 'numeric',
-          month: 'short',
-          day: 'numeric'
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
         })
       } catch (e) {
         return dateString
@@ -433,6 +467,30 @@ export default {
         submissions.value = []
       } finally {
         loadingSubmissions.value = false
+      }
+    }
+
+    // Refresh article metadata for all submissions in the contest
+    const refreshMetadata = async () => {
+      if (!props.contest || !canViewSubmissions.value || submissions.value.length === 0) {
+        return
+      }
+
+      refreshingMetadata.value = true
+      try {
+        const response = await api.post(`/submission/contest/${props.contest.id}/refresh-metadata`)
+        showAlert(
+          `Metadata refreshed: ${response.updated} updated, ${response.failed} failed`,
+          response.failed === 0 ? 'success' : 'warning'
+        )
+        
+        // Reload submissions to show updated data
+        await loadSubmissions()
+      } catch (error) {
+        console.error('Failed to refresh metadata:', error)
+        showAlert('Failed to refresh metadata: ' + error.message, 'danger')
+      } finally {
+        refreshingMetadata.value = false
       }
     }
 

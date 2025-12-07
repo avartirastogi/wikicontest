@@ -7,8 +7,9 @@ import json
 from datetime import datetime, date
 
 from database import db
+from models.base_model import BaseModel
 
-class Contest(db.Model):
+class Contest(BaseModel):
     """
     Contest model representing contests in the WikiContest platform
 
@@ -249,24 +250,12 @@ class Contest(db.Model):
             'marks_setting_accepted': self.marks_setting_accepted,
             'marks_setting_rejected': self.marks_setting_rejected,
             'jury_members': self.get_jury_members(),
-            'created_at': self.created_at.isoformat() if self.created_at else None,
+            # Format datetime as ISO string with 'Z' suffix to indicate UTC
+            # This ensures JavaScript interprets it as UTC, not local time
+            'created_at': (self.created_at.isoformat() + 'Z') if self.created_at else None,
             'submission_count': self.get_submission_count(),
             'status': self.get_status()
         }
-
-    def save(self):
-        """
-        Save contest to database
-        """
-        db.session.add(self)
-        db.session.commit()
-
-    def delete(self):
-        """
-        Delete contest from database
-        """
-        db.session.delete(self)
-        db.session.commit()
 
     def __repr__(self):
         """String representation of Contest instance"""

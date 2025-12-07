@@ -6,8 +6,9 @@ Defines the Submission table and related functionality
 from datetime import datetime
 
 from database import db
+from models.base_model import BaseModel
 
-class Submission(db.Model):
+class Submission(BaseModel):
     """
     Submission model representing user submissions to contests
 
@@ -216,7 +217,9 @@ class Submission(db.Model):
             'article_link': self.article_link,
             'status': self.status,
             'score': self.score,
-            'submitted_at': self.submitted_at.isoformat() if self.submitted_at else None,
+            # Format datetime as ISO string with 'Z' suffix to indicate UTC
+            # This ensures JavaScript interprets it as UTC, not local time
+            'submitted_at': (self.submitted_at.isoformat() + 'Z') if self.submitted_at else None,
             # Article metadata for judges and organizers
             'article_author': self.article_author,
             'article_created_at': self.article_created_at,
@@ -232,20 +235,6 @@ class Submission(db.Model):
             })
 
         return data
-
-    def save(self):
-        """
-        Save submission to database
-        """
-        db.session.add(self)
-        db.session.commit()
-
-    def delete(self):
-        """
-        Delete submission from database
-        """
-        db.session.delete(self)
-        db.session.commit()
 
     def __repr__(self):
         """String representation of Submission instance"""

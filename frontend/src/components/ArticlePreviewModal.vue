@@ -36,6 +36,20 @@
           <!-- MediaWiki content preview -->
           <!-- Content is from MediaWiki API parse action, which sanitizes HTML for safe display -->
           <div v-else-if="mediaWikiContent" class="article-preview-container mediawiki-content">
+            <!-- Article metadata card - shows author and creation date -->
+            <div v-if="articleMetadata && (articleMetadata.author || articleMetadata.article_created_at)" class="article-metadata-card">
+              <h6 class="article-metadata-title">Article Author</h6>
+              <div class="article-metadata-content">
+                <div v-if="articleMetadata.author" class="metadata-item">
+                  <i class="fas fa-user me-2"></i>
+                  <span>{{ articleMetadata.author }}</span>
+                </div>
+                <div v-if="articleMetadata.article_created_at" class="metadata-item">
+                  <i class="fas fa-calendar me-2"></i>
+                  <span>{{ formatDateShort(articleMetadata.article_created_at) }}</span>
+                </div>
+              </div>
+            </div>
             <!-- eslint-disable-next-line vue/no-v-html -->
             <div class="mediawiki-preview" v-html="mediaWikiContent"></div>
           </div>
@@ -90,6 +104,7 @@ export default {
     const error = ref('')
     const mediaWikiContent = ref('')
     const actualArticleTitle = ref(props.articleTitle || 'Article')
+    const articleMetadata = ref(null) // Store article metadata (author, creation date)
     let loadTimeout = null
     const iframeCheckInterval = null
 
@@ -107,6 +122,54 @@ export default {
         )
       } catch (e) {
         return false
+      }
+    }
+
+    // Fetch article metadata (author, creation date) from backend API
+    // This uses the article-info endpoint which returns comprehensive metadata
+    const fetchArticleMetadata = async (articleUrl) => {
+      try {
+        // Validate that we have a valid URL
+        if (!articleUrl) {
+          return null
+        }
+
+        // Only fetch metadata for MediaWiki URLs
+        if (!isMediaWikiUrl(articleUrl)) {
+          return null
+        }
+
+        // Use backend endpoint to fetch article metadata
+        // This includes author and creation date information
+        const response = await fetch(`/api/mediawiki/article-info?url=${encodeURIComponent(articleUrl)}`, {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json'
+          }
+        })
+
+        // If request fails, don't throw error - just return null
+        // Metadata is optional, so we don't want to break the preview if metadata fetch fails
+        if (!response.ok) {
+          return null
+        }
+
+        const data = await response.json()
+
+        // Check for error in response
+        if (data.error) {
+          return null
+        }
+
+        // Return metadata if available
+        return {
+          author: data.author || null,
+          article_created_at: data.article_created_at || null
+        }
+      } catch (err) {
+        // Silently fail - metadata is optional
+        console.warn('Error fetching article metadata:', err)
+        return null
       }
     }
 
@@ -170,6 +233,7 @@ export default {
       loading.value = true
       error.value = ''
       mediaWikiContent.value = ''
+      articleMetadata.value = null // Reset metadata when loading new article
       // Reset title to prop value (will be updated if API provides better title)
       actualArticleTitle.value = props.articleTitle || 'Article'
 
@@ -181,20 +245,27 @@ export default {
       // Check if it's a MediaWiki URL
       if (isMediaWikiUrl(props.articleUrl)) {
         try {
-          // Try to fetch via MediaWiki API
-          const result = await fetchMediaWikiContent(props.articleUrl)
+          // Fetch article content and metadata in parallel
+          // This improves performance by making both requests simultaneously
+          const [contentResult, metadata] = await Promise.all([
+            fetchMediaWikiContent(props.articleUrl),
+            fetchArticleMetadata(props.articleUrl)
+          ])
 
           // Update content and title
-          if (typeof result === 'object' && result.htmlContent) {
-            mediaWikiContent.value = result.htmlContent
+          if (typeof contentResult === 'object' && contentResult.htmlContent) {
+            mediaWikiContent.value = contentResult.htmlContent
             // Use actual page title from API if available, otherwise use prop
-            if (result.actualPageTitle) {
-              actualArticleTitle.value = result.actualPageTitle
+            if (contentResult.actualPageTitle) {
+              actualArticleTitle.value = contentResult.actualPageTitle
             }
           } else {
             // Fallback for old format (string)
-            mediaWikiContent.value = result
+            mediaWikiContent.value = contentResult
           }
+
+          // Store metadata for display
+          articleMetadata.value = metadata
 
           loading.value = false
         } catch (err) {
@@ -241,6 +312,37 @@ export default {
       error.value = 'Failed to load article preview. The article may not be accessible or may have security restrictions that prevent embedding.'
     }
 
+    // Format date with full date and time (for article creation date)
+    // Shows complete date and time information including time
+    const formatDateShort = (dateString) => {
+      if (!dateString) return ''
+      try {
+        // Ensure the date string is treated as UTC
+        // If it doesn't end with 'Z', append it to indicate UTC timezone
+        // This fixes the issue where naive UTC datetimes were being interpreted as local time
+        let utcDateString = dateString
+        if (!dateString.endsWith('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
+          // If no timezone indicator, assume it's UTC and append 'Z'
+          utcDateString = dateString + 'Z'
+        }
+        
+        // Convert to IST (Indian Standard Time) timezone
+        // IST is UTC+5:30, timezone identifier is 'Asia/Kolkata'
+        // Show full date and time with month name, day, year, hour, and minute
+        return new Date(utcDateString).toLocaleString('en-IN', {
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        })
+      } catch (e) {
+        return dateString
+      }
+    }
+
     // Watch for URL changes
     watch(() => props.articleUrl, (newUrl) => {
       if (newUrl) {
@@ -270,8 +372,10 @@ export default {
       error,
       mediaWikiContent,
       actualArticleTitle,
+      articleMetadata,
       handleIframeLoad,
-      handleIframeError
+      handleIframeError,
+      formatDateShort
     }
   }
 }
@@ -337,6 +441,49 @@ export default {
   background-color: white;
   height: 100%;
   flex: 1;
+}
+
+/* Article metadata card - displays author and creation date */
+.article-metadata-card {
+  background-color: #f8f9fa;
+  border: 1px solid var(--wiki-border);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .article-metadata-card {
+  background-color: #2d2d2d;
+  border-color: #555;
+}
+
+.article-metadata-title {
+  color: var(--wiki-primary);
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 0.75rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--wiki-primary);
+}
+
+.article-metadata-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metadata-item {
+  display: flex;
+  align-items: center;
+  color: var(--wiki-text);
+  font-size: 0.95rem;
+}
+
+.metadata-item i {
+  color: var(--wiki-text-muted);
+  width: 1.25rem;
+  text-align: center;
 }
 
 [data-theme="dark"] .mediawiki-content {

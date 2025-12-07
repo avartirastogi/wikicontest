@@ -30,6 +30,7 @@ from flask_jwt_extended.exceptions import JWTDecodeError, NoAuthorizationError
 from dotenv import load_dotenv
 import requests
 from sqlalchemy import text, inspect
+from sqlalchemy.exc import SQLAlchemyError, ProgrammingError, OperationalError
 
 # Local imports
 from database import db
@@ -216,12 +217,13 @@ def check_cookie():
     except (JWTDecodeError, NoAuthorizationError):
         # No token or invalid token - user is definitely not logged in
         return jsonify({'error': 'You are not logged in'}), 401
-    except Exception as error:
-        # Any other error - treat as not authenticated
+    except (SQLAlchemyError, RuntimeError, AttributeError, ValueError) as error:
+        # Catch database errors, Flask context errors, or other specific errors
         # Log for debugging but don't expose error to client
         try:
             current_app.logger.debug(f'Cookie check failed: {str(error)}')
-        except Exception:
+        except (AttributeError, RuntimeError):
+            # Logger might not be available or Flask context missing
             pass
         return jsonify({'error': 'You are not logged in'}), 401
 
@@ -521,8 +523,8 @@ def mediawiki_article_info():  # pylint: disable=too-many-return-statements
         return jsonify({
             'error': f'Invalid response from MediaWiki API: {str(error)}'
         }), 502
-    except Exception as error:
-        # Catch any other unexpected errors
+    except (KeyError, TypeError, AttributeError) as error:
+        # Catch data structure errors (missing keys, wrong types, missing attributes)
         return jsonify({
             'error': f'Unexpected error while fetching article information: {str(error)}'
         }), 500
@@ -707,8 +709,8 @@ def mediawiki_preview():  # pylint: disable=too-many-return-statements
         return jsonify({
             'error': f'Invalid response from MediaWiki API: {str(error)}'
         }), 502
-    except Exception as error:
-        # Catch any other unexpected errors
+    except (KeyError, TypeError, AttributeError) as error:
+        # Catch data structure errors (missing keys, wrong types, missing attributes)
         return jsonify({
             'error': f'Unexpected error while fetching article preview: {str(error)}'
         }), 500
@@ -772,8 +774,8 @@ def migrate_database():
                         text(f"ALTER TABLE submissions ADD COLUMN {col_name} {col_type}")
                     )
                     print(f"  ✓ Added column: {col_name}")
-                except Exception as error:
-                    # Column might already exist or there's a different error
+                except (ProgrammingError, OperationalError) as error:
+                    # Column might already exist or there's a SQL/database error
                     print(f"  ⚠ Could not add column {col_name}: {error}")
 
             db.session.commit()
@@ -781,8 +783,9 @@ def migrate_database():
         else:
             print("✓ Database schema is up to date")
 
-    except Exception as error:
+    except (OperationalError, SQLAlchemyError) as error:
         # If table doesn't exist yet, db.create_all() will handle it
+        # Or if there's a database connection/query error
         print(f"⚠ Migration check skipped (table may not exist yet): {error}")
         db.session.rollback()
 

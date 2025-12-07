@@ -10,11 +10,12 @@ Categories:
 - String validation utilities
 - Response formatting utilities
 - File handling utilities
+- Permission and access control utilities
 """
 
 import re
 from datetime import datetime, date
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from flask import jsonify
 
 
@@ -372,3 +373,75 @@ def safe_int_conversion(value: Any, default: int = 0) -> int:
         return int(value)
     except (ValueError, TypeError):
         return default
+
+
+# =============================================================================
+# PERMISSION AND ACCESS CONTROL UTILITIES
+# =============================================================================
+
+def can_view_submissions(user, contest) -> bool:
+    """
+    Check if user has permission to view submissions for a contest.
+    
+    Users can view submissions if they are:
+    - An admin
+    - The contest creator
+    - A jury member of the contest
+    
+    Args:
+        user: User object with permission methods
+        contest: Contest object to check permissions for
+        
+    Returns:
+        bool: True if user has permission, False otherwise
+        
+    Example:
+        >>> can_view_submissions(admin_user, contest)
+        True
+        >>> can_view_submissions(regular_user, contest)
+        False
+    """
+    return (user.is_admin() or
+            user.is_contest_creator(contest) or
+            user.is_jury_member(contest))
+
+
+def validate_contest_submission_access(contest_id: int, user, contest_model) -> Tuple[Any, Optional[tuple]]:
+    """
+    Validate that a contest exists and user has permission to view submissions.
+    
+    This function extracts the common validation logic used in multiple routes
+    to check contest existence and submission viewing permissions. It helps
+    eliminate code duplication across different route handlers.
+    
+    Args:
+        contest_id: ID of the contest to validate
+        user: User object (from request.current_user)
+        contest_model: Contest model class to query from database
+        
+    Returns:
+        Tuple[Any, Optional[tuple]]: 
+            - First element: Contest object if valid, None if invalid
+            - Second element: Error response tuple (jsonify, status_code) if invalid, None if valid
+            
+    Example:
+        >>> contest, error = validate_contest_submission_access(1, user, Contest)
+        >>> if error:
+        ...     return error  # Return 404 or 403 error
+        >>> # Use contest object
+    """
+    # Get contest from database
+    contest = contest_model.query.get(contest_id)
+    
+    # Check if contest exists
+    if not contest:
+        return None, (jsonify({'error': 'Contest not found'}), 404)
+    
+    # Check if user has permission to view submissions
+    if not can_view_submissions(user, contest):
+        return None, (jsonify({
+            'error': 'You are not allowed to view submissions for this contest'
+        }), 403)
+    
+    # Contest exists and user has permission
+    return contest, None

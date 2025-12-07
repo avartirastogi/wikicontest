@@ -12,25 +12,10 @@ from middleware.auth import require_auth, handle_errors, validate_json_data
 from models.contest import Contest
 from models.submission import Submission
 from models.user import User
+from utils import validate_contest_submission_access
 
 # Create blueprint
 contest_bp = Blueprint('contest', __name__)
-
-
-def can_view_submissions(user, contest):
-    """
-    Check if user has permission to view submissions for a contest.
-
-    Args:
-        user: User object
-        contest: Contest object
-
-    Returns:
-        bool: True if user has permission, False otherwise
-    """
-    return (user.is_admin() or
-            user.is_contest_creator(contest) or
-            user.is_jury_member(contest))
 
 def validate_date_string(date_str):
     """
@@ -411,8 +396,9 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
 
             # Fetch article information
             # Use formatversion=2 for better JSON structure (as shown in MediaWiki API docs)
-            # Request revisions with user info to get author
+            # Request revisions with user info to get author and latest word count
             # Note: We request both 'info' and 'revisions' props to get page info and revision history
+            # Get 2 revisions: newest (for latest word count) and oldest (for author/creation date)
             api_params = {
                 'action': 'query',
                 'titles': page_title,
@@ -420,8 +406,8 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                 'formatversion': '2',  # Use formatversion=2 for cleaner JSON structure
                 'prop': 'info|revisions',
                 'rvprop': 'timestamp|user|userid|comment|size',  # Include userid as fallback
-                'rvlimit': '1',  # Get first revision (creation)
-                'rvdir': 'newer',  # Start from oldest (first revision) - gets the creation revision
+                'rvlimit': '2',  # Get 2 revisions: newest and oldest
+                'rvdir': 'older',  # Start from newest (default), get newest first
                 'inprop': 'url|displaytitle',
                 'redirects': 'true',  # Follow redirects automatically
                 'converttitles': 'true'  # Convert titles to canonical form
@@ -471,22 +457,39 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
 
                             # Get revision information
                             # With formatversion=2, revisions is an array
+                            # With rvdir='older', revisions[0] is the newest (latest) revision
                             revisions = page_data.get('revisions', [])
                             if revisions and len(revisions) > 0:
-                                # Get first revision (oldest/creation revision)
-                                first_revision = revisions[0]
-                                # Extract author - try 'user' field first, then 'userid' as fallback
-                                article_author = first_revision.get('user')
+                                # Get latest revision (newest) for word count
+                                # With rvdir='older', the first revision is the newest
+                                latest_revision = revisions[0]
+                                
+                                # Get word count from latest revision (most current size)
+                                article_word_count = latest_revision.get('size', 0)
+                                
+                                # Get oldest revision (creation) for author and creation date
+                                # If we have multiple revisions, the last one in the array is the oldest
+                                # If we only have one revision, it's both the newest and oldest
+                                if len(revisions) > 1:
+                                    # We have both newest and oldest revisions
+                                    oldest_revision = revisions[-1]
+                                else:
+                                    # Only one revision exists, so it's both newest and oldest
+                                    oldest_revision = revisions[0]
+                                
+                                # Extract author from oldest revision (creation revision)
+                                # Try 'user' field first, then 'userid' as fallback
+                                article_author = oldest_revision.get('user')
                                 if not article_author:
                                     # If user field is missing, try userid (though this is numeric)
-                                    userid = first_revision.get('userid')
+                                    userid = oldest_revision.get('userid')
                                     if userid:
                                         article_author = f'User ID: {userid}'
                                     else:
                                         article_author = 'Unknown'
 
-                                article_created_at = first_revision.get('timestamp', '')
-                                article_word_count = first_revision.get('size', 0)
+                                # Get creation date from oldest revision
+                                article_created_at = oldest_revision.get('timestamp', '')
                                 article_page_id = page_id
 
                                 # Debug logging to help diagnose issues
@@ -498,7 +501,10 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                         f'created={article_created_at}, '
                                         f'revisions_count={len(revisions)}'
                                     )
-                                    current_app.logger.debug(f'First revision data: {first_revision}')
+                                    current_app.logger.debug(
+                                        f'Latest revision size: {latest_revision.get("size")}, '
+                                        f'Oldest revision timestamp: {oldest_revision.get("timestamp")}'
+                                    )
                                 except Exception:  # pylint: disable=broad-exception-caught
                                     # Logging failure shouldn't break the flow
                                     pass
@@ -507,6 +513,7 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                 # Sometimes revisions aren't returned in the first query
                                 try:
                                     # Make a second API call specifically for revisions
+                                    # Get 2 revisions: newest (for word count) and oldest (for author/creation)
                                     rev_api_params = {
                                         'action': 'query',
                                         'titles': page_title,
@@ -514,8 +521,8 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                         'formatversion': '2',
                                         'prop': 'revisions',
                                         'rvprop': 'timestamp|user|userid|size',
-                                        'rvlimit': '1',
-                                        'rvdir': 'newer',
+                                        'rvlimit': '2',  # Get 2 revisions: newest and oldest
+                                        'rvdir': 'older',  # Start from newest, get newest first
                                         'redirects': 'true'
                                     }
                                     rev_response = requests.get(
@@ -528,14 +535,32 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                             rev_page = rev_pages[0]
                                             rev_revisions = rev_page.get('revisions', [])
                                             if rev_revisions and len(rev_revisions) > 0:
-                                                first_rev = rev_revisions[0]
-                                                user_id_val = first_rev.get('userid')
+                                                # Get latest revision (newest) for word count
+                                                # With rvdir='older', the first revision is the newest
+                                                latest_rev = rev_revisions[0]
+                                                
+                                                # Get word count from latest revision (most current size)
+                                                article_word_count = latest_rev.get('size', 0)
+                                                
+                                                # Get oldest revision (creation) for author and creation date
+                                                # If we have multiple revisions, the last one in the array is the oldest
+                                                # If we only have one revision, it's both the newest and oldest
+                                                if len(rev_revisions) > 1:
+                                                    # We have both newest and oldest revisions
+                                                    oldest_rev = rev_revisions[-1]
+                                                else:
+                                                    # Only one revision exists, so it's both newest and oldest
+                                                    oldest_rev = rev_revisions[0]
+                                                
+                                                # Extract author from oldest revision (creation revision)
+                                                user_id_val = oldest_rev.get('userid')
                                                 article_author = (
-                                                    first_rev.get('user') or
+                                                    oldest_rev.get('user') or
                                                     (f"User ID: {user_id_val}" if user_id_val else 'Unknown')
                                                 )
-                                                article_created_at = first_rev.get('timestamp', '')
-                                                article_word_count = first_rev.get('size', 0)
+                                                
+                                                # Get creation date from oldest revision
+                                                article_created_at = oldest_rev.get('timestamp', '')
                                                 article_page_id = page_id
 
                                                 try:
@@ -653,7 +678,7 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
 @contest_bp.route('/<int:contest_id>/submissions', methods=['GET'])
 @require_auth
 @handle_errors
-def get_contest_submissions(contest_id):  # pylint: disable=duplicate-code
+def get_contest_submissions(contest_id):
     """
     Get all submissions for a specific contest (admin, jury, or creator only)
 
@@ -664,16 +689,12 @@ def get_contest_submissions(contest_id):  # pylint: disable=duplicate-code
         JSON response with submissions data
     """
     user = request.current_user
-    contest = Contest.query.get(contest_id)
 
-    if not contest:
-        return jsonify({'error': 'Contest not found'}), 404
-
-    # Check permissions
-    if not can_view_submissions(user, contest):
-        return jsonify({
-            'error': 'You are not allowed to view submissions for this contest'
-        }), 403
+    # Validate contest access and permissions using shared utility function
+    # This eliminates duplicate code across different route files
+    contest, error_response = validate_contest_submission_access(contest_id, user, Contest)
+    if error_response:
+        return error_response
 
     # Get submissions with user information
     submissions = db.session.query(
