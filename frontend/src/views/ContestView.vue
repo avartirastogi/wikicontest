@@ -79,6 +79,16 @@
           <p class="description-text">{{ contest.description }}</p>
         </div>
       </div>
+      <div v-if="contest.rules && contest.rules.text" class="card mb-4">
+  <div class="card-header">
+    <h5 class="mb-0"><i class="fas fa-book me-2"></i>Contest Rules</h5>
+  </div>
+  <div class="card-body">
+    <pre class="rules-text" style="white-space: pre-wrap; font-size: 1rem;">
+{{ contest.rules.text }}
+    </pre>
+  </div>
+</div>
 
       <!-- Jury Members Section -->
       <div v-if="contest.jury_members && contest.jury_members.length > 0" class="card mb-4">

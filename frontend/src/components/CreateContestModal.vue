@@ -40,6 +40,18 @@
                 v-model="formData.description"
               ></textarea>
             </div>
+            <div class="mb-3">
+  <label for="contestRules" class="form-label">Contest Rules *</label>
+  <textarea
+    class="form-control"
+    id="contestRules"
+    rows="4"
+    placeholder="Write rules about how articles must be submitted."
+    v-model="formData.rules_text"
+    required
+  ></textarea>
+</div>
+
 
             <div class="row">
               <div class="col-md-6 mb-3">
@@ -203,7 +215,8 @@ export default {
       jury_members: [],
       marks_setting_accepted: 10,
       marks_setting_rejected: 0,
-      code_link: null
+      code_link: null,
+      rules_text: ''
     })
 
     // Set default dates
@@ -295,7 +308,10 @@ export default {
         const contestData = {
           ...formData,
           jury_members: selectedJury.value,
-          code_link: formData.code_link?.trim() || null
+          code_link: formData.code_link?.trim() || null,
+           rules: {
+    text: formData.rules_text.trim()
+  }
         }
 
         const result = await store.createContest(contestData)
@@ -327,7 +343,8 @@ export default {
       formData.description = ''
       formData.code_link = null
       selectedJury.value = []
-      formData.jury_members = []
+      formData.jury_members = [],
+      formData.rules_text = ''
 
       // Reset dates
       const today = new Date()
