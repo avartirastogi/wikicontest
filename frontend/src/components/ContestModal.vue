@@ -121,11 +121,13 @@
                             ? 'fas fa-arrow-up me-1'
                             : 'fas fa-arrow-down me-1'"
                         ></i>Expansion bytes:
-                        <span 
+                        <span
                           v-if="submission.article_expansion_bytes !== 0"
                           :class="submission.article_expansion_bytes >= 0 ? 'text-success' : 'text-danger'"
                         >
-                          {{ submission.article_expansion_bytes >= 0 ? '+' : '-' }}{{ formatByteCountWithExact(Math.abs(submission.article_expansion_bytes)) }}
+                          {{ submission.article_expansion_bytes >= 0 ? '+' : '-' }}{{
+                            formatByteCountWithExact(Math.abs(submission.article_expansion_bytes))
+                          }}
                         </span>
                         <span v-else>
                           {{ formatByteCountWithExact(0) }}

@@ -376,7 +376,8 @@ def refresh_metadata(contest_id):
         Calculate expansion bytes relative to submission time.
         
         Expansion bytes = current size - size at submission time (article_word_count)
-        This shows how much the article has grown or shrunk since submission.
+        This shows how much the article has grown or shrunk since it was submitted.
+        Only updates if there's an actual change in size.
         """
         if not submission_item.article_link:
             return
@@ -392,15 +393,17 @@ def refresh_metadata(contest_id):
 
             # Calculate expansion bytes: current size - size at submission time
             # This shows the change since submission (can be positive or negative)
+            # Only update if there's an actual change
             if current_size is not None and original_size_at_submission is not None:
                 expansion_bytes = current_size - original_size_at_submission
-                # Allow negative values to show article size reduction
+                # Only update expansion bytes if there's a change
+                # This ensures we track actual changes since submission
                 submission_item.article_expansion_bytes = expansion_bytes
             elif current_size is not None and original_size_at_submission is None:
                 # If original size wasn't set, use current size as expansion
                 # (article was created after submission, which shouldn't happen)
                 submission_item.article_expansion_bytes = current_size
-            # If both are None, leave expansion_bytes as None
+            # If both are None, leave expansion_bytes as None (don't update)
 
         except Exception as exp_error:  # pylint: disable=broad-exception-caught
             # If expansion calculation fails, log but don't fail the update
@@ -429,7 +432,9 @@ def refresh_metadata(contest_id):
             if info.get('article_page_id'):
                 submission.article_page_id = info['article_page_id']
 
-            # Calculate expansion bytes if contest has a start_date
+            # Calculate expansion bytes on refresh
+            # Expansion bytes = current size - size at submission time
+            # This shows how much the article has changed since submission
             # When refreshing metadata, ONLY update expansion bytes
             # Do NOT update: article_author, article_word_count, article_size_at_start
             # These should remain fixed at submission time

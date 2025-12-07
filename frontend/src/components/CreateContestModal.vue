@@ -309,9 +309,9 @@ export default {
           ...formData,
           jury_members: selectedJury.value,
           code_link: formData.code_link?.trim() || null,
-           rules: {
-    text: formData.rules_text.trim()
-  }
+          rules: {
+            text: formData.rules_text.trim()
+          }
         }
 
         const result = await store.createContest(contestData)
@@ -343,7 +343,7 @@ export default {
       formData.description = ''
       formData.code_link = null
       selectedJury.value = []
-      formData.jury_members = [],
+      formData.jury_members = []
       formData.rules_text = ''
 
       // Reset dates
