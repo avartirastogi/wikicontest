@@ -630,19 +630,10 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             if size_at_submission is None:
                 size_at_submission = get_article_size_at_timestamp(article_link, submission_datetime)
 
-            # Calculate expansion
-            # If article didn't exist at contest start, expansion = full size at submission
-            # If we couldn't get size_at_start, set expansion to None (unknown)
-            if size_at_start is not None and size_at_submission is not None:
-                article_expansion_bytes = size_at_submission - size_at_start
-                # Allow negative values to show if article size decreased
-            elif size_at_submission is not None and size_at_start is None:
-                # Article didn't exist at contest start, so all content is expansion
-                article_expansion_bytes = size_at_submission
-                article_size_at_start = 0  # Set to 0 if article didn't exist at start
-            else:
-                # Couldn't determine expansion
-                article_expansion_bytes = None
+            # Calculate expansion bytes
+            # At submission time, expansion bytes should be 0 since the article hasn't changed yet
+            # Expansion bytes will be updated on refresh to show changes since submission
+            article_expansion_bytes = 0
 
             # Log expansion calculation for debugging
             try:
