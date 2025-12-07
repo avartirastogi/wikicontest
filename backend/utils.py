@@ -11,11 +11,14 @@ Categories:
 - Response formatting utilities
 - File handling utilities
 - Permission and access control utilities
+- MediaWiki API utilities
 """
 
 import re
+import requests
 from datetime import datetime, date
 from typing import Optional, List, Dict, Any, Tuple
+from urllib.parse import urlparse, unquote, parse_qs
 from flask import jsonify
 
 
@@ -445,3 +448,290 @@ def validate_contest_submission_access(contest_id: int, user, contest_model) -> 
     
     # Contest exists and user has permission
     return contest, None
+
+
+# =============================================================================
+# MEDIAWIKI API UTILITIES
+# =============================================================================
+
+def extract_page_title_from_url(article_link: str) -> Optional[str]:
+    """
+    Extract page title from a MediaWiki article URL.
+
+    This function handles various MediaWiki URL formats:
+    - Standard format: /wiki/Page_Title
+    - Query format: ?title=Page_Title
+    - Other formats: /path/to/Page_Title
+
+    Args:
+        article_link (str): Full URL to the article
+
+    Returns:
+        Optional[str]: Extracted page title, or None if extraction fails
+
+    Example:
+        >>> extract_page_title_from_url('https://en.wikipedia.org/wiki/Example')
+        'Example'
+        >>> extract_page_title_from_url('https://en.wikipedia.org/w/index.php?title=Example')
+        'Example'
+    """
+    try:
+        url_obj = urlparse(article_link)
+        base_url = f"{url_obj.scheme}://{url_obj.netloc}"
+
+        # Extract page title from URL
+        page_title = ''
+        if '/wiki/' in url_obj.path:
+            page_title = unquote(url_obj.path.split('/wiki/')[1])
+        elif 'title=' in url_obj.query:
+            query_params = parse_qs(url_obj.query)
+            page_title = unquote(query_params.get('title', [''])[0])
+        else:
+            parts = url_obj.path.split('/')
+            page_title = unquote(parts[-1]) if parts else ''
+
+        return page_title if page_title else None
+    except Exception:
+        return None
+
+
+def get_oldest_revision_author(revisions: List[Dict[str, Any]]) -> Optional[str]:
+    """
+    Extract author from the oldest revision (creation revision).
+
+    This function handles cases where the 'user' field might be missing
+    and falls back to 'userid' if available.
+
+    Args:
+        revisions (List[Dict[str, Any]]): List of revision dictionaries
+
+    Returns:
+        Optional[str]: Author name or 'User ID: {userid}' or None
+
+    Example:
+        >>> revisions = [{'user': 'John', 'userid': 123}, {'user': 'Jane', 'userid': 456}]
+        >>> get_oldest_revision_author(revisions)
+        'Jane'  # Returns author from oldest (last) revision
+    """
+    if not revisions or len(revisions) == 0:
+        return None
+
+    # Get oldest revision (creation revision)
+    # If we have multiple revisions, the last one is the oldest
+    # If we only have one revision, it's both the newest and oldest
+    if len(revisions) > 1:
+        oldest_revision = revisions[-1]
+    else:
+        oldest_revision = revisions[0]
+
+    # Extract author from oldest revision (creation revision)
+    # Try 'user' field first, then 'userid' as fallback
+    article_author = oldest_revision.get('user')
+    if not article_author:
+        userid = oldest_revision.get('userid')
+        if userid:
+            article_author = f'User ID: {userid}'
+        else:
+            article_author = None
+
+    return article_author
+
+
+def get_latest_revision_author(revisions: List[Dict[str, Any]]) -> Optional[str]:
+    """
+    Extract author from the latest revision (most recent revision at submission time).
+
+    This function handles cases where the 'user' field might be missing
+    and falls back to 'userid' if available.
+
+    When revisions are fetched with rvdir='older', the first revision
+    in the array is the newest (latest) revision.
+
+    Args:
+        revisions (List[Dict[str, Any]]): List of revision dictionaries
+            (with rvdir='older', revisions[0] is the latest)
+
+    Returns:
+        Optional[str]: Author name or 'User ID: {userid}' or None
+
+    Example:
+        >>> revisions = [{'user': 'John', 'userid': 123}, {'user': 'Jane', 'userid': 456}]
+        >>> get_latest_revision_author(revisions)
+        'John'  # Returns author from latest (first) revision
+    """
+    if not revisions or len(revisions) == 0:
+        return None
+
+    # Get latest revision (newest revision)
+    # With rvdir='older', the first revision is the newest (latest)
+    latest_revision = revisions[0]
+
+    # Extract author from latest revision
+    # Try 'user' field first, then 'userid' as fallback
+    article_author = latest_revision.get('user')
+    if not article_author:
+        userid = latest_revision.get('userid')
+        if userid:
+            article_author = f'User ID: {userid}'
+        else:
+            article_author = None
+
+    return article_author
+
+
+def build_mediawiki_revisions_api_params(page_title: str) -> Dict[str, Any]:
+    """
+    Build MediaWiki API parameters for querying article revisions.
+
+    This function creates the standard API parameters used to fetch
+    article information including revisions with author and size data.
+
+    Args:
+        page_title (str): Page title to query
+
+    Returns:
+        Dict[str, Any]: API parameters dictionary
+
+    Example:
+        >>> params = build_mediawiki_revisions_api_params('Example')
+        >>> params['action']
+        'query'
+    """
+    return {
+        'action': 'query',
+        'titles': page_title,
+        'format': 'json',
+        'formatversion': '2',  # Use formatversion=2 for cleaner JSON structure
+        'prop': 'info|revisions',
+        'rvprop': 'timestamp|user|userid|comment|size',  # Include userid as fallback
+        'rvlimit': '2',  # Get 2 revisions: newest and oldest
+        'rvdir': 'older',  # Start from newest, get newest first
+        'redirects': 'true',  # Follow redirects automatically
+        'converttitles': 'true'  # Convert titles to canonical form
+    }
+
+
+def get_mediawiki_headers() -> Dict[str, str]:
+    """
+    Get standard headers for MediaWiki API requests.
+
+    MediaWiki API requires a User-Agent header to identify the application.
+    This function provides the standard headers used across all API requests.
+
+    Returns:
+        Dict[str, str]: Headers dictionary with User-Agent
+
+    Example:
+        >>> headers = get_mediawiki_headers()
+        >>> headers['User-Agent']
+        'WikiContest/1.0 (https://wikicontest.toolforge.org; contact@wikicontest.org) Python/requests'
+    """
+    return {
+        'User-Agent': (
+            'WikiContest/1.0 (https://wikicontest.toolforge.org; '
+            'contact@wikicontest.org) Python/requests'
+        )
+    }
+
+
+def get_article_size_at_timestamp(article_link: str, timestamp: datetime) -> Optional[int]:
+    """
+    Get the byte size of an article at a specific timestamp using MediaWiki API.
+    
+    This function queries the MediaWiki API to find the revision of an article
+    that existed at or before the given timestamp, and returns its size in bytes.
+    
+    Args:
+        article_link (str): Full URL to the article
+        timestamp (datetime): Timestamp to get article size for (UTC)
+        
+    Returns:
+        Optional[int]: Article size in bytes at the timestamp, or None if:
+            - Article doesn't exist
+            - API request fails
+            - No revision found at or before the timestamp
+            
+    Example:
+        >>> from datetime import datetime
+        >>> size = get_article_size_at_timestamp(
+        ...     'https://en.wikipedia.org/wiki/Example',
+        ...     datetime(2024, 1, 15, 0, 0, 0)
+        ... )
+        >>> print(size)
+        5000
+    """
+    try:
+        # Extract page title from URL using shared utility function
+        page_title = extract_page_title_from_url(article_link)
+        if not page_title:
+            return None
+
+        # Parse the article URL to extract base URL
+        url_obj = urlparse(article_link)
+        base_url = f"{url_obj.scheme}://{url_obj.netloc}"
+        
+        # Convert datetime to MediaWiki API timestamp format (ISO 8601)
+        # Format: YYYY-MM-DDTHH:MM:SSZ
+        api_timestamp = timestamp.strftime('%Y-%m-%dT%H:%M:%SZ')
+        
+        # Build MediaWiki API URL
+        api_url = f"{base_url}/w/api.php"
+        
+        # Query for revision at or before the specified timestamp
+        # Use rvend to get the latest revision before or at the timestamp
+        # Use rvdir='older' to get revisions going backwards from the timestamp
+        api_params = {
+            'action': 'query',
+            'titles': page_title,
+            'format': 'json',
+            'formatversion': '2',
+            'prop': 'revisions',
+            'rvprop': 'timestamp|size',
+            'rvlimit': '1',  # Only need the latest revision at or before timestamp
+            'rvend': api_timestamp,  # Get revision at or before this timestamp
+            'rvdir': 'older',  # Go backwards from timestamp
+            'redirects': 'true',
+            'converttitles': 'true'
+        }
+        
+        # Make request to MediaWiki API using shared headers
+        headers = get_mediawiki_headers()
+        response = requests.get(api_url, params=api_params, headers=headers, timeout=10)
+        
+        if response.status_code != 200:
+            return None
+        
+        data = response.json()
+        
+        # Check for API errors
+        if 'error' in data:
+            return None
+        
+        # Parse response
+        pages = data.get('query', {}).get('pages', [])
+        if not pages or len(pages) == 0:
+            return None
+        
+        page_data = pages[0]
+        
+        # Check if page exists
+        is_missing = page_data.get('missing', False)
+        page_id = str(page_data.get('pageid', ''))
+        
+        if is_missing or not page_id or page_id == '-1':
+            return None
+        
+        # Get revision information
+        revisions = page_data.get('revisions', [])
+        if not revisions or len(revisions) == 0:
+            return None
+        
+        # Get the first (and only) revision - this is the latest revision at or before timestamp
+        revision = revisions[0]
+        size = revision.get('size', 0)
+        
+        return size if size else None
+        
+    except Exception:
+        # Return None on any error (network, parsing, etc.)
+        return None

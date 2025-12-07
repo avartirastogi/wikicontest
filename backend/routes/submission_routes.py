@@ -3,15 +3,22 @@ Submission Routes for WikiContest Application
 Handles submission management and review functionality
 """
 
-from flask import Blueprint, request, jsonify
+from urllib.parse import urlparse
+
+import requests
+from flask import Blueprint, jsonify, request
 
 from database import db
-from middleware.auth import require_auth, require_submission_permission, handle_errors, validate_json_data
+from middleware.auth import handle_errors, require_auth, require_submission_permission, validate_json_data
 from models.contest import Contest
 from models.submission import Submission
-from utils import validate_contest_submission_access
-import requests
-from urllib.parse import urlparse, unquote, parse_qs
+from utils import (
+    validate_contest_submission_access,
+    extract_page_title_from_url,
+    get_latest_revision_author,
+    build_mediawiki_revisions_api_params,
+    get_mediawiki_headers
+)
 
 # Create blueprint
 submission_bp = Blueprint('submission', __name__)
@@ -248,7 +255,7 @@ def get_submission_stats():
 @submission_bp.route('/contest/<int:contest_id>/refresh-metadata', methods=['POST'])
 @require_auth
 @handle_errors
-def refresh_contest_submissions_metadata(contest_id):
+def refresh_metadata(contest_id):
     """
     Refresh article metadata (word count, author, etc.) for all submissions in a contest.
     
@@ -262,15 +269,16 @@ def refresh_contest_submissions_metadata(contest_id):
         JSON response with refresh results
     """
     user = request.current_user
-    
+
     # Validate contest access and permissions
-    contest, error_response = validate_contest_submission_access(contest_id, user, Contest)
+    # Note: contest variable is validated but not used in this route
+    _contest, error_response = validate_contest_submission_access(contest_id, user, Contest)
     if error_response:
         return error_response
-    
+
     # Get all submissions for this contest
     submissions = Submission.query.filter_by(contest_id=contest_id).all()
-    
+
     if not submissions:
         return jsonify({
             'message': 'No submissions found for this contest',
@@ -278,135 +286,166 @@ def refresh_contest_submissions_metadata(contest_id):
             'failed': 0,
             'total': 0
         }), 200
-    
+
     updated = 0
     failed = 0
-    
+
     # Function to fetch article info (same logic as backfill script)
     def fetch_article_info(article_link):
         """Fetch article information from MediaWiki API"""
         try:
-            # Parse the article URL
-            url_obj = urlparse(article_link)
-            base_url = f"{url_obj.scheme}://{url_obj.netloc}"
-            
-            # Extract page title
-            page_title = ''
-            if '/wiki/' in url_obj.path:
-                page_title = unquote(url_obj.path.split('/wiki/')[1])
-            elif 'title=' in url_obj.query:
-                query_params = parse_qs(url_obj.query)
-                page_title = unquote(query_params.get('title', [''])[0])
-            else:
-                parts = url_obj.path.split('/')
-                page_title = unquote(parts[-1]) if parts else ''
-            
+            # Extract page title from URL using shared utility function
+            page_title = extract_page_title_from_url(article_link)
             if not page_title:
                 return None
-            
+
+            # Parse the article URL to extract base URL
+            url_obj = urlparse(article_link)
+            base_url = f"{url_obj.scheme}://{url_obj.netloc}"
+
             # Build API request - get 2 revisions (newest and oldest)
             api_url = f"{base_url}/w/api.php"
-            api_params = {
-                'action': 'query',
-                'titles': page_title,
-                'format': 'json',
-                'formatversion': '2',
-                'prop': 'info|revisions',
-                'rvprop': 'timestamp|user|userid|comment|size',
-                'rvlimit': '2',  # Get 2 revisions: newest and oldest
-                'rvdir': 'older',  # Start from newest, get newest first
-                'redirects': 'true',
-                'converttitles': 'true'
-            }
-            headers = {
-                'User-Agent': (
-                    'WikiContest/1.0 (https://wikicontest.toolforge.org; '
-                    'contact@wikicontest.org) Python/requests'
-                )
-            }
-            
+            # Build API parameters using shared utility function
+            api_params = build_mediawiki_revisions_api_params(page_title)
+            # Get headers using shared utility function
+            headers = get_mediawiki_headers()
+
             response = requests.get(api_url, params=api_params, headers=headers, timeout=10)
-            
+
             if response.status_code != 200:
                 return None
-            
+
             data = response.json()
-            
+
             if 'error' in data:
                 return None
-            
+
             pages = data.get('query', {}).get('pages', [])
             if not pages:
                 return None
-            
+
             page_data = pages[0]
             is_missing = page_data.get('missing', False)
             page_id = str(page_data.get('pageid', ''))
-            
+
             if is_missing or not page_id or page_id == '-1':
                 return None
-            
+
             # Get revision info
             # With rvdir='older', revisions[0] is the newest (latest) revision
             revisions = page_data.get('revisions', [])
             if not revisions or len(revisions) == 0:
                 return None
-            
-            # Get latest revision (newest) for word count
+
+            # Get latest revision (newest) for current size and author
             latest_revision = revisions[0]
-            article_word_count = latest_revision.get('size', 0)
-            
-            # Get oldest revision (creation) for author and creation date
+            # Current size from latest revision (used for expansion bytes calculation on refresh)
+            current_size = latest_revision.get('size', 0)
+
+            # Extract author from latest revision (newest revision at submission time)
+            # Use shared utility function to extract author from latest revision
+            # This gets the author who made the most recent edit at submission time
+            article_author = get_latest_revision_author(revisions)
+
+            # Get latest revision timestamp
+            latest_revision_timestamp = latest_revision.get('timestamp', '')
+
+            # Get oldest revision (creation) for creation date (for historical reference)
             if len(revisions) > 1:
                 oldest_revision = revisions[-1]
             else:
                 oldest_revision = revisions[0]
-            
-            # Extract author from oldest revision (creation revision)
-            article_author = oldest_revision.get('user')
-            if not article_author:
-                userid = oldest_revision.get('userid')
-                if userid:
-                    article_author = f'User ID: {userid}'
-                else:
-                    article_author = None
-            
+
             return {
-                'article_author': article_author,
+                'article_author': article_author,  # Author from latest revision at submission time
                 'article_created_at': oldest_revision.get('timestamp', ''),
-                'article_word_count': article_word_count,  # Use latest revision for word count
-                'article_page_id': page_id
+                # Current size from API (used for expansion bytes calculation, not stored as article_word_count)
+                'current_size': current_size,
+                'article_page_id': page_id,
+                # Latest revision metadata (kept for backward compatibility)
+                'latest_revision_author': article_author,  # Same as article_author now
+                'latest_revision_timestamp': latest_revision_timestamp
             }
-            
-        except Exception:
+
+        except Exception:  # pylint: disable=broad-exception-caught
             return None
-    
+
+    # Helper function to calculate expansion bytes for a submission
+    def calculate_expansion_bytes(submission_item, article_info):
+        """
+        Calculate expansion bytes relative to submission time.
+        
+        Expansion bytes = current size - size at submission time (article_word_count)
+        This shows how much the article has grown or shrunk since submission.
+        """
+        if not submission_item.article_link:
+            return
+
+        try:
+            # Get current size from API (latest revision size)
+            # This is the current/latest size of the article from the API
+            current_size = article_info.get('current_size')
+
+            # Get original size at submission time (article_word_count)
+            # This is the size when the article was submitted
+            original_size_at_submission = submission_item.article_word_count
+
+            # Calculate expansion bytes: current size - size at submission time
+            # This shows the change since submission (can be positive or negative)
+            if current_size is not None and original_size_at_submission is not None:
+                expansion_bytes = current_size - original_size_at_submission
+                # Allow negative values to show article size reduction
+                submission_item.article_expansion_bytes = expansion_bytes
+            elif current_size is not None and original_size_at_submission is None:
+                # If original size wasn't set, use current size as expansion
+                # (article was created after submission, which shouldn't happen)
+                submission_item.article_expansion_bytes = current_size
+            # If both are None, leave expansion_bytes as None
+
+        except Exception as exp_error:  # pylint: disable=broad-exception-caught
+            # If expansion calculation fails, log but don't fail the update
+            try:
+                from flask import current_app
+                current_app.logger.warning(
+                    f'Failed to calculate expansion for submission {submission_item.id}: {str(exp_error)}'
+                )
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
     # Refresh metadata for each submission
     for submission in submissions:
         info = fetch_article_info(submission.article_link)
-        
+
         if info:
             # Update submission with latest metadata
-            if info.get('article_author'):
+            # Do NOT update article_author - it should remain fixed at submission time
+            # Only update if it's not already set (for backward compatibility with old submissions)
+            if info.get('article_author') and not submission.article_author:
                 submission.article_author = info['article_author']
-            if info.get('article_created_at'):
+            if info.get('article_created_at') and not submission.article_created_at:
                 submission.article_created_at = info['article_created_at']
-            if info.get('article_word_count') is not None:
-                submission.article_word_count = info['article_word_count']
+            # Do NOT update article_word_count - it should remain fixed at submission time
+            # article_word_count represents the size at the time of submission
             if info.get('article_page_id'):
                 submission.article_page_id = info['article_page_id']
-            
+
+            # Calculate expansion bytes if contest has a start_date
+            # When refreshing metadata, ONLY update expansion bytes
+            # Do NOT update: article_author, article_word_count, article_size_at_start
+            # These should remain fixed at submission time
+            calculate_expansion_bytes(submission, info)
+
             updated += 1
         else:
             failed += 1
-    
+
     # Commit all changes
     try:
         db.session.commit()
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         db.session.rollback()
         return jsonify({'error': 'Failed to save updates to database'}), 500
-    
+
     return jsonify({
         'message': f'Refreshed metadata for {updated} submissions',
         'updated': updated,

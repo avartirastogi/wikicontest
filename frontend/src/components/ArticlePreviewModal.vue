@@ -37,7 +37,10 @@
           <!-- Content is from MediaWiki API parse action, which sanitizes HTML for safe display -->
           <div v-else-if="mediaWikiContent" class="article-preview-container mediawiki-content">
             <!-- Article metadata card - shows author and creation date -->
-            <div v-if="articleMetadata && (articleMetadata.author || articleMetadata.article_created_at)" class="article-metadata-card">
+            <div
+              v-if="articleMetadata && (articleMetadata.author || articleMetadata.article_created_at)"
+              class="article-metadata-card"
+            >
               <h6 class="article-metadata-title">Article Author</h6>
               <div class="article-metadata-content">
                 <div v-if="articleMetadata.author" class="metadata-item">
@@ -325,7 +328,7 @@ export default {
           // If no timezone indicator, assume it's UTC and append 'Z'
           utcDateString = dateString + 'Z'
         }
-        
+
         // Convert to IST (Indian Standard Time) timezone
         // IST is UTC+5:30, timezone identifier is 'Asia/Kolkata'
         // Show full date and time with month name, day, year, hour, and minute

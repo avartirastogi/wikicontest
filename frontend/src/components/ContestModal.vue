@@ -41,14 +41,17 @@
                 class="btn btn-sm btn-outline-secondary"
                 disabled
               >
-                <span class="spinner-border spinner-border-sm me-2"></span>{{ loadingSubmissions ? 'Loading...' : 'Refreshing...' }}
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                {{
+                  loadingSubmissions ? 'Loading...' : 'Refreshing...'
+                }}
               </button>
               <button
                 v-else
                 class="btn btn-sm btn-outline-light"
                 @click="refreshMetadata"
                 :disabled="submissions.length === 0"
-                title="Refresh article metadata (word count, author, etc.) from MediaWiki and reload submissions"
+                title="Refresh article metadata (byte count, author, etc.) from MediaWiki and reload submissions"
                 style="color: white; border-color: white;"
               >
                 <i class="fas fa-database me-1"></i>Refresh Metadata
@@ -84,23 +87,77 @@
                         {{ submission.article_title }}
                         <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
                       </a>
+                      <!-- Total bytes = Original bytes (at submission) + Expansion bytes (change since submission) -->
                       <div
-                        v-if="submission.article_word_count && submission.article_word_count > 0"
+                        v-if="submission.article_word_count !== null &&
+                          submission.article_word_count !== undefined"
                         class="text-muted small mt-1"
                       >
-                        <i class="fas fa-file-alt me-1"></i>{{ formatWordCount(submission.article_word_count) }}
+                        <i class="fas fa-file-alt me-1"></i>Total bytes:
+                        {{
+                          formatByteCountWithExact(
+                            (submission.article_word_count || 0) +
+                            (submission.article_expansion_bytes || 0)
+                          )
+                        }}
                       </div>
-                      <div v-else-if="submission.article_word_count === 0" class="text-muted small mt-1">
-                        <i class="fas fa-file-alt me-1"></i>Size: 0 bytes
+                      <div
+                        v-if="submission.article_word_count !== null &&
+                          submission.article_word_count !== undefined"
+                        class="text-muted small mt-1"
+                      >
+                        <i class="fas fa-clock me-1"></i>Original bytes:
+                        {{ formatByteCountWithExact(submission.article_word_count) }}
+                      </div>
+                      <!-- Show expansion bytes (0 if no change, +X if increased, -X if decreased) -->
+                      <div
+                        v-if="submission.article_expansion_bytes !== null &&
+                          submission.article_expansion_bytes !== undefined"
+                        class="text-muted small mt-1"
+                      >
+                        <i
+                          v-if="submission.article_expansion_bytes !== 0"
+                          :class="submission.article_expansion_bytes >= 0
+                            ? 'fas fa-arrow-up me-1'
+                            : 'fas fa-arrow-down me-1'"
+                        ></i>Expansion bytes:
+                        <span 
+                          v-if="submission.article_expansion_bytes !== 0"
+                          :class="submission.article_expansion_bytes >= 0 ? 'text-success' : 'text-danger'"
+                        >
+                          {{ submission.article_expansion_bytes >= 0 ? '+' : '-' }}{{ formatByteCountWithExact(Math.abs(submission.article_expansion_bytes)) }}
+                        </span>
+                        <span v-else>
+                          {{ formatByteCountWithExact(0) }}
+                        </span>
                       </div>
                     </td>
                     <td>
+                      <!-- Original author (from oldest revision) -->
                       <div v-if="submission.article_author">
                         <i class="fas fa-user me-1"></i>{{ submission.article_author }}
                       </div>
                       <div v-else class="text-muted small">Unknown</div>
                       <div v-if="submission.article_created_at" class="text-muted small mt-1">
                         <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
+                      </div>
+                      <!-- Latest revision author (from latest revision, shown below original) -->
+                      <div
+                        v-if="submission.latest_revision_author"
+                        class="mt-2 pt-2"
+                        style="border-top: 1px solid #dee2e6;"
+                      >
+                        <div>
+                          <i class="fas fa-user me-1"></i>{{ submission.latest_revision_author }}
+                          <span class="badge bg-info ms-1" style="font-size: 0.7em;">Latest</span>
+                        </div>
+                        <div
+                          v-if="submission.latest_revision_timestamp"
+                          class="text-muted small mt-1"
+                        >
+                          <i class="fas fa-calendar me-1"></i>
+                          {{ formatDateShort(submission.latest_revision_timestamp) }}
+                        </div>
                       </div>
                     </td>
                     <td>{{ submission.username || 'Unknown' }}</td>
@@ -365,7 +422,7 @@ export default {
           // If no timezone indicator, assume it's UTC and append 'Z'
           utcDateString = dateString + 'Z'
         }
-        
+
         // Convert to IST (Indian Standard Time) timezone
         // IST is UTC+5:30, timezone identifier is 'Asia/Kolkata'
         return new Date(utcDateString).toLocaleString('en-IN', {
@@ -395,7 +452,7 @@ export default {
           // If no timezone indicator, assume it's UTC and append 'Z'
           utcDateString = dateString + 'Z'
         }
-        
+
         // Convert to IST (Indian Standard Time) timezone
         // IST is UTC+5:30, timezone identifier is 'Asia/Kolkata'
         // Show full date and time with month name, day, year, hour, and minute
@@ -413,13 +470,43 @@ export default {
       }
     }
 
-    // Format word count for display
-    const formatWordCount = (count) => {
-      if (!count) return ''
-      if (count >= 1000) {
-        return `${(count / 1000).toFixed(1)}k words`
+    // Format byte count for display
+    // Converts bytes to appropriate unit (bytes, KB, MB)
+    const formatByteCount = (bytes) => {
+      if (!bytes) return ''
+      if (bytes >= 1048576) {
+        // 1 MB = 1024 * 1024 bytes
+        return `${(bytes / 1048576).toFixed(1)} MB`
       }
-      return `${count} words`
+      if (bytes >= 1024) {
+        // 1 KB = 1024 bytes
+        return `${(bytes / 1024).toFixed(1)} KB`
+      }
+      return `${bytes} bytes`
+    }
+
+    // Format byte count with exact bytes in parentheses
+    // Shows formatted size (KB/MB) with exact byte count in parentheses
+    // Example: "1.2 KB (1224 bytes)" or "-500 bytes" for negative values
+    const formatByteCountWithExact = (bytes) => {
+      if (!bytes && bytes !== 0) return ''
+
+      // Handle negative values - use absolute value for formatting
+      const absBytes = Math.abs(bytes)
+
+      let formatted = ''
+      if (absBytes >= 1048576) {
+        // 1 MB = 1024 * 1024 bytes
+        formatted = `${(absBytes / 1048576).toFixed(1)} MB (${bytes} bytes)`
+      } else if (absBytes >= 1024) {
+        // 1 KB = 1024 bytes
+        formatted = `${(absBytes / 1024).toFixed(1)} KB (${bytes} bytes)`
+      } else {
+        // For values less than 1 KB, just show bytes (no parentheses needed)
+        formatted = `${bytes} bytes`
+      }
+
+      return formatted
     }
 
     // Show article preview modal
@@ -483,7 +570,7 @@ export default {
           `Metadata refreshed: ${response.updated} updated, ${response.failed} failed`,
           response.failed === 0 ? 'success' : 'warning'
         )
-        
+
         // Reload submissions to show updated data
         await loadSubmissions()
       } catch (error) {
@@ -756,18 +843,21 @@ export default {
       currentUser,
       submissions,
       loadingSubmissions,
+      refreshingMetadata,
       deletingContest,
       checkingAuth,
       canViewSubmissions,
       canDeleteContest,
       formatDate,
       formatDateShort,
-      formatWordCount,
+      formatByteCount,
+      formatByteCountWithExact,
       getStatusColor,
       loadSubmissions,
       handleSubmitArticle,
       handleDeleteContest,
       forceAuthRefresh,
+      refreshMetadata,
       showArticlePreview,
       previewArticleUrl,
       previewArticleTitle

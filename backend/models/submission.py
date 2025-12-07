@@ -37,10 +37,14 @@ class Submission(BaseModel):
     article_link = db.Column(db.String(1000), nullable=False)
 
     # Article metadata (fetched from MediaWiki API)
-    article_author = db.Column(db.String(200), nullable=True)  # Author/creator of the article
+    # Author from latest revision at submission time (most recent editor)
+    article_author = db.Column(db.String(200), nullable=True)
     article_created_at = db.Column(db.String(50), nullable=True)  # When article was created (ISO format string)
-    article_word_count = db.Column(db.Integer, nullable=True)  # Word count/size of article
+    article_word_count = db.Column(db.Integer, nullable=True)  # Word count/size of article (in bytes)
     article_page_id = db.Column(db.String(50), nullable=True)  # MediaWiki page ID
+    article_size_at_start = db.Column(db.Integer, nullable=True)  # Article size in bytes at contest start
+    # Bytes added between contest start and submission time
+    article_expansion_bytes = db.Column(db.Integer, nullable=True)
 
     # Submission status and scoring
     status = db.Column(db.String(20), nullable=False, default='pending')
@@ -55,7 +59,8 @@ class Submission(BaseModel):
     )
 
     def __init__(self, user_id, contest_id, article_title, article_link, status='pending',
-                 article_author=None, article_created_at=None, article_word_count=None, article_page_id=None):
+                 article_author=None, article_created_at=None, article_word_count=None, article_page_id=None,
+                 article_size_at_start=None, article_expansion_bytes=None):
         """
         Initialize a new Submission instance
 
@@ -65,10 +70,12 @@ class Submission(BaseModel):
             article_title: Title of the submitted article
             article_link: URL to the submitted article
             status: Initial status (defaults to 'pending')
-            article_author: Author/creator of the article (optional, fetched from MediaWiki API)
+            article_author: Author from latest revision at submission time (optional, fetched from MediaWiki API)
             article_created_at: When article was created (optional, fetched from MediaWiki API)
-            article_word_count: Word count/size of article (optional, fetched from MediaWiki API)
+            article_word_count: Word count/size of article in bytes (optional, fetched from MediaWiki API)
             article_page_id: MediaWiki page ID (optional, fetched from MediaWiki API)
+            article_size_at_start: Article size in bytes at contest start (optional)
+            article_expansion_bytes: Bytes added between contest start and submission time (optional)
         """
         self.user_id = user_id
         self.contest_id = contest_id
@@ -80,6 +87,8 @@ class Submission(BaseModel):
         self.article_created_at = article_created_at
         self.article_word_count = article_word_count
         self.article_page_id = article_page_id
+        self.article_size_at_start = article_size_at_start
+        self.article_expansion_bytes = article_expansion_bytes
 
     def is_pending(self):
         """
@@ -224,7 +233,9 @@ class Submission(BaseModel):
             'article_author': self.article_author,
             'article_created_at': self.article_created_at,
             'article_word_count': self.article_word_count,
-                'article_page_id': self.article_page_id
+            'article_page_id': self.article_page_id,
+            'article_size_at_start': self.article_size_at_start,
+            'article_expansion_bytes': self.article_expansion_bytes
         }
 
         if include_user_info:
