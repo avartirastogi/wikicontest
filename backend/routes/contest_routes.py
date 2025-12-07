@@ -12,7 +12,14 @@ from middleware.auth import require_auth, handle_errors, validate_json_data
 from models.contest import Contest
 from models.submission import Submission
 from models.user import User
-from utils import validate_contest_submission_access
+from utils import (
+    validate_contest_submission_access,
+    get_article_size_at_timestamp,
+    extract_page_title_from_url,
+    get_latest_revision_author,
+    build_mediawiki_revisions_api_params,
+    get_mediawiki_headers
+)
 
 # Create blueprint
 contest_bp = Blueprint('contest', __name__)
@@ -328,7 +335,7 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
         JSON response with success message and submission ID
     """
     import requests
-    from urllib.parse import urlparse, parse_qs, unquote
+    from urllib.parse import urlparse
 
     user = request.current_user
     data = request.validated_data
@@ -371,57 +378,30 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
     article_created_at = None
     article_word_count = None
     article_page_id = None
+    article_size_at_start = None
+    article_expansion_bytes = None
 
     # MediaWiki API fetching has deep nesting due to complex error handling
     # pylint: disable=too-many-nested-blocks
     try:
-        # Parse the article URL to extract base URL and page title
-        url_obj = urlparse(article_link)
-        base_url = f"{url_obj.scheme}://{url_obj.netloc}"
-
-        # Extract page title from URL
-        page_title = ''
-        if '/wiki/' in url_obj.path:
-            page_title = unquote(url_obj.path.split('/wiki/')[1])
-        elif 'title=' in url_obj.query:
-            query_params = parse_qs(url_obj.query)
-            page_title = unquote(query_params.get('title', [''])[0])
-        else:
-            parts = url_obj.path.split('/')
-            page_title = unquote(parts[-1]) if parts else ''
+        # Extract page title from URL using shared utility function
+        page_title = extract_page_title_from_url(article_link)
 
         if page_title:
+            # Parse the article URL to extract base URL
+            url_obj = urlparse(article_link)
+            base_url = f"{url_obj.scheme}://{url_obj.netloc}"
+
             # Build MediaWiki API URL
             api_url = f"{base_url}/w/api.php"
 
-            # Fetch article information
-            # Use formatversion=2 for better JSON structure (as shown in MediaWiki API docs)
-            # Request revisions with user info to get author and latest word count
-            # Note: We request both 'info' and 'revisions' props to get page info and revision history
-            # Get 2 revisions: newest (for latest word count) and oldest (for author/creation date)
-            api_params = {
-                'action': 'query',
-                'titles': page_title,
-                'format': 'json',
-                'formatversion': '2',  # Use formatversion=2 for cleaner JSON structure
-                'prop': 'info|revisions',
-                'rvprop': 'timestamp|user|userid|comment|size',  # Include userid as fallback
-                'rvlimit': '2',  # Get 2 revisions: newest and oldest
-                'rvdir': 'older',  # Start from newest (default), get newest first
-                'inprop': 'url|displaytitle',
-                'redirects': 'true',  # Follow redirects automatically
-                'converttitles': 'true'  # Convert titles to canonical form
-            }
+            # Build API parameters using shared utility function
+            api_params = build_mediawiki_revisions_api_params(page_title)
+            # Add additional parameters specific to this endpoint
+            api_params['inprop'] = 'url|displaytitle'
 
-            # Make request to MediaWiki API
-            # MediaWiki API requires a User-Agent header to identify the application
-            headers = {
-                'User-Agent': (
-                    'WikiContest/1.0 (https://wikicontest.toolforge.org; '
-                    'contact@wikicontest.org) Python/requests'
-                )
-            }
-
+            # Make request to MediaWiki API using shared headers
+            headers = get_mediawiki_headers()
             response = requests.get(api_url, params=api_params, headers=headers, timeout=10)
 
             if response.status_code == 200:
@@ -463,30 +443,22 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                 # Get latest revision (newest) for word count
                                 # With rvdir='older', the first revision is the newest
                                 latest_revision = revisions[0]
-                                
+
                                 # Get word count from latest revision (most current size)
                                 article_word_count = latest_revision.get('size', 0)
-                                
-                                # Get oldest revision (creation) for author and creation date
-                                # If we have multiple revisions, the last one in the array is the oldest
-                                # If we only have one revision, it's both the newest and oldest
+
+                                # Get latest revision (newest) for author at submission time
+                                # Use shared utility function to extract author from latest revision
+                                # This gets the author who made the most recent edit at submission time
+                                article_author = get_latest_revision_author(revisions)
+                                if not article_author:
+                                    article_author = 'Unknown'
+
+                                # Get oldest revision for creation date
                                 if len(revisions) > 1:
-                                    # We have both newest and oldest revisions
                                     oldest_revision = revisions[-1]
                                 else:
-                                    # Only one revision exists, so it's both newest and oldest
                                     oldest_revision = revisions[0]
-                                
-                                # Extract author from oldest revision (creation revision)
-                                # Try 'user' field first, then 'userid' as fallback
-                                article_author = oldest_revision.get('user')
-                                if not article_author:
-                                    # If user field is missing, try userid (though this is numeric)
-                                    userid = oldest_revision.get('userid')
-                                    if userid:
-                                        article_author = f'User ID: {userid}'
-                                    else:
-                                        article_author = 'Unknown'
 
                                 # Get creation date from oldest revision
                                 article_created_at = oldest_revision.get('timestamp', '')
@@ -538,28 +510,29 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                                 # Get latest revision (newest) for word count
                                                 # With rvdir='older', the first revision is the newest
                                                 latest_rev = rev_revisions[0]
-                                                
+
                                                 # Get word count from latest revision (most current size)
                                                 article_word_count = latest_rev.get('size', 0)
-                                                
-                                                # Get oldest revision (creation) for author and creation date
+
+                                                # Get latest revision (newest) for author at submission time
+                                                # With rvdir='older', the first revision is the newest (latest)
+                                                latest_rev = rev_revisions[0]
+
+                                                # Extract author from latest revision (most recent edit)
+                                                # This gets the author who made the most recent edit at submission time
+                                                user_id_val = latest_rev.get('userid')
+                                                article_author = (
+                                                    latest_rev.get('user') or
+                                                    (f"User ID: {user_id_val}" if user_id_val else 'Unknown')
+                                                )
+
+                                                # Get creation date from oldest revision (for historical reference)
                                                 # If we have multiple revisions, the last one in the array is the oldest
                                                 # If we only have one revision, it's both the newest and oldest
                                                 if len(rev_revisions) > 1:
-                                                    # We have both newest and oldest revisions
                                                     oldest_rev = rev_revisions[-1]
                                                 else:
-                                                    # Only one revision exists, so it's both newest and oldest
                                                     oldest_rev = rev_revisions[0]
-                                                
-                                                # Extract author from oldest revision (creation revision)
-                                                user_id_val = oldest_rev.get('userid')
-                                                article_author = (
-                                                    oldest_rev.get('user') or
-                                                    (f"User ID: {user_id_val}" if user_id_val else 'Unknown')
-                                                )
-                                                
-                                                # Get creation date from oldest revision
                                                 article_created_at = oldest_rev.get('timestamp', '')
                                                 article_page_id = page_id
 
@@ -633,6 +606,65 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
         if not article_title:
             article_title = 'Article'
 
+    # Calculate expansion (bytes added between contest start and submission time)
+    # Expansion = size at submission time - size at contest start
+    if contest.start_date and article_link and article_page_id:
+        try:
+            from datetime import time
+            from flask import current_app
+
+            # Convert contest start_date (Date) to datetime at start of day (00:00:00 UTC)
+            # This ensures we get the article size at the beginning of the contest start date
+            contest_start_datetime = datetime.combine(contest.start_date, time.min)
+
+            # Get submission time (current time when submission is being created)
+            submission_datetime = datetime.utcnow()
+
+            # Get article size at contest start
+            size_at_start = get_article_size_at_timestamp(article_link, contest_start_datetime)
+            article_size_at_start = size_at_start  # Store the size at contest start
+
+            # Get article size at submission time
+            # Use the current article_word_count if available, otherwise query API
+            size_at_submission = article_word_count
+            if size_at_submission is None:
+                size_at_submission = get_article_size_at_timestamp(article_link, submission_datetime)
+
+            # Calculate expansion
+            # If article didn't exist at contest start, expansion = full size at submission
+            # If we couldn't get size_at_start, set expansion to None (unknown)
+            if size_at_start is not None and size_at_submission is not None:
+                article_expansion_bytes = size_at_submission - size_at_start
+                # Allow negative values to show if article size decreased
+            elif size_at_submission is not None and size_at_start is None:
+                # Article didn't exist at contest start, so all content is expansion
+                article_expansion_bytes = size_at_submission
+                article_size_at_start = 0  # Set to 0 if article didn't exist at start
+            else:
+                # Couldn't determine expansion
+                article_expansion_bytes = None
+
+            # Log expansion calculation for debugging
+            try:
+                current_app.logger.info(
+                    f'Expansion calculation: size_at_start={size_at_start}, '
+                    f'size_at_submission={size_at_submission}, '
+                    f'expansion={article_expansion_bytes}'
+                )
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
+        except Exception as exp_error:  # pylint: disable=broad-exception-caught
+            # If expansion calculation fails, log but don't fail submission
+            try:
+                from flask import current_app
+                current_app.logger.warning(
+                    f'Failed to calculate expansion: {str(exp_error)}'
+                )
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+            article_expansion_bytes = None
+
     # Create submission with fetched information
     try:
         submission = Submission(
@@ -644,7 +676,9 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             article_author=article_author,
             article_created_at=article_created_at,
             article_word_count=article_word_count,
-            article_page_id=article_page_id
+            article_page_id=article_page_id,
+            article_size_at_start=article_size_at_start,
+            article_expansion_bytes=article_expansion_bytes
         )
 
         submission.save()
@@ -668,7 +702,8 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             'article_title': article_title,
             'article_author': article_author,
             'article_word_count': article_word_count,
-            'article_created_at': article_created_at
+            'article_created_at': article_created_at,
+            'article_expansion_bytes': article_expansion_bytes
         }), 201
 
     except Exception:  # pylint: disable=broad-exception-caught
