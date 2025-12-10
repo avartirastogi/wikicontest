@@ -9,8 +9,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 // Import page components
 import Home from '../views/Home.vue'
-import Login from '../views/Login.vue'
-import Register from '../views/Register.vue'
 import Contests from '../views/Contests.vue'
 import ContestView from '../views/ContestView.vue'
 import Dashboard from '../views/Dashboard.vue'
@@ -24,16 +22,6 @@ const routes = [
     path: '/',
     name: 'Home',
     component: Home
-  },
-  {
-    path: '/login',
-    name: 'Login',
-    component: Login
-  },
-  {
-    path: '/register',
-    name: 'Register',
-    component: Register
   },
   {
     path: '/contests',
@@ -111,14 +99,27 @@ router.beforeEach(async (to, from, next) => {
 
   // Check if route requires authentication
   if (to.meta.requiresAuth && !isAuthenticated) {
-    // Redirect to login with return URL
-    next({
-      name: 'Login',
-      query: { redirect: to.fullPath }
-    })
+    // Redirect directly to MediaWiki OAuth authentication
+    // Get API base URL for OAuth redirect
+    const getApiBaseUrl = () => {
+      // In development, use full URL to Flask backend
+      if (import.meta.env.DEV) {
+        return 'http://localhost:5000/api'
+      }
+      // In production, use relative URL
+      return '/api'
+    }
+    
+    // Store the intended destination for after OAuth
+    if (to.fullPath !== '/') {
+      sessionStorage.setItem('oauth_redirect', to.fullPath)
+    }
+    
+    // Redirect to OAuth login endpoint
+    window.location.href = `${getApiBaseUrl()}/user/oauth/login`
+    return // Stop navigation
   } else {
-    // Allow access to login/register pages even if authenticated
-    // The Login component will show a message if user is already logged in
+    // Allow access to public pages
     next()
   }
 })

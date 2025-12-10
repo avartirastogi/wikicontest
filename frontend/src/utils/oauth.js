@@ -32,14 +32,16 @@ export function processOAuthCallback(store, router) {
           // Clean up URL and redirect to dashboard
           router.replace('/dashboard')
         } else {
-          // Auth check failed, redirect to login
+          // Auth check failed, redirect to home page
+          // User can try OAuth login again from there
           showAlert('Authentication failed. Please try again.', 'warning')
-          router.replace('/login')
+          router.replace('/')
         }
       } catch (error) {
         console.error('OAuth callback error:', error)
         showAlert('Failed to verify authentication. Please try logging in again.', 'danger')
-        router.replace('/login')
+        // Redirect to home page - user can try OAuth login again
+        router.replace('/')
       }
     }, 200)
   }
@@ -48,7 +50,8 @@ export function processOAuthCallback(store, router) {
   const oauthError = urlParams.get('oauth_error')
   if (oauthError) {
     showAlert(`OAuth login failed: ${oauthError}`, 'danger')
-    // Clean up URL
-    router.replace('/login')
+    // Clean up URL and redirect to home page
+    // User can try OAuth login again from there
+    router.replace('/')
   }
 }
