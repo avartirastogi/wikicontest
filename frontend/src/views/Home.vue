@@ -14,7 +14,13 @@
 
           <div class="hero-buttons">
             <router-link class="btn btn-primary btn-lg" to="/contests">Browse Contests</router-link>
-            <router-link class="btn btn-outline-primary btn-lg" to="/register">Get Started</router-link>
+            <a
+              @click.prevent="handleGetStarted"
+              class="btn btn-outline-primary btn-lg"
+              title="Get started with Wikimedia OAuth authentication"
+            >
+              Get Started
+            </a>
           </div>
         </div>
       </div>
@@ -56,8 +62,47 @@
 
 
 <script>
+import { useStore } from '../store'
+import { useRouter } from 'vue-router'
+
 export default {
-  name: 'Home'
+  name: 'Home',
+  setup() {
+    const store = useStore()
+    const router = useRouter()
+
+    return {
+      store,
+      router
+    }
+  },
+  methods: {
+    // Handle "Get Started" button click
+    // If user is logged in, navigate to dashboard
+    // Otherwise, redirect to OAuth login
+    async handleGetStarted() {
+      // Check if user is authenticated
+      const isAuthenticated = this.store.isAuthenticated
+
+      if (isAuthenticated) {
+        // User is logged in - navigate to dashboard
+        this.router.push('/dashboard')
+      } else {
+        // User is not logged in - redirect to OAuth login
+        window.location.href = this.getOAuthUrl()
+      }
+    },
+    // Get MediaWiki OAuth URL - directly opens MediaWiki authentication
+    // This bypasses the login/register page and goes straight to OAuth
+    getOAuthUrl() {
+      // In development, use full URL to Flask backend
+      if (import.meta.env.DEV) {
+        return 'http://localhost:5000/api/user/oauth/login'
+      }
+      // In production, use relative URL
+      return '/api/user/oauth/login'
+    }
+  }
 }
 </script>
 
