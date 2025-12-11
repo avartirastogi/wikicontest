@@ -174,10 +174,6 @@
                         )
                       }}
                     </div>
-                    <div v-if="submission.article_word_count && submission.article_word_count > 0"
-                      class="text-muted small mt-1">
-                      <i class="fas fa-file-alt me-1"></i>{{ formatWordCount(submission.article_word_count) }}
-                    </div>
                     <div
                       v-if="submission.article_word_count !== null &&
                         submission.article_word_count !== undefined"
@@ -580,6 +576,20 @@ export default {
       return formatted
     }
 
+    // Format raw byte count into a short human-readable string
+    // Keeps it simple to avoid template crashes when data is present
+    const formatWordCount = (bytes) => {
+      if (bytes === null || bytes === undefined) return '0 bytes'
+      const absBytes = Math.abs(bytes)
+      if (absBytes >= 1048576) {
+        return `${(absBytes / 1048576).toFixed(1)} MB`
+      }
+      if (absBytes >= 1024) {
+        return `${(absBytes / 1024).toFixed(1)} KB`
+      }
+      return `${absBytes} bytes`
+    }
+
     // Get status label
     const getStatusLabel = (status) => {
       const labels = {
@@ -917,6 +927,7 @@ export default {
       formatDateShort,
       formatByteCount,
       formatByteCountWithExact,
+      formatWordCount,
       getStatusLabel,
       getStatusColor,
       loadSubmissions,

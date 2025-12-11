@@ -4,6 +4,7 @@ Handles contest creation, retrieval, and management functionality
 """
 
 from datetime import datetime
+import traceback
 
 from flask import Blueprint, request, jsonify, current_app
 
@@ -315,22 +316,22 @@ def delete_contest(contest_id):
         return jsonify({'error': 'Failed to delete contest'}), 500
 
 
-def parse_date_or_none(s):
-    if not s:
+def parse_date_or_none(date_str):
+    """Parse a date string and return date or None when invalid."""
+    if not date_str:
         return None
     try:
-        return datetime.strptime(s, "%Y-%m-%d").date()
-    except Exception:
+        return datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
         try:
-            return datetime.fromisoformat(s).date()
-        except Exception:
+            return datetime.fromisoformat(date_str).date()
+        except ValueError:
             return None
 
 @contest_bp.route('/<int:contest_id>', methods=['PUT'])
-@require_auth  
-def update_contest(contest_id):
-    from flask import Blueprint, request, jsonify, current_app
-    user = request.current_user 
+@require_auth
+def update_contest(contest_id):  # pylint: disable=too-many-return-statements
+    user = request.current_user
     try:
         if not request.is_json:
             data = request.get_json(force=True, silent=True) or {}
@@ -350,24 +351,19 @@ def update_contest(contest_id):
         # --- Basic fields ---
         if 'name' in data:
             contest.name = data.get('name') or contest.name
-        
         if 'project_name' in data:
-            contest.project_name = data.get('project_name') or contest.project_name    
+            contest.project_name = data.get('project_name') or contest.project_name
 
         if 'description' in data:
             contest.description = data.get('description')
 
-        
         rules_payload = data.get('rules', None)
         if rules_payload is not None:
             if isinstance(rules_payload, str):
-               
-               
                 contest.set_rules({'text': rules_payload})
             elif isinstance(rules_payload, dict):
                 contest.set_rules(rules_payload)
             else:
-                
                 contest.set_rules({'text': ''})
 
         # --- Dates ---
@@ -387,30 +383,27 @@ def update_contest(contest_id):
             if contest.start_date >= contest.end_date:
                 return jsonify({'error': 'start_date must be < end_date'}), 400
 
-        
         if 'marks_setting_accepted' in data:
             try:
                 contest.marks_setting_accepted = int(data.get('marks_setting_accepted') or 0)
-            except Exception:
+            except (TypeError, ValueError):
                 return jsonify({'error': 'marks_setting_accepted must be integer'}), 400
 
         if 'marks_setting_rejected' in data:
             try:
                 contest.marks_setting_rejected = int(data.get('marks_setting_rejected') or 0)
-            except Exception:
+            except (TypeError, ValueError):
                 return jsonify({'error': 'marks_setting_rejected must be integer'}), 400
 
         # --- Jury members: accept list or comma string ---
         if 'jury_members' in data:
-            jm = data.get('jury_members')
-            if isinstance(jm, list):
-                contest.set_jury_members(jm)
-            elif isinstance(jm, str):
-               
-                arr = [x.strip() for x in jm.split(',') if x.strip()]
+            jury_members_value = data.get('jury_members')
+            if isinstance(jury_members_value, list):
+                contest.set_jury_members(jury_members_value)
+            elif isinstance(jury_members_value, str):
+                arr = [x.strip() for x in jury_members_value.split(',') if x.strip()]
                 contest.set_jury_members(arr)
             else:
-                
                 contest.set_jury_members([])
 
         # --- Code link ---
@@ -425,11 +418,9 @@ def update_contest(contest_id):
         current_app.logger.info("Contest %s updated by %s", contest_id, user.username)
         return jsonify({'message': 'Contest updated', 'contest': contest.to_dict()}), 200
 
-    except Exception as exc:
-      
+    except Exception as exc:  # pylint: disable=broad-exception-caught
         current_app.logger.error("Error updating contest %s: %s", contest_id, exc)
         current_app.logger.error(traceback.format_exc())
-        
         return jsonify({'error': 'Internal server error'}), 500
 
 
@@ -586,7 +577,6 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
 
                                 # Debug logging to help diagnose issues
                                 try:
-                                    from flask import current_app
                                     current_app.logger.info(
                                         f'Fetched article info: title={article_title}, '
                                         f'author={article_author}, word_count={article_word_count}, '
@@ -657,7 +647,6 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                                 article_page_id = page_id
 
                                                 try:
-                                                    from flask import current_app
                                                     current_app.logger.info(
                                                         f'Got revision data from second API call: '
                                                         f'author={article_author}'
@@ -668,7 +657,6 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                 except Exception as rev_err:  # pylint: disable=broad-exception-caught
                                     # If second API call fails, log it but continue
                                     try:
-                                        from flask import current_app
                                         current_app.logger.warning(
                                             f'Failed to get revisions from second API call: '
                                             f'{str(rev_err)}'
@@ -680,7 +668,6 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                 # Log if still no revisions found
                                 if not article_author or article_author == 'Unknown':
                                     try:
-                                        from flask import current_app
                                         current_app.logger.warning(
                                             f'No revisions found for page: {page_title}, '
                                             f'page_data keys: {list(page_data.keys())}, '
@@ -692,7 +679,6 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                         else:
                             # Page is missing or doesn't exist
                             try:
-                                from flask import current_app
                                 current_app.logger.warning(
                                     f'Page not found or missing: {page_title}, '
                                     f'page_id={page_id}, missing={is_missing}'
@@ -714,7 +700,6 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
         # but with limited information
         # Log the error but don't fail the submission
         try:
-            from flask import current_app
             current_app.logger.warning(
                 f'Failed to fetch article info from MediaWiki API: {str(error)}'
             )
@@ -731,7 +716,6 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
     if contest.start_date and article_link and article_page_id:
         try:
             from datetime import time
-            from flask import current_app
 
             # Convert contest start_date (Date) to datetime at start of day (00:00:00 UTC)
             # This ensures we get the article size at the beginning of the contest start date
@@ -768,7 +752,6 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
         except Exception as exp_error:  # pylint: disable=broad-exception-caught
             # If expansion calculation fails, log but don't fail submission
             try:
-                from flask import current_app
                 current_app.logger.warning(
                     f'Failed to calculate expansion: {str(exp_error)}'
                 )
@@ -796,7 +779,6 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
 
         # Debug: Log what was saved
         try:
-            from flask import current_app
             current_app.logger.info(
                 f'Submission saved: id={submission.id}, '
                 f'author={submission.article_author}, '
