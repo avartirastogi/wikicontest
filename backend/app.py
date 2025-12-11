@@ -138,7 +138,7 @@ def create_app():
 
     # Initialize database with the app
     db.init_app(flask_app)
-
+    
     # Initialize JWT manager for token handling
     JWTManager(flask_app)
 
@@ -176,7 +176,6 @@ app = create_app()
 app.register_blueprint(user_bp, url_prefix='/api/user')  # User management endpoints
 app.register_blueprint(contest_bp, url_prefix='/api/contest')  # Contest endpoints
 app.register_blueprint(submission_bp, url_prefix='/api/submission')  # Submission endpoints
-
 # =============================================================================
 # AUTHENTICATION ENDPOINTS
 # =============================================================================

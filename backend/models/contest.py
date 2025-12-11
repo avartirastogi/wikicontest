@@ -51,6 +51,7 @@ class Contest(BaseModel):
     rules = db.Column(db.Text, nullable=True)  # JSON string
     marks_setting_accepted = db.Column(db.Integer, default=0, nullable=False)
     marks_setting_rejected = db.Column(db.Integer, default=0, nullable=False)
+    allowed_submission_type = db.Column(db.String(20), default="both", nullable=False)
 
     # Jury members (comma-separated usernames)
     jury_members = db.Column(db.Text, nullable=True)
@@ -82,6 +83,8 @@ class Contest(BaseModel):
         self.end_date = kwargs.get('end_date')
         self.marks_setting_accepted = kwargs.get('marks_setting_accepted', 0)
         self.marks_setting_rejected = kwargs.get('marks_setting_rejected', 0)
+        self.allowed_submission_type = kwargs.get('allowed_submission_type', 'both')
+
 
         # Handle rules and jury_members
         self.set_rules(kwargs.get('rules', {}))
@@ -249,12 +252,13 @@ class Contest(BaseModel):
             'rules': self.get_rules(),
             'marks_setting_accepted': self.marks_setting_accepted,
             'marks_setting_rejected': self.marks_setting_rejected,
+            'allowed_submission_type': self.allowed_submission_type,
             'jury_members': self.get_jury_members(),
             # Format datetime as ISO string with 'Z' suffix to indicate UTC
             # This ensures JavaScript interprets it as UTC, not local time
             'created_at': (self.created_at.isoformat() + 'Z') if self.created_at else None,
             'submission_count': self.get_submission_count(),
-            'status': self.get_status()
+            'status': self.get_status()      
         }
 
     def __repr__(self):

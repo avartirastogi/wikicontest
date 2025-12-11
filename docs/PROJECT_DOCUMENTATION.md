@@ -98,6 +98,8 @@ class Contest(db.Model):
     end_date = db.Column(db.DateTime, nullable=False)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    allowed_submission_type = db.Column(db.String(20), default="both")
+
 ```
 
 **Purpose**: Manages contest information, timing, and creator relationships.
