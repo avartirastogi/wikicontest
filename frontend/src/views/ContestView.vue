@@ -1,11 +1,40 @@
 <template>
   <div class="container py-5">
     <!-- Back button -->
-    <div class="mb-4">
-      <button class="btn btn-outline-secondary" @click="goBack">
-        <i class="fas fa-arrow-left me-2"></i>Back to Contests
-      </button>
-    </div>
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+  <!-- Left: Back button -->
+  <button class="btn btn-outline-secondary" @click="goBack">
+    <i class="fas fa-arrow-left me-2"></i>Back to Contests
+  </button>
+
+  <!-- Right: Action buttons -->
+  <div class="d-flex gap-2">
+    <button v-if="canDeleteContest"
+            class="btn btn-danger"
+            @click="handleDeleteContest"
+            :disabled="deletingContest">
+      <span v-if="deletingContest" class="spinner-border spinner-border-sm me-2"></span>
+      <i v-else class="fas fa-trash me-2"></i>
+      {{ deletingContest ? 'Deleting...' : 'Delete Contest' }}
+    </button>
+
+    <button v-if="canDeleteContest"
+            class="btn btn-primary"
+            @click="openEditModal">
+      <i class="fas fa-edit me-2"></i>Edit Contest
+    </button>
+
+    <button v-if="contest?.status === 'current' 
+                  && isAuthenticated 
+                  && !canViewSubmissions"
+            class="btn btn-primary"
+            @click="handleSubmitArticle">
+      <i class="fas fa-paper-plane me-2"></i>Submit Article
+    </button>
+  </div>
+</div>
+
+     
 
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-5">
@@ -269,20 +298,6 @@
             <i class="fas fa-sync-alt me-1"></i>Refresh Auth
           </button>
         </div>
-
-        <button v-if="canDeleteContest" class="btn btn-danger" @click="handleDeleteContest" :disabled="deletingContest">
-          <span v-if="deletingContest" class="spinner-border spinner-border-sm me-2"></span>
-          <i v-else class="fas fa-trash me-2"></i>
-          {{ deletingContest ? 'Deleting...' : 'Delete Contest' }}
-        </button>
-        <button v-if="canDeleteContest" class="btn btn-warning" @click="openEditModal">
-          <i class="fas fa-edit me-2"></i>Edit Contest
-        </button>
-
-        <button v-if="contest?.status === 'current' && isAuthenticated && !canViewSubmissions" class="btn btn-primary"
-          @click="handleSubmitArticle">
-          <i class="fas fa-paper-plane me-2"></i>Submit Article
-        </button>
       </div>
     </div>
 
