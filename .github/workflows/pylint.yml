@@ -11,19 +11,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"  # adjust if you need 3.10
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r backend/requirements.txt
-          pip install pylint
+          python -m pip install --upgrade pip
+          if [ -f backend/requirements.txt ]; then python -m pip install -r backend/requirements.txt; fi
+          python -m pip install pylint
 
-      - name: Run Pylint
-        run: |
-          pylint --fail-under=9 backend/**/*.py
+      - name: Run pylint on app.py
+        run: python -m pylint --fail-under=9 backend/app.py
+
+      - name: Run pylint on models
+        run: python -m pylint --fail-under=9 backend/models/
+
+      - name: Run pylint on routes
+        run: python -m pylint --fail-under=9 backend/routes/
