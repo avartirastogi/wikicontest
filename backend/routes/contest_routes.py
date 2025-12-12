@@ -155,6 +155,7 @@ def create_contest():
     # Parse scoring settings
     marks_accepted = data.get('marks_setting_accepted', 0)
     marks_rejected = data.get('marks_setting_rejected', 0)
+    allowed_submission_type = data.get("allowed_submission_type", "both")
 
     try:
         marks_accepted = int(marks_accepted)
@@ -175,7 +176,8 @@ def create_contest():
             rules=rules,
             marks_setting_accepted=marks_accepted,
             marks_setting_rejected=marks_rejected,
-            jury_members=jury_members
+            jury_members=jury_members,
+            allowed_submission_type=allowed_submission_type  
         )
 
         contest.save()
@@ -365,7 +367,16 @@ def update_contest(contest_id):  # pylint: disable=too-many-return-statements
                 contest.set_rules(rules_payload)
             else:
                 contest.set_rules({'text': ''})
+        
+        if "allowed_submission_type" in data:
+           new_type = data.get("allowed_submission_type", "both")
 
+          # Validate only allowed values
+        if new_type not in ["new", "expansion", "both"]:
+                return jsonify({"error": "Invalid allowed_submission_type"}), 400
+
+        contest.allowed_submission_type = new_type
+    
         # --- Dates ---
         if 'start_date' in data:
             parsed = parse_date_or_none(data.get('start_date'))

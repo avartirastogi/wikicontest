@@ -34,6 +34,29 @@
                 Enter the full URL of your MediaWiki article (e.g., Wikipedia, Wikiversity, etc.)
               </small>
             </div>
+            <!-- SUBMISSION TYPE -->
+            <div class="mb-3" v-if="contest">
+              <label class="form-label">
+                <i class="fas fa-edit me-2 text-primary"></i>
+                Submission Type <span class="text-danger">*</span>
+              </label>
+
+              <select v-model="formData.submission_type" class="form-control" required>
+                <option 
+                  value="new"
+                  v-if="contest.allowed_submission_type === 'new' || contest.allowed_submission_type === 'both'"
+                >
+                  New Article
+                </option>
+
+                <option 
+                  value="expansion"
+                  v-if="contest.allowed_submission_type === 'expansion' || contest.allowed_submission_type === 'both'"
+                >
+                  Expansion
+                </option>
+              </select>
+            </div>
 
             <div v-if="error" class="alert alert-danger" role="alert">
               {{ error }}

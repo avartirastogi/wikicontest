@@ -86,6 +86,33 @@
     </pre>
         </div>
       </div>
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>Submission Type Allowed</h3>
+        </div>
+        <div class="card-body">
+          <p>
+            <strong>
+              {{
+                contest.allowed_submission_type === 'new'
+                  ? 'New Articles Only'
+                  : contest.allowed_submission_type === 'expansion'
+                    ? 'Improved Articles Only'
+                    : 'Both (New Articles + Improved Articles)'
+              }}
+            </strong>
+          </p>
+
+          <!-- Small explanatory note -->
+          <p class="mt-2 small text-muted">
+            <em>
+              • <strong>New Articles</strong> = Completely new Wikipedia article created during the contest.<br>
+              • <strong>Improved Articles</strong> = An existing article improved or expanded with substantial content.
+            </em>
+          </p>
+        </div>
+      </div>
+
 
       <!-- Jury Members Section -->
       <div v-if="contest.jury_members && contest.jury_members.length > 0" class="card mb-4">
@@ -109,27 +136,19 @@
           </p>
         </div>
       </div>
-
-
-
       <!-- Submissions Section (for jury and contest creators) -->
       <div v-if="canViewSubmissions" class="card mb-4">
         <div class="card-header">
           <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Submissions</h5>
-            <button
-              v-if="loadingSubmissions || refreshingMetadata"
-              class="btn btn-sm btn-outline-secondary"
-              disabled
-            >
+            <button v-if="loadingSubmissions || refreshingMetadata" class="btn btn-sm btn-outline-secondary" disabled>
               <span class="spinner-border spinner-border-sm me-2"></span>
               {{ loadingSubmissions ? 'Loading...' : 'Refreshing...' }}
             </button>
             <button v-else class="btn btn-sm btn-outline-light" @click="refreshMetadata"
               :disabled="submissions.length === 0"
               title="Refresh article metadata (byte count, author, etc.) from MediaWiki and reload submissions"
-              style="color: white; border-color: white;"
-            >
+              style="color: white; border-color: white;">
               <i class="fas fa-database me-1"></i>Refresh Metadata
             </button>
           </div>
@@ -161,11 +180,8 @@
                       <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
                     </a>
                     <!-- Total bytes = Original bytes (at submission) + Expansion bytes (change since submission) -->
-                    <div
-                      v-if="submission.article_word_count !== null &&
-                        submission.article_word_count !== undefined"
-                      class="text-muted small mt-1"
-                    >
+                    <div v-if="submission.article_word_count !== null &&
+                      submission.article_word_count !== undefined" class="text-muted small mt-1">
                       <i class="fas fa-file-alt me-1"></i>Total bytes:
                       {{
                         formatByteCountWithExact(
@@ -174,30 +190,23 @@
                         )
                       }}
                     </div>
-                    <div
-                      v-if="submission.article_word_count !== null &&
-                        submission.article_word_count !== undefined"
-                      class="text-muted small mt-1"
-                    >
+                    <div v-if="submission.article_word_count && submission.article_word_count > 0"
+                      class="text-muted small mt-1">
+                      <i class="fas fa-file-alt me-1"></i>{{ formatWordCount(submission.article_word_count) }}
+                    </div>
+                    <div v-if="submission.article_word_count !== null &&
+                      submission.article_word_count !== undefined" class="text-muted small mt-1">
                       <i class="fas fa-clock me-1"></i>Original bytes:
                       {{ formatByteCountWithExact(submission.article_word_count) }}
                     </div>
                     <!-- Show expansion bytes (0 if no change, +X if increased, -X if decreased) -->
-                    <div
-                      v-if="submission.article_expansion_bytes !== null &&
-                        submission.article_expansion_bytes !== undefined"
-                      class="text-muted small mt-1"
-                    >
-                      <i
-                        v-if="submission.article_expansion_bytes !== 0"
-                        :class="submission.article_expansion_bytes >= 0
-                          ? 'fas fa-arrow-up me-1'
-                          : 'fas fa-arrow-down me-1'"
-                      ></i>Expansion bytes:
-                      <span
-                        v-if="submission.article_expansion_bytes !== 0"
-                        :class="submission.article_expansion_bytes >= 0 ? 'text-success' : 'text-danger'"
-                      >
+                    <div v-if="submission.article_expansion_bytes !== null &&
+                      submission.article_expansion_bytes !== undefined" class="text-muted small mt-1">
+                      <i v-if="submission.article_expansion_bytes !== 0" :class="submission.article_expansion_bytes >= 0
+                        ? 'fas fa-arrow-up me-1'
+                        : 'fas fa-arrow-down me-1'"></i>Expansion bytes:
+                      <span v-if="submission.article_expansion_bytes !== 0"
+                        :class="submission.article_expansion_bytes >= 0 ? 'text-success' : 'text-danger'">
                         {{ submission.article_expansion_bytes >= 0 ? '+' : '-' }}{{
                           formatByteCountWithExact(Math.abs(submission.article_expansion_bytes))
                         }}
@@ -217,19 +226,13 @@
                       <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
                     </div>
                     <!-- Latest revision author (from latest revision, shown below original) -->
-                    <div
-                      v-if="submission.latest_revision_author"
-                      class="mt-2 pt-2"
-                      style="border-top: 1px solid #dee2e6;"
-                    >
+                    <div v-if="submission.latest_revision_author" class="mt-2 pt-2"
+                      style="border-top: 1px solid #dee2e6;">
                       <div>
                         <i class="fas fa-user me-1"></i>{{ submission.latest_revision_author }}
                         <span class="badge bg-info ms-1" style="font-size: 0.7em;">Latest</span>
                       </div>
-                      <div
-                        v-if="submission.latest_revision_timestamp"
-                        class="text-muted small mt-1"
-                      >
+                      <div v-if="submission.latest_revision_timestamp" class="text-muted small mt-1">
                         <i class="fas fa-calendar me-1"></i>
                         {{ formatDateShort(submission.latest_revision_timestamp) }}
                       </div>
@@ -325,6 +328,17 @@
               <label class="form-label">Rules</label>
               <textarea v-model="editForm.rules" rows="6" class="form-control"></textarea>
             </div>
+
+            <div class="mb-3">
+              <label class="form-label">Allowed Submission Type</label>
+              <select class="form-control" v-model="editForm.allowed_submission_type">
+                <option value="new">New Articles Only</option>
+                <option value="expansion">Improved Article Only</option>
+                <option value="both">Both (New Article + Improved Article)</option>
+              </select>
+            </div>
+
+
 
             <div class="row">
               <div class="col-md-6 mb-3">
@@ -834,7 +848,8 @@ export default {
       marks_setting_accepted: 0,
       marks_setting_rejected: 0,
       jury_members: '',
-      code_link: ''
+      code_link: '',
+      allowed_submission_type: ''
     })
 
     onMounted(() => {
@@ -853,6 +868,7 @@ export default {
 
 
       editForm.rules = contest.value.rules?.text || "";
+      editForm.allowed_submission_type = contest.value.allowed_submission_type || "both";
 
       editForm.start_date = contest.value.start_date || "";
       editForm.end_date = contest.value.end_date || "";
@@ -887,7 +903,8 @@ export default {
               .split(",")
               .map(x => x.trim())
               .filter(x => x.length > 0),
-          code_link: editForm.code_link?.trim() || null
+          code_link: editForm.code_link?.trim() || null,
+          allowed_submission_type: editForm.allowed_submission_type,
         };
 
         // console.log("FINAL PAYLOAD SENT →", payload);
