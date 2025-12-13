@@ -9,9 +9,12 @@ Usage:
     python main.py
 """
 
-from app import app, db
+# Third-party imports should come before local imports
 from sqlalchemy import inspect, text
 from sqlalchemy.exc import SQLAlchemyError, ProgrammingError, OperationalError
+
+# Local application imports
+from app import app, db
 
 def migrate_database():
     """
