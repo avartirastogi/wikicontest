@@ -8,12 +8,12 @@ import traceback
 
 from flask import Blueprint, request, jsonify, current_app
 
-from database import db
-from middleware.auth import require_auth, handle_errors, validate_json_data
-from models.contest import Contest
-from models.submission import Submission
-from models.user import User
-from utils import (
+from app.database import db
+from app.middleware.auth import require_auth, handle_errors, validate_json_data
+from app.models.contest import Contest
+from app.models.submission import Submission
+from app.models.user import User
+from app.utils import (
     validate_contest_submission_access,
     get_article_size_at_timestamp,
     extract_page_title_from_url,
@@ -177,7 +177,7 @@ def create_contest():
             marks_setting_accepted=marks_accepted,
             marks_setting_rejected=marks_rejected,
             jury_members=jury_members,
-            allowed_submission_type=allowed_submission_type  
+            allowed_submission_type=allowed_submission_type
         )
 
         contest.save()
@@ -367,16 +367,16 @@ def update_contest(contest_id):  # pylint: disable=too-many-return-statements
                 contest.set_rules(rules_payload)
             else:
                 contest.set_rules({'text': ''})
-        
-        if "allowed_submission_type" in data:
-           new_type = data.get("allowed_submission_type", "both")
 
-          # Validate only allowed values
-        if new_type not in ["new", "expansion", "both"]:
+        if "allowed_submission_type" in data:
+            new_type = data.get("allowed_submission_type", "both")
+
+            # Validate only allowed values
+            if new_type not in ["new", "expansion", "both"]:
                 return jsonify({"error": "Invalid allowed_submission_type"}), 400
 
-        contest.allowed_submission_type = new_type
-    
+            contest.allowed_submission_type = new_type
+
         # --- Dates ---
         if 'start_date' in data:
             parsed = parse_date_or_none(data.get('start_date'))
