@@ -65,10 +65,16 @@ A web platform for hosting and participating in collaborative online competition
    
    d. Users can then click "Login with Wikimedia" on the login page
 
-7. **Initialize database**
+7. **Initialize database with Alembic migrations**
    ```bash
-   python init_db.py
+   # Apply all database migrations
+   alembic upgrade head
+   
+   # Or use the helper script
+   python scripts/migrate.py upgrade head
    ```
+   
+   **Note**: The app does not automatically run migrations on startup. You must run Alembic migrations manually before starting the application.
 
 8. **Run the application**
 
@@ -78,7 +84,7 @@ A web platform for hosting and participating in collaborative online competition
    
    Terminal 1 - Flask Backend:
    ```bash
-   python app.py
+   python main.py
    ```
    
    Terminal 2 - Vue.js Frontend:
@@ -98,7 +104,7 @@ A web platform for hosting and participating in collaborative online competition
    npm install  # Only needed first time
    npm run build
    cd ../backend
-   python app.py
+   python main.py
    ```
    
    Access at: `http://localhost:5000` (Flask serves built Vue.js files)
@@ -108,6 +114,8 @@ A web platform for hosting and participating in collaborative online competition
    - Production: `http://localhost:5000` (Flask serves built files)
 
 **Quick Testing Option**: If you want to skip MySQL setup, edit `.env` and change `DATABASE_URL` to `sqlite:///wikicontest.db`
+
+**Database Migrations**: The application uses Alembic for database migrations. Always run `alembic upgrade head` before starting the app to ensure your database schema is up to date. The app does not automatically run migrations on startup.
 
 **Frontend Development**: For the best development experience, run the Vue.js dev server (`npm run dev` in `frontend/` directory) alongside Flask. The dev server proxies API requests to Flask automatically.
 
@@ -146,8 +154,11 @@ The `.env.example` file contains all configuration options. Copy it to `.env` an
 ## 🧪 Testing
 
 ```bash
+# Make sure migrations are applied first
+alembic upgrade head
+
 # Test the application
-python app.py
+python main.py
 # Open http://localhost:5000 and test:
 # - User registration/login
 # - Contest creation
@@ -162,10 +173,15 @@ python app.py
    export DATABASE_URL=your-production-mysql-url
    ```
 
-2. **Run with production server**
+2. **Apply database migrations**
+   ```bash
+   alembic upgrade head
+   ```
+
+3. **Run with production server**
    ```bash
    pip install gunicorn
-   gunicorn -w 4 -b 0.0.0.0:5000 app:app
+   gunicorn -w 4 -b 0.0.0.0:5000 "app:app"
    ```
 
 ## Project Structure
@@ -173,10 +189,14 @@ python app.py
 ```
 wikicontest/
 ├── backend/           # Flask application
-│   ├── app.py        # Main application
-│   ├── models/       # Database models
-│   ├── routes/        # API endpoints
-│   └── middleware/    # Authentication
+│   ├── main.py       # Application entry point
+│   ├── app/          # Application package
+│   │   ├── __init__.py  # Flask app factory
+│   │   ├── models/   # Database models
+│   │   ├── routes/   # API endpoints
+│   │   └── middleware/ # Authentication
+│   ├── alembic/      # Database migrations (Alembic)
+│   └── scripts/      # Utility scripts
 └── frontend/         # Vue.js frontend
     ├── src/          # Source files
     │   ├── views/    # Page components

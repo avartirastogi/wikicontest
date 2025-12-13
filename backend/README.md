@@ -41,11 +41,6 @@ backend/
 │   ├── versions/               # Migration version files
 │   ├── script.py.mako         # Migration template
 │   └── README.md               # Alembic documentation
-├── migrations/                 # Custom migration scripts (one-time/data migrations)
-│   ├── README.md
-│   ├── add_article_metadata_to_submissions.py
-│   ├── add_expansion_bytes_to_submissions.py
-│   └── add_size_at_start_to_submissions.py
 ├── scripts/                     # Utility scripts
 │   ├── init_db.py               # Database initialization
 │   ├── backfill_article_info.py # Backfill article metadata
@@ -332,17 +327,6 @@ For detailed Alembic documentation, see:
 - [`docs/ALEMBIC_USAGE_GUIDE.md`](docs/ALEMBIC_USAGE_GUIDE.md) - Complete usage guide
 - [`docs/ALEMBIC_MODEL_COMPATIBILITY.md`](docs/ALEMBIC_MODEL_COMPATIBILITY.md) - Model compatibility guide
 - [`docs/ALEMBIC_SETUP_VERIFICATION.md`](docs/ALEMBIC_SETUP_VERIFICATION.md) - Setup verification checklist
-
-#### Legacy Migration Scripts
-
-The application also includes custom migration scripts in the `migrations/` directory for reference. These can be run manually if needed:
-
-```bash
-# Run a specific migration
-python migrations/add_article_metadata_to_submissions.py
-```
-
-**Note**: For new schema changes, use Alembic migrations instead of custom scripts.
 
 ### Utility Scripts
 

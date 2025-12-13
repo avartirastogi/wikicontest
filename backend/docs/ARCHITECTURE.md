@@ -18,7 +18,7 @@ backend/
 │   ├── routes/            # API route blueprints
 │   ├── middleware/        # Middleware functions
 │   └── utils/             # Utility functions
-├── migrations/            # Database migration scripts
+├── alembic/               # Alembic database migrations
 ├── scripts/               # Utility scripts
 ├── toolforge/             # Toolforge deployment files
 ├── tests/                 # Test files
@@ -162,16 +162,14 @@ Routes use the `@handle_errors` decorator for consistent error handling.
 
 ## Database Migrations
 
-### Custom Migration Scripts
+The application uses **Alembic** for all database migrations:
 
-Migrations are custom Python scripts in `migrations/`:
-- Check if columns exist before adding
-- Use SQLAlchemy's `text()` for raw SQL
-- Idempotent (safe to run multiple times)
+- **Migration files**: Located in `alembic/versions/`
+- **Version tracking**: Managed by Alembic's `alembic_version` table
+- **Migration commands**: Use `alembic upgrade head` to apply migrations
+- **Auto-generation**: Use `alembic revision --autogenerate` to create migrations from model changes
 
-### Automatic Migrations
-
-Migrations run automatically on application startup via `migrate_database()` function.
+For detailed migration documentation, see [`docs/ALEMBIC_USAGE_GUIDE.md`](../docs/ALEMBIC_USAGE_GUIDE.md).
 
 ## Utility Functions
 

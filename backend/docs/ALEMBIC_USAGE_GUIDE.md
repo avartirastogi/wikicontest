@@ -353,17 +353,17 @@ If you have conflicts with existing migrations:
 
 10. **Use transactions** - Alembic wraps migrations in transactions by default, but be aware of database-specific limitations
 
-## Integration with Existing Migrations
+## Migration Strategy
 
-The project also has custom migration scripts in the `migrations/` directory. These can coexist with Alembic migrations:
+The project uses **Alembic exclusively** for all database migrations:
 
-- **Custom migrations** (`migrations/`): For one-time data migrations or complex changes
-- **Alembic migrations** (`alembic/versions/`): For schema version control
+- **Alembic migrations** (`alembic/versions/`): For all schema version control
+- **Alembic** handles both schema changes (adding columns, tables, indexes, etc.) and data migrations
 
 **Guidelines:**
-- **Use Alembic** for all new schema changes (adding columns, tables, indexes, etc.)
-- **Use custom scripts** for data migrations (backfilling data, one-time transformations)
-- Both can coexist, but prefer Alembic for schema changes
+- **Use Alembic** for all database changes (schema and data migrations)
+- Create migrations using `alembic revision --autogenerate` for schema changes
+- Create manual migrations using `alembic revision` for data migrations or complex operations
 
 ## Quick Reference
 
