@@ -221,8 +221,8 @@ def get_dashboard():
     total_score = user.score
 
     # Get contest-wise scores
-    from models.submission import Submission
-    from models.contest import Contest
+    from app.models.submission import Submission
+    from app.models.contest import Contest
 
     contest_scores = db.session.query(
         Contest.id.label('contest_id'),
