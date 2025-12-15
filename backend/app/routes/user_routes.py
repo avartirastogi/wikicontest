@@ -79,6 +79,14 @@ def register():
     if len(password) < 6:
         return jsonify({'error': 'Password must be at least 6 characters long'}), 400
 
+    # Allow only two roles via the public API for security:
+    # - user: regular user (default)
+    # - admin: admin-level access
+    #
+    # IMPORTANT SECURITY NOTE:
+    # - "superadmin" role MUST NOT be created through this endpoint.
+    # - Superadmin accounts should ONLY be created/updated directly in the database
+    #   or via a very secure internal tool, to avoid privilege escalation.
     if role not in ['user', 'admin']:
         return jsonify({'error': 'Invalid role'}), 400
 
@@ -140,10 +148,13 @@ def login():
         access_token = create_access_token(identity=str(user.id))
 
         # Create response
+        # NOTE: we also include the user's role so frontend can know if they are
+        # admin / superadmin and adjust UI (like delete buttons) accordingly.
         response = make_response(jsonify({
             'message': 'Login successful',
             'userId': user.id,
-            'username': user.username
+            'username': user.username,
+            'role': user.role
         }))
 
         # Set JWT token in HTTP-only cookie

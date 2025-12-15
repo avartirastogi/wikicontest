@@ -109,15 +109,15 @@ router.beforeEach(async (to, from, next) => {
       // In production, use relative URL
       return '/api'
     }
-    
+
     // Store the intended destination for after OAuth
     if (to.fullPath !== '/') {
       sessionStorage.setItem('oauth_redirect', to.fullPath)
     }
-    
+
     // Redirect to OAuth login endpoint
     window.location.href = `${getApiBaseUrl()}/user/oauth/login`
-    return // Stop navigation
+    // Stop navigation
   } else {
     // Allow access to public pages
     next()

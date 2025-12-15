@@ -18,7 +18,7 @@ class User(BaseModel):
         id: Primary key, auto-incrementing integer
         username: Unique username for the user
         email: Unique email address
-        role: User role (admin, user, etc.)
+        role: User role (superadmin, admin, user, etc.)
         password: Hashed password
         score: Total score accumulated by user
         created_at: Timestamp when user was created
@@ -112,12 +112,25 @@ class User(BaseModel):
 
     def is_admin(self):
         """
-        Check if user has admin role
+        Check if user has admin-level role.
 
-        Returns:
-            bool: True if user is admin, False otherwise
+        NOTE:
+        - We treat both "admin" and "superadmin" as admin-level users.
+        - This keeps permission checks simple: any place that checks is_admin()
+          will automatically give full access to superadmin accounts as well.
         """
-        return self.role == 'admin'
+        # Return True for both admin and superadmin so they share admin powers.
+        return self.role in ('admin', 'superadmin')
+
+    def is_superadmin(self):
+        """
+        Check if user has the superadmin role.
+
+        Superadmin is intended to be the highest-privilege role.
+        - Superadmins should be created and managed very carefully.
+        - Use this helper when you explicitly want to target only superadmins.
+        """
+        return self.role == 'superadmin'
 
     def is_jury_member(self, contest):
         """

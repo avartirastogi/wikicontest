@@ -11,22 +11,36 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="contestName" class="form-label">Contest Name *</label>
-                <input type="text" class="form-control" id="contestName" v-model="formData.name" required />
+                <input type="text"
+class="form-control"
+id="contestName"
+v-model="formData.name"
+required />
               </div>
               <div class="col-md-6 mb-3">
                 <label for="projectName" class="form-label">Project Name *</label>
-                <input type="text" class="form-control" id="projectName" v-model="formData.project_name" required />
+                <input type="text"
+class="form-control"
+id="projectName"
+v-model="formData.project_name"
+required />
               </div>
             </div>
 
             <div class="mb-3">
               <label for="contestDescription" class="form-label">Description</label>
-              <textarea class="form-control" id="contestDescription" rows="3" v-model="formData.description"></textarea>
+              <textarea class="form-control"
+id="contestDescription"
+rows="3"
+v-model="formData.description"></textarea>
             </div>
             <div class="mb-3">
               <label for="contestRules" class="form-label">Contest Rules *</label>
-              <textarea class="form-control" id="contestRules" rows="4"
-                placeholder="Write rules about how articles must be submitted." v-model="formData.rules_text"
+              <textarea class="form-control"
+id="contestRules"
+rows="4"
+                placeholder="Write rules about how articles must be submitted."
+v-model="formData.rules_text"
                 required></textarea>
             </div>
             <div class="mb-3">
@@ -41,11 +55,19 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="startDate" class="form-label">Start Date *</label>
-                <input type="date" class="form-control" id="startDate" v-model="formData.start_date" required />
+                <input type="date"
+class="form-control"
+id="startDate"
+v-model="formData.start_date"
+required />
               </div>
               <div class="col-md-6 mb-3">
                 <label for="endDate" class="form-label">End Date *</label>
-                <input type="date" class="form-control" id="endDate" v-model="formData.end_date" required />
+                <input type="date"
+class="form-control"
+id="endDate"
+v-model="formData.end_date"
+required />
               </div>
             </div>
 
@@ -61,7 +83,9 @@
                 <small v-if="selectedJury.length === 0" class="jury-placeholder-text">
                   No jury members selected yet
                 </small>
-                <span v-for="username in selectedJury" :key="username" class="badge bg-primary me-2 mb-2"
+                <span v-for="username in selectedJury"
+:key="username"
+class="badge bg-primary me-2 mb-2"
                   style="font-size: 0.9rem; cursor: pointer;">
                   {{ username }}
                   <i class="fas fa-times ms-1" @click="removeJury(username)"></i>
@@ -70,8 +94,13 @@
 
               <!-- Jury Input with Autocomplete -->
               <div style="position: relative;">
-                <input type="text" class="form-control" id="juryInput" v-model="jurySearchQuery" @input="searchJury"
-                  placeholder="Type username to search..." autocomplete="off" />
+                <input type="text"
+class="form-control"
+id="juryInput"
+v-model="jurySearchQuery"
+@input="searchJury"
+                  placeholder="Type username to search..."
+autocomplete="off" />
                 <!-- Autocomplete Dropdown -->
                 <!--
                   Note: we avoid hard-coded light backgrounds here so that
@@ -81,8 +110,11 @@
                 <div v-if="jurySearchResults.length > 0 && jurySearchQuery.length >= 2"
                   class="jury-autocomplete position-absolute w-100 border rounded-bottom"
                   style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div v-for="user in jurySearchResults" :key="user.username" class="p-2 border-bottom cursor-pointer"
-                    style="cursor: pointer;" @click="addJury(user.username)">
+                  <div v-for="user in jurySearchResults"
+:key="user.username"
+class="p-2 border-bottom cursor-pointer"
+                    style="cursor: pointer;"
+@click="addJury(user.username)">
                     <i class="fas fa-user me-2 text-primary"></i>
                     <strong>{{ user.username }}</strong>
                   </div>
@@ -93,13 +125,19 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="marksAccepted" class="form-label">Points for Accepted Submissions</label>
-                <input type="number" class="form-control" id="marksAccepted"
-                  v-model.number="formData.marks_setting_accepted" min="0" />
+                <input type="number"
+class="form-control"
+id="marksAccepted"
+                  v-model.number="formData.marks_setting_accepted"
+min="0" />
               </div>
               <div class="col-md-6 mb-3">
                 <label for="marksRejected" class="form-label">Points for Rejected Submissions</label>
-                <input type="number" class="form-control" id="marksRejected"
-                  v-model.number="formData.marks_setting_rejected" min="0" />
+                <input type="number"
+class="form-control"
+id="marksRejected"
+                  v-model.number="formData.marks_setting_rejected"
+min="0" />
               </div>
             </div>
 
@@ -107,7 +145,10 @@
               <label for="codeLink" class="form-label">
                 Code Repository Link <span class="text-muted">(Optional)</span>
               </label>
-              <input type="text" class="form-control" id="codeLink" v-model="formData.code_link"
+              <input type="text"
+class="form-control"
+id="codeLink"
+v-model="formData.code_link"
                 placeholder="https://github.com/..." />
             </div>
 
@@ -116,7 +157,10 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" @click="handleSubmit" :disabled="loading">
+          <button type="button"
+class="btn btn-primary"
+@click="handleSubmit"
+:disabled="loading">
             <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
             Create Contest
           </button>

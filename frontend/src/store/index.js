@@ -52,7 +52,10 @@ export function useStore() {
         const newUser = {
           id: response.userId,
           username: response.username || response.email || 'User',
-          email: response.email || ''
+          email: response.email || '',
+          // Store role from backend so we can detect admin / superadmin in UI.
+          // Default to 'user' if backend does not send a role for any reason.
+          role: response.role || 'user'
         }
 
         console.log('✅ Setting current user:', newUser)
@@ -100,7 +103,9 @@ export function useStore() {
       state.currentUser = {
         id: response.userId,
         username: response.username,
-        email
+        email,
+        // Include role from login response so admin/superadmin can be used in UI.
+        role: response.role || 'user'
       }
 
       // Verify the state was set correctly

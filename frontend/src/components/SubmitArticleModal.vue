@@ -42,14 +42,14 @@
               </label>
 
               <select v-model="formData.submission_type" class="form-control" required>
-                <option 
+                <option
                   value="new"
                   v-if="contest.allowed_submission_type === 'new' || contest.allowed_submission_type === 'both'"
                 >
                   New Article
                 </option>
 
-                <option 
+                <option
                   value="expansion"
                   v-if="contest.allowed_submission_type === 'expansion' || contest.allowed_submission_type === 'both'"
                 >

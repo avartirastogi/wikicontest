@@ -209,7 +209,9 @@ def check_cookie():
         return jsonify({
             'userId': user.id,
             'username': user.username,
-            'email': user.email
+            'email': user.email,
+            # Include role so frontend can know if user is admin / superadmin
+            'role': user.role
         }), 200
 
     except (JWTDecodeError, NoAuthorizationError):
