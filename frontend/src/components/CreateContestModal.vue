@@ -53,7 +53,7 @@
             <div class="mb-3">
               <label for="juryInput" class="form-label">
                 Jury Members *
-                <span class="badge bg-info text-dark">Type to search users</span>
+                <span class="badge bg-info">Type to search users</span>
               </label>
 
               <!-- Selected Jury Members Display -->
