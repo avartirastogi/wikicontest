@@ -27,7 +27,6 @@
     </div>
   </div>
 
-     
 
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-5">
@@ -128,7 +127,7 @@
           <!-- Small explanatory note -->
           <p class="mt-2 small text-muted">
             <em>
-              • <strong>New Articles</strong> = Completely new Wikipedia article created during the contest.<br>
+              • <strong>New Articles</strong> = Completely new Wikipedia article created during the contest.<br/>
               • <strong>Improved Articles</strong> = An existing article improved or expanded with substantial content.
             </em>
           </p>
@@ -151,7 +150,10 @@
         </div>
         <div class="card-body">
           <p class="code-link-text">
-            <a v-if="contest.code_link" :href="contest.code_link" target="_blank" rel="noopener noreferrer">
+            <a v-if="contest.code_link"
+:href="contest.code_link"
+target="_blank"
+rel="noopener noreferrer">
               {{ contest.code_link }}
             </a>
             <span v-else class="text-muted">No code link provided</span>
@@ -167,7 +169,9 @@
               <span class="spinner-border spinner-border-sm me-2"></span>
               {{ loadingSubmissions ? 'Loading...' : 'Refreshing...' }}
             </button>
-            <button v-else class="btn btn-sm btn-outline-light" @click="refreshMetadata"
+            <button v-else
+class="btn btn-sm btn-outline-light"
+@click="refreshMetadata"
               :disabled="submissions.length === 0"
               title="Refresh article metadata (byte count, author, etc.) from MediaWiki and reload submissions"
               style="color: white; border-color: white;">
@@ -196,14 +200,17 @@
               <tbody>
                 <tr v-for="submission in submissions" :key="submission.id">
                   <td>
-                    <a href="#" @click.prevent="showArticlePreview(submission.article_link, submission.article_title)"
-                      class="text-decoration-none article-title-link" :title="submission.article_link">
+                    <a href="#"
+@click.prevent="showArticlePreview(submission.article_link, submission.article_title)"
+                      class="text-decoration-none article-title-link"
+:title="submission.article_link">
                       {{ submission.article_title }}
                       <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
                     </a>
                     <!-- Total bytes = Original bytes (at submission) + Expansion bytes (change since submission) -->
                     <div v-if="submission.article_word_count !== null &&
-                      submission.article_word_count !== undefined" class="text-muted small mt-1">
+                      submission.article_word_count !== undefined"
+class="text-muted small mt-1">
                       <i class="fas fa-file-alt me-1"></i>Total bytes:
                       {{
                         formatByteCountWithExact(
@@ -219,7 +226,8 @@
                          The previous extra "word count" line was removed to avoid duplicate numbers
                          and to match the simplified UI requested by the user. -->
                     <div v-if="submission.article_word_count !== null &&
-                      submission.article_word_count !== undefined" class="text-muted small mt-1">
+                      submission.article_word_count !== undefined"
+class="text-muted small mt-1">
                       <i class="fas fa-clock me-1"></i>Original bytes:
                       {{ formatByteCountWithExact(submission.article_word_count) }}
                     </div>
@@ -229,7 +237,8 @@
                          - Down arrow for negative (bytes decreased)
                          - Left-right arrow for zero change -->
                     <div v-if="submission.article_expansion_bytes !== null &&
-                      submission.article_expansion_bytes !== undefined" class="text-muted small mt-1">
+                      submission.article_expansion_bytes !== undefined"
+class="text-muted small mt-1">
                       <i
                         class="me-1"
                         :class="
@@ -262,7 +271,8 @@
                       <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
                     </div>
                     <!-- Latest revision author (from latest revision, shown below original) -->
-                    <div v-if="submission.latest_revision_author" class="mt-2 pt-2"
+                    <div v-if="submission.latest_revision_author"
+class="mt-2 pt-2"
                       style="border-top: 1px solid #dee2e6;">
                       <div>
                         <i class="fas fa-user me-1"></i>{{ submission.latest_revision_author }}
@@ -284,7 +294,8 @@
                   <td>{{ formatDate(submission.submitted_at) }}</td>
                   <td>
                     <button @click="showArticlePreview(submission.article_link, submission.article_title)"
-                      class="btn btn-sm btn-outline-primary" title="Preview Article">
+                      class="btn btn-sm btn-outline-primary"
+title="Preview Article">
                       <i class="fas fa-eye"></i>
                     </button>
                   </td>
@@ -309,8 +320,8 @@
 
         <!-- Main submit button shown at the bottom of the page -->
         <!-- Simple rule: show only for logged-in users when contest is current and they are not jury/creator -->
-        <button v-if="contest?.status === 'current' 
-                      && isAuthenticated 
+        <button v-if="contest?.status === 'current'
+                      && isAuthenticated
                       && !canViewSubmissions"
                 class="btn btn-primary ms-auto"
                 @click="handleSubmitArticle">
@@ -320,7 +331,8 @@
     </div>
 
     <!-- Submit Article Modal -->
-    <SubmitArticleModal v-if="submittingToContestId" :contest-id="submittingToContestId"
+    <SubmitArticleModal v-if="submittingToContestId"
+:contest-id="submittingToContestId"
       @submitted="handleArticleSubmitted" />
 
     <!-- Article Preview Modal -->
@@ -372,16 +384,15 @@
             </div>
 
 
-
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Start Date</label>
-                <input type="date" v-model="editForm.start_date" class="form-control">
+                <input type="date" v-model="editForm.start_date" class="form-control"/>
               </div>
 
               <div class="col-md-6 mb-3">
                 <label class="form-label">End Date</label>
-                <input type="date" v-model="editForm.end_date" class="form-control">
+                <input type="date" v-model="editForm.end_date" class="form-control"/>
               </div>
             </div>
             <div class="mb-3">
@@ -401,7 +412,9 @@
 
             <div class="mb-3">
               <label class="form-label">Code Link (optional)</label>
-              <input type="text" class="form-control" v-model="editForm.code_link"
+              <input type="text"
+class="form-control"
+v-model="editForm.code_link"
                 placeholder="Optional: Add Code Link" />
             </div>
 
@@ -497,6 +510,10 @@ export default {
     })
 
     // Check if user can delete contest
+    // Rules:
+    // - Contest creator can delete their own contest.
+    // - Any admin-level user (admin or superadmin) also gets delete permission.
+    //   This relies on "role" inside currentUser coming from backend (user.is_admin()).
     const checkDeletePermission = () => {
       canDeleteContest.value = false
 
@@ -511,6 +528,7 @@ export default {
       }
 
       const username = (userToCheck.username || '').trim()
+      const role = (userToCheck.role || '').trim().toLowerCase()
       const contestCreator = (contest.value.created_by || '').trim()
 
       if (!username || !contestCreator) {
@@ -520,7 +538,20 @@ export default {
 
       const usernameLower = username.toLowerCase()
       const creatorLower = contestCreator.toLowerCase()
-      canDeleteContest.value = usernameLower === creatorLower
+      // Allow delete if:
+      // - user is contest creator, OR
+      // - user is admin-level (admin or superadmin)
+      if (usernameLower === creatorLower) {
+        canDeleteContest.value = true
+        return
+      }
+
+      if (role === 'admin' || role === 'superadmin') {
+        canDeleteContest.value = true
+        return
+      }
+
+      canDeleteContest.value = false
     }
 
     // Format date for display in Indian Standard Time (IST)
@@ -668,7 +699,7 @@ export default {
       error.value = null
 
       try {
-        let data;
+        let data
         if (id) {
           data = await api.get(`/contest/${id}`)
         } else {
@@ -886,46 +917,46 @@ export default {
     })
 
     onMounted(() => {
-      loadContest();
-      const modalEl = document.getElementById("editContestModal");
-      if (modalEl) editModal = new bootstrap.Modal(modalEl);
+      loadContest()
+      const modalEl = document.getElementById('editContestModal')
+      if (modalEl) editModal = new bootstrap.Modal(modalEl)
     })
 
     let editModal = null
     const openEditModal = () => {
-      if (!contest.value) return;
+      if (!contest.value) return
 
-      editForm.name = contest.value.name;
-      editForm.project_name = contest.value.project_name || "";
-      editForm.description = contest.value.description || "";
+      editForm.name = contest.value.name
+      editForm.project_name = contest.value.project_name || ''
+      editForm.description = contest.value.description || ''
 
 
-      editForm.rules = contest.value.rules?.text || "";
-      editForm.allowed_submission_type = contest.value.allowed_submission_type || "both";
+      editForm.rules = contest.value.rules?.text || ''
+      editForm.allowed_submission_type = contest.value.allowed_submission_type || 'both'
 
-      editForm.start_date = contest.value.start_date || "";
-      editForm.end_date = contest.value.end_date || "";
+      editForm.start_date = contest.value.start_date || ''
+      editForm.end_date = contest.value.end_date || ''
 
-      editForm.marks_setting_accepted = Number(contest.value.marks_setting_accepted ?? 0);
-      editForm.marks_setting_rejected = Number(contest.value.marks_setting_rejected ?? 0);
+      editForm.marks_setting_accepted = Number(contest.value.marks_setting_accepted ?? 0)
+      editForm.marks_setting_rejected = Number(contest.value.marks_setting_rejected ?? 0)
       editForm.jury_members = Array.isArray(contest.value.jury_members)
-        ? contest.value.jury_members.join(", ")
-        : '';
+        ? contest.value.jury_members.join(', ')
+        : ''
 
-      editForm.code_link = contest.value?.code_link ?? "";
+      editForm.code_link = contest.value?.code_link ?? ''
 
 
-      editModal.show();
+      editModal.show()
     }
 
 
     const saveContestEdits = async () => {
       try {
         const payload = {
-          name: editForm.name || "",
-          project_name: editForm.project_name || "",
-          description: editForm.description || "",
-          rules: editForm.rules?.trim() || "",
+          name: editForm.name || '',
+          project_name: editForm.project_name || '',
+          description: editForm.description || '',
+          rules: editForm.rules?.trim() || '',
           start_date: editForm.start_date || null,
           end_date: editForm.end_date || null,
           marks_setting_accepted: Number(editForm.marks_setting_accepted) || 0,
@@ -933,31 +964,31 @@ export default {
           jury_members: Array.isArray(editForm.jury_members)
             ? editForm.jury_members
             : editForm.jury_members
-              .split(",")
+              .split(',')
               .map(x => x.trim())
               .filter(x => x.length > 0),
           code_link: editForm.code_link?.trim() || null,
-          allowed_submission_type: editForm.allowed_submission_type,
-        };
+          allowed_submission_type: editForm.allowed_submission_type
+        }
 
         // console.log("FINAL PAYLOAD SENT →", payload);
-        await api.put(`/contest/${contest.value.id}`, payload);
+        await api.put(`/contest/${contest.value.id}`, payload)
 
-        showAlert("Contest updated successfully", "success");
-        editModal.hide();
+        showAlert('Contest updated successfully', 'success')
+        editModal.hide()
 
-        await loadContest(contest.value.id);
-        const newSlug = slugify(payload.name, { lower: true, strict: true });
-        router.replace({ name: 'ContestView', params: { name: newSlug } });
+        await loadContest(contest.value.id)
+        const newSlug = slugify(payload.name, { lower: true, strict: true })
+        router.replace({ name: 'ContestView', params: { name: newSlug } })
       } catch (error) {
-        console.error("SAVE ERROR:", error);
+        console.error('SAVE ERROR:', error)
 
         showAlert(
-          "Failed to save: " + (error.response?.data?.detail || error.message),
-          "danger"
-        );
+          'Failed to save: ' + (error.response?.data?.detail || error.message),
+          'danger'
+        )
       }
-    };
+    }
 
 
     return {
@@ -993,7 +1024,7 @@ export default {
       previewArticleTitle,
       editForm,
       openEditModal,
-      saveContestEdits,
+      saveContestEdits
     }
   }
 }

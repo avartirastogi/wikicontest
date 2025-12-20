@@ -44,20 +44,55 @@ export function useStore() {
       console.log('🔐 Checking authentication...')
       const response = await api.get('/cookie')
       console.log('🔐 Auth API response:', response)
+      console.log('🔐 Response role value:', response?.role)
+      console.log('🔐 Response role type:', typeof response?.role)
 
       // Double-check response is valid and has required fields
       // Must have userId and it must be a valid number > 0
       if (response && response.userId && typeof response.userId === 'number' && response.userId > 0) {
         // Ensure username and email are set (handle cases where they might be missing)
+        // IMPORTANT: Use the role from response, but ensure it's a string and lowercase
+        const roleFromResponse = response.role
+        console.log('🔐 Role from response (raw):', roleFromResponse)
+
+        // Normalize role: convert to string, lowercase, and default to 'user' if missing/null/undefined
+        let normalizedRole = 'user'
+        if (roleFromResponse) {
+          normalizedRole = String(roleFromResponse).toLowerCase().trim()
+          // CRITICAL: Don't override if role is explicitly 'superadmin'
+          if (normalizedRole === 'superadmin') {
+            console.log('✅ [ROLE] Detected superadmin role - preserving it')
+          }
+        }
+        console.log('🔐 Normalized role:', normalizedRole)
+        console.log('🔐 Role comparison - normalizedRole === "superadmin":', normalizedRole === 'superadmin')
+
+        // Special check for Adityakumar0545
+        if (response.username === 'Adityakumar0545') {
+          console.log('⚠️ [SPECIAL CHECK] User Adityakumar0545 detected')
+          console.log('  - Raw role from response:', roleFromResponse)
+          console.log('  - Normalized role:', normalizedRole)
+          if (normalizedRole !== 'superadmin') {
+            console.error('❌ [ERROR] Adityakumar0545 should have superadmin role but got:', normalizedRole)
+          } else {
+            console.log('✅ [SUCCESS] Adityakumar0545 has correct superadmin role')
+          }
+        }
+
         const newUser = {
           id: response.userId,
           username: response.username || response.email || 'User',
-          email: response.email || ''
+          email: response.email || '',
+          // Store role from backend so we can detect admin / superadmin in UI.
+          // Use normalized role to ensure consistency
+          role: normalizedRole
         }
 
         console.log('✅ Setting current user:', newUser)
+        console.log('✅ User role being stored:', newUser.role)
         state.currentUser = newUser
         console.log('✅ Current user set. State:', state.currentUser)
+        console.log('✅ State currentUser.role:', state.currentUser?.role)
         return true
       } else {
         // No valid user data - clear state
@@ -100,7 +135,9 @@ export function useStore() {
       state.currentUser = {
         id: response.userId,
         username: response.username,
-        email
+        email,
+        // Include role from login response so admin/superadmin can be used in UI.
+        role: response.role || 'user'
       }
 
       // Verify the state was set correctly

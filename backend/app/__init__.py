@@ -30,6 +30,7 @@ from flask_jwt_extended.exceptions import JWTDecodeError, NoAuthorizationError
 from dotenv import load_dotenv
 import requests
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text as sql_text
 
 # Local imports
 from app.database import db
@@ -201,16 +202,124 @@ def check_cookie():
         if not user_id:
             return jsonify({'error': 'Invalid token'}), 401
 
-        # Get user details from database
-        user = User.query.get(int(user_id))
-        if not user:
+        # IMPORTANT: Expire any cached SQLAlchemy session to ensure fresh data
+        # This ensures we get the latest role from the database, even if it was recently changed
+        db.session.expire_all()
+
+        # Log the user_id from JWT token for debugging
+        # CRITICAL: This shows which user the JWT token is for
+        try:
+            current_app.logger.info(
+                f'🔐 Cookie check - JWT user_id: {user_id} (type: {type(user_id)})'
+            )
+            # Also print to console for immediate visibility
+            print(f'🔐 [COOKIE CHECK] JWT user_id: {user_id}')
+        except Exception:
+            pass
+
+        # CRITICAL: Query directly from database using raw SQL to bypass ALL ORM caching
+        # This ensures we get the absolute latest role from the database
+        direct_query = db.session.execute(
+            sql_text('SELECT id, username, email, role FROM users WHERE id = :user_id'),
+            {'user_id': int(user_id)}
+        ).fetchone()
+
+        if not direct_query:
+            try:
+                error_msg = f'Cookie check - User not found in database for ID: {user_id}'
+                current_app.logger.error(error_msg)
+                print(f'❌ [COOKIE CHECK] {error_msg}')
+            except Exception:
+                pass
             return jsonify({'error': 'User not found'}), 401
 
-        return jsonify({
-            'userId': user.id,
-            'username': user.username,
-            'email': user.email
-        }), 200
+        # Extract data from direct database query (most reliable - no ORM caching)
+        db_user_id = direct_query[0]
+        db_username = direct_query[1]
+        db_email = direct_query[2]
+        db_role = direct_query[3]
+
+        # Log what we got from the database - CRITICAL DEBUG INFO
+        try:
+            log_msg = (
+                f'🔐 Cookie check - Direct DB Query Result - '
+                f'ID: {db_user_id}, Username: {db_username}, '
+                f'Role: {db_role}, Role type: {type(db_role)}'
+            )
+            current_app.logger.info(log_msg)
+            # Also print to console for immediate visibility
+            print(f'🔐 [COOKIE CHECK] {log_msg}')
+            
+            # Special check: If username is Adityakumar0545, verify role is superadmin
+            if db_username == 'Adityakumar0545':
+                print(f'⚠️ [SPECIAL CHECK] User Adityakumar0545 - Role from DB: {db_role}')
+                if db_role != 'superadmin':
+                    print(f'❌ [ERROR] Expected superadmin but got: {db_role}')
+                else:
+                    print(f'✅ [SUCCESS] Role is correct: superadmin')
+        except Exception as e:
+            current_app.logger.error(f'Logging error: {str(e)}')
+            print(f'❌ [ERROR] Logging failed: {str(e)}')
+
+        # Also verify by username as a double-check (in case there's any ID mismatch)
+        username_verify = db.session.execute(
+            sql_text('SELECT id, username, email, role FROM users WHERE username = :username'),
+            {'username': db_username}
+        ).fetchone()
+
+        if username_verify:
+            verify_role = username_verify[3]
+            try:
+                current_app.logger.info(
+                    f'Cookie check - Username verification - Username: {username_verify[1]}, '
+                    f'Role from username query: {verify_role}'
+                )
+                # Use role from username query if it's different (more recent)
+                if verify_role and verify_role != db_role:
+                    current_app.logger.warning(
+                        f'Role mismatch! ID query returned: {db_role}, '
+                        f'Username query returned: {verify_role}. Using username query result.'
+                    )
+                    db_role = verify_role
+            except Exception:
+                pass
+
+        # Normalize role: ensure it's a string, trimmed, and lowercase
+        role_value = str(db_role).strip().lower() if db_role else 'user'
+
+        # Build response using data directly from database (no ORM objects)
+        response_data = {
+            'userId': db_user_id,
+            'username': db_username,
+            'email': db_email,
+            # Use role directly from database query - most reliable source
+            'role': role_value
+        }
+
+        # Log the final response being sent - CRITICAL DEBUG INFO
+        try:
+            log_msg = (
+                f'🔐 Cookie check FINAL RESPONSE - '
+                f'Username: {response_data.get("username")}, '
+                f'User ID: {response_data.get("userId")}, '
+                f'Role being sent to frontend: {response_data.get("role")}'
+            )
+            current_app.logger.info(log_msg)
+            # Also print to console for immediate visibility
+            print(f'🔐 [FINAL RESPONSE] {log_msg}')
+            
+            # Special check for Adityakumar0545
+            if response_data.get("username") == 'Adityakumar0545':
+                print(f'⚠️ [SPECIAL CHECK] Adityakumar0545 - Role in response: {response_data.get("role")}')
+                if response_data.get("role") != 'superadmin':
+                    print(f'❌ [ERROR] Role should be superadmin but is: {response_data.get("role")}')
+                else:
+                    print(f'✅ [SUCCESS] Role is correctly set to superadmin in response')
+        except Exception as e:
+            current_app.logger.error(f'Logging error: {str(e)}')
+            print(f'❌ [ERROR] Final logging failed: {str(e)}')
+
+        return jsonify(response_data), 200
 
     except (JWTDecodeError, NoAuthorizationError):
         # No token or invalid token - user is definitely not logged in
@@ -224,6 +333,79 @@ def check_cookie():
             # Logger might not be available or Flask context missing
             pass
         return jsonify({'error': 'You are not logged in'}), 401
+
+@app.route('/api/debug/user-role/<username>', methods=['GET'])
+def debug_user_role(username):
+    """
+    Debug endpoint to check user role directly from database by username.
+    This helps verify what role is actually stored in the database.
+    No authentication required for debugging purposes.
+
+    Args:
+        username: Username to check
+
+    Returns:
+        JSON with user information including role from database
+    """
+    try:
+        print(f'🔍 [DEBUG] Checking role for username: {username}')
+        
+        # Query directly from database using raw SQL
+        result = db.session.execute(
+            sql_text('SELECT id, username, email, role FROM users WHERE username = :username'),
+            {'username': username}
+        ).fetchone()
+
+        if not result:
+            print(f'❌ [DEBUG] User not found: {username}')
+            return jsonify({
+                'error': 'User not found',
+                'username': username
+            }), 404
+
+        user_data = {
+            'id': result[0],
+            'username': result[1],
+            'email': result[2],
+            'role': result[3],
+            'role_type': type(result[3]).__name__,
+            'role_string': str(result[3]),
+            'role_lowercase': str(result[3]).lower() if result[3] else 'user'
+        }
+
+        print(f'🔍 [DEBUG] Found user - ID: {user_data["id"]}, Username: {user_data["username"]}, Role: {user_data["role"]}')
+
+        # Also check by ID to compare
+        id_result = db.session.execute(
+            sql_text('SELECT id, username, email, role FROM users WHERE id = :user_id'),
+            {'user_id': result[0]}
+        ).fetchone()
+
+        if id_result:
+            user_data['by_id'] = {
+                'id': id_result[0],
+                'username': id_result[1],
+                'role': id_result[3]
+            }
+            print(f'🔍 [DEBUG] Verified by ID - Role: {id_result[3]}')
+
+        # Special check for Adityakumar0545
+        if username == 'Adityakumar0545':
+            if user_data['role'] != 'superadmin':
+                print(f'❌ [ERROR] Adityakumar0545 should have superadmin but has: {user_data["role"]}')
+            else:
+                print(f'✅ [SUCCESS] Adityakumar0545 has correct superadmin role')
+
+        return jsonify(user_data), 200
+
+    except Exception as error:
+        error_msg = f'Debug user role error: {str(error)}'
+        current_app.logger.error(error_msg)
+        print(f'❌ [ERROR] {error_msg}')
+        return jsonify({
+            'error': 'Failed to query user',
+            'details': str(error)
+        }), 500
 
 # =============================================================================
 # FRONTEND SERVING ROUTES
