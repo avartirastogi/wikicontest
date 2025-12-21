@@ -115,7 +115,7 @@
           <!-- Small explanatory note -->
           <p class="mt-2 small text-muted">
             <em>
-              • <strong>New Articles</strong> = Completely new Wikipedia article created during the contest.<br/>
+              • <strong>New Articles</strong> = Completely new Wikipedia article created during the contest.<br />
               • <strong>Improved Articles</strong> = An existing article improved or expanded with substantial content.
             </em>
           </p>
@@ -138,10 +138,7 @@
         </div>
         <div class="card-body">
           <p class="code-link-text">
-            <a v-if="contest.code_link"
-:href="contest.code_link"
-target="_blank"
-rel="noopener noreferrer">
+            <a v-if="contest.code_link" :href="contest.code_link" target="_blank" rel="noopener noreferrer">
               {{ contest.code_link }}
             </a>
             <span v-else class="text-muted">No code link provided</span>
@@ -204,8 +201,7 @@ rel="noopener noreferrer">
                          The previous extra "word count" line was removed to avoid duplicate numbers
                          and to match the simplified UI requested by the user. -->
                     <div v-if="submission.article_word_count !== null &&
-                      submission.article_word_count !== undefined"
-class="text-muted small mt-1">
+                      submission.article_word_count !== undefined" class="text-muted small mt-1">
                       <i class="fas fa-clock me-1"></i>Original bytes:
                       {{ formatByteCountWithExact(submission.article_word_count) }}
                     </div>
@@ -243,8 +239,7 @@ class="text-muted small mt-1">
                       <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
                     </div>
                     <!-- Latest revision author (from latest revision, shown below original) -->
-                    <div v-if="submission.latest_revision_author"
-class="mt-2 pt-2"
+                    <div v-if="submission.latest_revision_author" class="mt-2 pt-2"
                       style="border-top: 1px solid #dee2e6;">
                       <div>
                         <i class="fas fa-user me-1"></i>{{ submission.latest_revision_author }}
@@ -303,8 +298,7 @@ class="mt-2 pt-2"
     </div>
 
     <!-- Submit Article Modal -->
-    <SubmitArticleModal v-if="submittingToContestId"
-:contest-id="submittingToContestId"
+    <SubmitArticleModal v-if="submittingToContestId" :contest-id="submittingToContestId"
       @submitted="handleArticleSubmitted" />
 
     <!-- Article Preview Modal - Pass computed currentSubmission -->
@@ -360,17 +354,61 @@ class="mt-2 pt-2"
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Start Date</label>
-                <input type="date" v-model="editForm.start_date" class="form-control"/>
+                <input type="date" v-model="editForm.start_date" class="form-control" />
               </div>
 
               <div class="col-md-6 mb-3">
                 <label class="form-label">End Date</label>
-                <input type="date" v-model="editForm.end_date" class="form-control"/>
+                <input type="date" v-model="editForm.end_date" class="form-control" />
               </div>
             </div>
             <div class="mb-3">
-              <label class="form-label">Jury Members (comma separated)</label>
-              <input v-model="editForm.jury_members" class="form-control" placeholder="e.g. user1, user2, user3" />
+              <label class="form-label">
+                Jury Members
+                <span class="badge bg-info">Type to search and add users</span>
+              </label>
+
+              <!-- Selected Jury Members Display -->
+              <div class="mb-2 p-2 border rounded bg-light jury-selection-box" style="min-height: 60px;">
+                <small v-if="editForm.selectedJuryMembers.length === 0" class="text-muted">
+                  No jury members selected
+                </small>
+                <span v-for="username in editForm.selectedJuryMembers" :key="username"
+                  class="badge bg-primary me-2 mb-2" style="font-size: 0.9rem; cursor: pointer;">
+                  {{ username }}
+                  <i class="fas fa-times ms-1" @click="removeJuryMember(username)"></i>
+                </span>
+              </div>
+
+              <!-- Jury Search Input with Autocomplete -->
+              <div style="position: relative;">
+                <input type="text" class="form-control" v-model="jurySearchQuery" @input="searchJuryMembers"
+                  placeholder="Type username to search and add..." autocomplete="off" />
+
+                <!-- Autocomplete Dropdown -->
+                <div v-if="jurySearchResults.length > 0 && jurySearchQuery.length >= 2"
+                  class="jury-autocomplete position-absolute w-100 border rounded-bottom"
+                  style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                  <div v-for="user in jurySearchResults" :key="user.username" class="p-2 border-bottom cursor-pointer"
+                    :class="{ 'bg-warning-subtle': isCurrentUser(user.username) }" style="cursor: pointer;"
+                    @click="addJuryMember(user.username)">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div class="d-flex align-items-center">
+                        <i class="fas fa-user me-2 text-primary"></i>
+                        <strong>{{ user.username }}</strong>
+                      </div>
+                      <div v-if="isCurrentUser(user.username)" class="self-warning-badge">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <small>This is you</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <small class="form-text text-muted mt-1">
+                Search and click to add jury members. Click × to remove.
+              </small>
             </div>
 
             <div class="mb-3">
@@ -385,9 +423,7 @@ class="mt-2 pt-2"
 
             <div class="mb-3">
               <label class="form-label">Code Link (optional)</label>
-              <input type="text"
-class="form-control"
-v-model="editForm.code_link"
+              <input type="text" class="form-control" v-model="editForm.code_link"
                 placeholder="Optional: Add Code Link" />
             </div>
 
@@ -440,6 +476,9 @@ export default {
     const submittingToContestId = ref(null)
     const previewArticleUrl = ref('')
     const previewArticleTitle = ref('')
+    const jurySearchQuery = ref('')
+    const jurySearchResults = ref([])
+    let jurySearchTimeout = null
 
     // FIXED: Store submission ID instead of all preview data
     const currentSubmissionId = ref(null)
@@ -895,7 +934,8 @@ export default {
       marks_setting_rejected: 0,
       jury_members: '',
       code_link: '',
-      allowed_submission_type: ''
+      allowed_submission_type: '',
+      selectedJuryMembers: []
     })
 
     onMounted(() => {
@@ -903,6 +943,73 @@ export default {
       const modalEl = document.getElementById('editContestModal')
       if (modalEl) editModal = new bootstrap.Modal(modalEl)
     })
+
+
+    // Check if username is current user
+    const isCurrentUser = (username) => {
+      const currentUsername = currentUser.value?.username
+      if (!currentUsername || !username) return false
+      return String(currentUsername).trim().toLowerCase() ===
+        String(username).trim().toLowerCase()
+    }
+
+    // Search for jury members
+    const searchJuryMembers = async () => {
+      const query = jurySearchQuery.value.trim()
+
+      if (query.length < 2) {
+        jurySearchResults.value = []
+        return
+      }
+
+      // Debounce search
+      if (jurySearchTimeout) {
+        clearTimeout(jurySearchTimeout)
+      }
+
+      jurySearchTimeout = setTimeout(async () => {
+        try {
+          const response = await api.get(`/user/search?q=${encodeURIComponent(query)}&limit=10`)
+          // Filter out already selected jury members
+          jurySearchResults.value = (response.users || []).filter(
+            user => !editForm.selectedJuryMembers.includes(user.username)
+          )
+          console.log('🔍 Jury search results:', jurySearchResults.value)
+        } catch (error) {
+          console.error('Jury search error:', error)
+          jurySearchResults.value = []
+        }
+      }, 300)
+    }
+
+    // Add jury member
+    const addJuryMember = (username) => {
+      // Check if trying to add self
+      if (isCurrentUser(username)) {
+        const confirmed = window.confirm(
+          '⚠️ WARNING: Self-Selection as Jury Member\n\n' +
+          'You are about to add yourself as a jury member.\n\n' +
+          'It is recommended to select other users as jury members.\n\n' +
+          'Continue?'
+        )
+        if (!confirmed) return
+      }
+
+      // Add if not already in list
+      if (!editForm.selectedJuryMembers.includes(username)) {
+        editForm.selectedJuryMembers.push(username)
+        jurySearchQuery.value = ''
+        jurySearchResults.value = []
+      }
+    }
+
+    // Remove jury member
+    const removeJuryMember = (username) => {
+      editForm.selectedJuryMembers = editForm.selectedJuryMembers.filter(
+        u => u !== username
+      )
+    }
+
 
     let editModal = null
     const openEditModal = () => {
@@ -921,9 +1028,18 @@ export default {
 
       editForm.marks_setting_accepted = Number(contest.value.marks_setting_accepted ?? 0)
       editForm.marks_setting_rejected = Number(contest.value.marks_setting_rejected ?? 0)
-      editForm.jury_members = Array.isArray(contest.value.jury_members)
-        ? contest.value.jury_members.join(', ')
-        : ''
+      if (Array.isArray(contest.value.jury_members)) {
+        editForm.selectedJuryMembers = [...contest.value.jury_members]
+      } else {
+        editForm.selectedJuryMembers = []
+      }
+
+      console.log('📝 Edit modal opened with jury members:', editForm.selectedJuryMembers)
+
+      // Reset search state
+      jurySearchQuery.value = ''
+      jurySearchResults.value = []
+
 
       editForm.code_link = contest.value?.code_link ?? ''
 
@@ -943,12 +1059,7 @@ export default {
           end_date: editForm.end_date || null,
           marks_setting_accepted: Number(editForm.marks_setting_accepted) || 0,
           marks_setting_rejected: Number(editForm.marks_setting_rejected) || 0,
-          jury_members: Array.isArray(editForm.jury_members)
-            ? editForm.jury_members
-            : editForm.jury_members
-              .split(',')
-              .map(x => x.trim())
-              .filter(x => x.length > 0),
+          jury_members: editForm.selectedJuryMembers,
           code_link: editForm.code_link?.trim() || null,
           allowed_submission_type: editForm.allowed_submission_type
         }
@@ -1000,7 +1111,12 @@ export default {
       handleSubmitArticle,
       handleArticleSubmitted,
       forceAuthRefresh,
-
+      jurySearchQuery,
+      jurySearchResults,
+      searchJuryMembers,
+      addJuryMember,
+      removeJuryMember,
+      isCurrentUser,
       goBack,
       showArticlePreview,
       handleSubmissionReviewed,
@@ -1141,6 +1257,10 @@ export default {
 
 .badge.bg-primary {
   background-color: var(--wiki-primary) !important;
+}
+.badge.bg-info {
+  background-color: var(--wiki-primary) !important;
+  color: white;
 }
 
 /* Table Styling */
@@ -1317,6 +1437,58 @@ export default {
 
 [data-theme="dark"] .description-text {
   color: var(--wiki-text);
+}
+.jury-autocomplete {
+  border: 1px solid var(--wiki-border);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: var(--wiki-card-bg);
+  z-index: 1060;
+  transition: background-color 0.2s ease;
+}
+
+[data-theme="dark"] .jury-autocomplete {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.jury-autocomplete .p-2 {
+  transition: background-color 0.2s ease;
+  color: var(--wiki-text);
+}
+
+.jury-autocomplete .p-2:hover {
+  background-color: var(--wiki-hover-bg) !important;
+}
+
+/* Self-selection warning */
+.jury-autocomplete .bg-warning-subtle {
+  background-color: rgba(255, 193, 7, 0.25) !important;
+  border-left: 4px solid #ffc107;
+}
+
+[data-theme="dark"] .jury-autocomplete .bg-warning-subtle {
+  background-color: rgba(255, 193, 7, 0.35) !important;
+}
+
+.self-warning-badge {
+  background-color: #ffc107;
+  color: #000;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .self-warning-badge {
+  background-color: #ff9800;
+  color: #fff;
+}
+
+/* Text styling */
+.jury-autocomplete .text-primary {
+  color: var(--wiki-primary) !important;
 }
 
 /* Responsive */
