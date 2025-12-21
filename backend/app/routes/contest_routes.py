@@ -163,6 +163,33 @@ def create_contest():
     except (ValueError, TypeError):
         return jsonify({'error': 'Marks settings must be valid integers'}), 400
 
+    # Parse byte count range (optional)
+    # These fields define the allowed byte count range for article submissions
+    min_byte_count = data.get('min_byte_count')
+    max_byte_count = data.get('max_byte_count')
+
+    # Convert to integers if provided, otherwise keep as None
+    if min_byte_count is not None:
+        try:
+            min_byte_count = int(min_byte_count)
+            if min_byte_count < 0:
+                return jsonify({'error': 'Minimum byte count must be non-negative'}), 400
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Minimum byte count must be a valid integer'}), 400
+
+    if max_byte_count is not None:
+        try:
+            max_byte_count = int(max_byte_count)
+            if max_byte_count < 0:
+                return jsonify({'error': 'Maximum byte count must be non-negative'}), 400
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Maximum byte count must be a valid integer'}), 400
+
+    # Validate that min <= max if both are provided
+    if min_byte_count is not None and max_byte_count is not None:
+        if min_byte_count > max_byte_count:
+            return jsonify({'error': 'Minimum byte count must be less than or equal to maximum byte count'}), 400
+
     # Create contest
     try:
         contest = Contest(
@@ -177,7 +204,9 @@ def create_contest():
             marks_setting_accepted=marks_accepted,
             marks_setting_rejected=marks_rejected,
             jury_members=jury_members,
-            allowed_submission_type=allowed_submission_type
+            allowed_submission_type=allowed_submission_type,
+            min_byte_count=min_byte_count,
+            max_byte_count=max_byte_count
         )
 
         contest.save()
@@ -405,6 +434,38 @@ def update_contest(contest_id):  # pylint: disable=too-many-return-statements
                 contest.marks_setting_rejected = int(data.get('marks_setting_rejected') or 0)
             except (TypeError, ValueError):
                 return jsonify({'error': 'marks_setting_rejected must be integer'}), 400
+
+        # --- Byte count range ---
+        if 'min_byte_count' in data:
+            min_byte_count_value = data.get('min_byte_count')
+            if min_byte_count_value is None or min_byte_count_value == '':
+                contest.min_byte_count = None
+            else:
+                try:
+                    min_byte_count = int(min_byte_count_value)
+                    if min_byte_count < 0:
+                        return jsonify({'error': 'Minimum byte count must be non-negative'}), 400
+                    contest.min_byte_count = min_byte_count
+                except (TypeError, ValueError):
+                    return jsonify({'error': 'min_byte_count must be a valid integer'}), 400
+
+        if 'max_byte_count' in data:
+            max_byte_count_value = data.get('max_byte_count')
+            if max_byte_count_value is None or max_byte_count_value == '':
+                contest.max_byte_count = None
+            else:
+                try:
+                    max_byte_count = int(max_byte_count_value)
+                    if max_byte_count < 0:
+                        return jsonify({'error': 'Maximum byte count must be non-negative'}), 400
+                    contest.max_byte_count = max_byte_count
+                except (TypeError, ValueError):
+                    return jsonify({'error': 'max_byte_count must be a valid integer'}), 400
+
+        # Validate that min <= max if both are set
+        if contest.min_byte_count is not None and contest.max_byte_count is not None:
+            if contest.min_byte_count > contest.max_byte_count:
+                return jsonify({'error': 'Minimum byte count must be less than or equal to maximum byte count'}), 400
 
         # --- Jury members: accept list or comma string ---
         if 'jury_members' in data:
@@ -769,6 +830,14 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             except Exception:  # pylint: disable=broad-exception-caught
                 pass
             article_expansion_bytes = None
+
+    # Validate article byte count against contest requirements
+    # This check happens after fetching article information from MediaWiki API
+    # article_word_count is actually the byte count (size) from MediaWiki API
+    if contest.min_byte_count is not None or contest.max_byte_count is not None:
+        is_valid, error_message = contest.validate_byte_count(article_word_count)
+        if not is_valid:
+            return jsonify({'error': error_message}), 400
 
     # Create submission with fetched information
     try:

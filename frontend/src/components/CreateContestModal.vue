@@ -1,6 +1,6 @@
 <template>
   <div class="modal fade" id="createContestModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-fullscreen">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Create New Contest</h5>
@@ -141,6 +141,33 @@ min="0" />
               </div>
             </div>
 
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="minByteCount" class="form-label">
+                  Minimum Byte Count <span class="text-muted">(Optional)</span>
+                </label>
+                <input type="number"
+class="form-control"
+id="minByteCount"
+                  v-model.number="formData.min_byte_count"
+min="0"
+                  placeholder="e.g., 1000" />
+                <small class="form-text text-muted">Articles must have at least this many bytes</small>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="maxByteCount" class="form-label">
+                  Maximum Byte Count <span class="text-muted">(Optional)</span>
+                </label>
+                <input type="number"
+class="form-control"
+id="maxByteCount"
+                  v-model.number="formData.max_byte_count"
+min="0"
+                  placeholder="e.g., 50000" />
+                <small class="form-text text-muted">Articles must not exceed this many bytes</small>
+              </div>
+            </div>
+
             <div class="mb-3">
               <label for="codeLink" class="form-label">
                 Code Repository Link <span class="text-muted">(Optional)</span>
@@ -198,7 +225,9 @@ export default {
       marks_setting_rejected: 0,
       code_link: null,
       rules_text: '',
-      allowed_submission_type: 'both'
+      allowed_submission_type: 'both',
+      min_byte_count: null,
+      max_byte_count: null
     })
 
     // Set default dates
@@ -285,6 +314,14 @@ export default {
         return
       }
 
+      // Validate byte count range
+      if (formData.min_byte_count !== null && formData.max_byte_count !== null) {
+        if (formData.min_byte_count > formData.max_byte_count) {
+          showAlert('Minimum byte count must be less than or equal to maximum byte count', 'warning')
+          return
+        }
+      }
+
       loading.value = true
       try {
         const contestData = {
@@ -293,7 +330,22 @@ export default {
           code_link: formData.code_link?.trim() || null,
           rules: {
             text: formData.rules_text.trim()
-          }
+          },
+          // Byte count fields: null if not set or invalid, otherwise use the value (including 0)
+          min_byte_count: (
+            formData.min_byte_count === null ||
+            formData.min_byte_count === undefined ||
+            isNaN(formData.min_byte_count)
+          )
+            ? null
+            : Number(formData.min_byte_count),
+          max_byte_count: (
+            formData.max_byte_count === null ||
+            formData.max_byte_count === undefined ||
+            isNaN(formData.max_byte_count)
+          )
+            ? null
+            : Number(formData.max_byte_count)
         }
 
         const result = await store.createContest(contestData)
@@ -327,6 +379,8 @@ export default {
       selectedJury.value = []
       formData.jury_members = []
       formData.rules_text = ''
+      formData.min_byte_count = null
+      formData.max_byte_count = null
 
       // Reset dates
       const today = new Date()
@@ -605,5 +659,43 @@ input[type="date"].form-control {
   border-width: 0.15em;
   border-color: currentColor;
   border-right-color: transparent;
+}
+
+/* Full screen modal styling */
+.modal-fullscreen {
+  width: 100vw;
+  max-width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.modal-fullscreen .modal-content {
+  height: 100vh;
+  border: 0;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-fullscreen .modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+/* Better spacing for full screen layout */
+.modal-fullscreen .modal-body .row {
+  margin-bottom: 1rem;
+}
+
+.modal-fullscreen .modal-body .mb-3 {
+  margin-bottom: 1.5rem !important;
+}
+
+/* Ensure form uses available space well */
+.modal-fullscreen .modal-body form {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 </style>

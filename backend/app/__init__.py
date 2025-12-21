@@ -42,6 +42,12 @@ from app.models.submission import Submission  # pylint: disable=unused-import
 from app.routes.user_routes import user_bp
 from app.routes.contest_routes import contest_bp
 from app.routes.submission_routes import submission_bp
+from app.utils import (
+    extract_page_title_from_url,
+    build_mediawiki_revisions_api_params,
+    get_mediawiki_headers,
+    get_latest_revision_author
+)
 
 # =============================================================================
 # CONFIGURATION SETUP
@@ -559,54 +565,31 @@ def mediawiki_article_info():  # pylint: disable=too-many-return-statements
         return jsonify({'error': 'Article URL is required'}), 400
 
     try:
-        # Parse the article URL to extract base URL and page title
-        url_obj = urlparse(article_url)
-        base_url = f"{url_obj.scheme}://{url_obj.netloc}"
-
-        # Extract page title from URL
-        page_title = ''
-        if '/wiki/' in url_obj.path:
-            # Standard MediaWiki URL format: /wiki/Page_Title
-            page_title = unquote(url_obj.path.split('/wiki/')[1])
-        elif 'title=' in url_obj.query:
-            # Old-style URL: /w/index.php?title=Page_Title
-            query_params = parse_qs(url_obj.query)
-            page_title = unquote(query_params.get('title', [''])[0])
-        else:
-            # Try to extract from pathname
-            parts = url_obj.path.split('/')
-            page_title = unquote(parts[-1]) if parts else ''
+        # Extract page title from URL using shared utility function
+        # This ensures consistency with the submission route
+        page_title = extract_page_title_from_url(article_url)
 
         if not page_title:
             return jsonify({'error': 'Could not extract page title from URL'}), 400
 
+        # Parse the article URL to extract base URL
+        url_obj = urlparse(article_url)
+        base_url = f"{url_obj.scheme}://{url_obj.netloc}"
+
         # Build MediaWiki API URL
         api_url = f"{base_url}/w/api.php"
 
-        # First, get page information including revisions (for author)
-        # Use formatversion=2 for better JSON structure (as shown in MediaWiki API docs)
-        api_params = {
-            'action': 'query',
-            'titles': page_title,
-            'format': 'json',
-            'formatversion': '2',  # Use formatversion=2 for cleaner JSON structure
-            'prop': 'info|revisions',
-            'rvprop': 'timestamp|user|comment|size',
-            'rvlimit': '1',  # Get first revision (creation)
-            'rvdir': 'newer',  # Start from oldest
-            'inprop': 'url|displaytitle',
-            'redirects': 'true'  # Follow redirects
-        }
+        # Build API parameters using shared utility function
+        # This ensures we use the same logic as the submission route
+        # With rvdir='older', we get the newest revision first, then oldest
+        # This matches how the submission route fetches byte count
+        api_params = build_mediawiki_revisions_api_params(page_title)
+        # Add additional parameters for this endpoint
+        api_params['inprop'] = 'url|displaytitle'
 
-        # Make request to MediaWiki API with timeout
-        # MediaWiki API requires a User-Agent header to identify the application
-        headers = {
-            'User-Agent': (
-                'WikiContest/1.0 (https://wikicontest.toolforge.org; '
-                'contact@wikicontest.org) Python/requests'
-            )
-        }
-
+        # Make request to MediaWiki API using shared headers
+        # This ensures consistency with the submission route
+        headers = get_mediawiki_headers()
         response = requests.get(api_url, params=api_params, headers=headers, timeout=10)
 
         # Check if request was successful
@@ -647,7 +630,12 @@ def mediawiki_article_info():  # pylint: disable=too-many-return-statements
             page_data = pages[page_id]
 
         # Check if page exists
-        if page_id == '-1' or page_data.get('missing') is not False:
+        # In formatversion=2, missing pages have 'missing': True
+        # In formatversion=1, missing pages have pageid: -1
+        is_missing = page_data.get('missing', False) if page_data else True
+        has_valid_pageid = page_id and page_id != '-1' and page_id != ''
+
+        if not has_valid_pageid or is_missing:
             return jsonify({'error': 'Article not found'}), 404
 
         # Extract article information
@@ -655,24 +643,46 @@ def mediawiki_article_info():  # pylint: disable=too-many-return-statements
         display_title = page_data.get('displaytitle', article_title)
         page_url = page_data.get('fullurl', article_url)
 
-        # Get revision information (first revision = creation)
+        # Get revision information
+        # With rvdir='older' and rvlimit=2, we get:
+        # - revisions[0] = newest (latest) revision - use for byte count
+        # - revisions[-1] = oldest (first) revision - use for creation date/author
         revisions = page_data.get('revisions', [])
         author = None
         article_created_at = None
         last_revision_date = None
         word_count = None
 
-        if revisions:
-            # First revision is the creation
-            first_revision = revisions[0]
-            author = first_revision.get('user', 'Unknown')
-            article_created_at = first_revision.get('timestamp', '')
-            word_count = first_revision.get('size', 0)
+        if revisions and len(revisions) > 0:
+            # Get latest revision (newest) for byte count
+            # This matches the submission route logic - we validate against current size
+            # With rvdir='older', the first revision is the newest (latest)
+            latest_revision = revisions[0]
+            word_count = latest_revision.get('size', 0)
 
-            # Last revision (most recent)
-            if len(revisions) > 0:
-                last_revision = revisions[-1]
-                last_revision_date = last_revision.get('timestamp', '')
+            # Get latest revision author using shared utility function
+            # This gets the author who made the most recent edit
+            author = get_latest_revision_author(revisions)
+            if not author:
+                author = 'Unknown'
+
+            # Get oldest revision for creation date
+            # If we have multiple revisions, the last one is the oldest
+            # If we only have one revision, it's both the newest and oldest
+            if len(revisions) > 1:
+                oldest_revision = revisions[-1]
+            else:
+                oldest_revision = revisions[0]
+
+            article_created_at = oldest_revision.get('timestamp', '')
+            last_revision_date = latest_revision.get('timestamp', '')
+        else:
+            # Page exists but has no revisions - this is unusual but possible
+            # Set defaults and log a warning
+            word_count = 0
+            author = 'Unknown'
+            article_created_at = None
+            last_revision_date = None
 
         # Return comprehensive article information
         return jsonify({
