@@ -56,7 +56,7 @@ class User(BaseModel):
     reviewed_submissions = db.relationship(
         "Submission",
         foreign_keys="Submission.reviewed_by",
-        primaryjoin="User.username == Submission.reviewed_by",
+        primaryjoin="User.id == Submission.reviewed_by",
         back_populates="reviewer",
         overlaps="submissions",
     )
@@ -122,7 +122,8 @@ class User(BaseModel):
             score_change: Amount to add/subtract from current score
         """
         self.score += score_change
-        db.session.commit()
+        # Note: Don't commit here - let the caller handle the commit
+        # This allows multiple updates to be batched together
 
     def is_admin(self):
         """

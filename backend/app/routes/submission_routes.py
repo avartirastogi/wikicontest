@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 import requests
 from flask import Blueprint, jsonify, request
+from sqlalchemy.orm import joinedload
 
 from app.database import db
 from app.middleware.auth import handle_errors, require_auth, require_submission_permission, validate_json_data
@@ -466,7 +467,11 @@ def review_submission(submission_id):
     user = request.current_user
     data = request.validated_data
 
-    submission = Submission.query.get_or_404(submission_id)
+    # Load submission with relationships to avoid lazy loading issues
+    submission = Submission.query.options(
+        joinedload(Submission.submitter),
+        joinedload(Submission.contest)
+    ).get_or_404(submission_id)
     contest = submission.contest
 
     # ---- Permission ----
@@ -497,13 +502,21 @@ def review_submission(submission_id):
         score = contest.marks_setting_rejected
 
     # ✅ SINGLE SOURCE OF TRUTH
-    submission.update_status(
-        new_status=status,
-        reviewer=user,
-        score=score,
-        comment=comment,
-        contest=contest
-    )
+    try:
+        submission.update_status(
+            new_status=status,
+            reviewer=user,
+            score=score,
+            comment=comment,
+            contest=contest
+        )
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        db.session.rollback()
+        # Log the error for debugging
+        import traceback
+        print(f"Error updating submission status: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({"error": "Internal server error"}), 500
 
     return jsonify({
         "message": "Submission reviewed successfully",

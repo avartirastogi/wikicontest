@@ -197,6 +197,12 @@ class Submission(BaseModel):
 
         # Update user's total score
         if score_difference != 0:
+            # Ensure submitter is loaded - if not, load it explicitly
+            if self.submitter is None:
+                from app.models.user import User
+                self.submitter = User.query.get(self.user_id)
+                if self.submitter is None:
+                    raise ValueError(f"Submitter user with id {self.user_id} not found")
             self.submitter.update_score(score_difference)
 
         db.session.commit()

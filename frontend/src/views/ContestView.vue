@@ -7,7 +7,10 @@
       </button>
 
       <div class="d-flex gap-2">
-        <button v-if="canDeleteContest" class="btn btn-danger" @click="handleDeleteContest" :disabled="deletingContest">
+        <button v-if="canDeleteContest"
+class="btn btn-danger"
+@click="handleDeleteContest"
+:disabled="deletingContest">
           <span v-if="deletingContest" class="spinner-border spinner-border-sm me-2"></span>
           <i v-else class="fas fa-trash me-2"></i>
           {{ deletingContest ? 'Deleting...' : 'Delete Contest' }}
@@ -138,7 +141,10 @@
         </div>
         <div class="card-body">
           <p class="code-link-text">
-            <a v-if="contest.code_link" :href="contest.code_link" target="_blank" rel="noopener noreferrer">
+            <a v-if="contest.code_link"
+:href="contest.code_link"
+target="_blank"
+rel="noopener noreferrer">
               {{ contest.code_link }}
             </a>
             <span v-else class="text-muted">No code link provided</span>
@@ -155,8 +161,11 @@
               <span class="spinner-border spinner-border-sm me-2"></span>
               {{ loadingSubmissions ? 'Loading...' : 'Refreshing...' }}
             </button>
-            <button v-else class="btn btn-sm btn-outline-light" @click="refreshMetadata"
-              :disabled="submissions.length === 0" title="Refresh article metadata"
+            <button v-else
+class="btn btn-sm btn-outline-light"
+@click="refreshMetadata"
+              :disabled="submissions.length === 0"
+title="Refresh article metadata"
               style="color: white; border-color: white;">
               <i class="fas fa-database me-1"></i>Refresh Metadata
             </button>
@@ -183,8 +192,10 @@
               <tbody>
                 <tr v-for="submission in submissions" :key="submission.id">
                   <td>
-                    <a href="#" @click.prevent="showArticlePreview(submission)"
-                      class="text-decoration-none article-title-link" :title="submission.article_link">
+                    <a href="#"
+@click.prevent="showArticlePreview(submission)"
+                      class="text-decoration-none article-title-link"
+:title="submission.article_link">
                       {{ submission.article_title }}
                       <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
                     </a>
@@ -201,7 +212,8 @@
                          The previous extra "word count" line was removed to avoid duplicate numbers
                          and to match the simplified UI requested by the user. -->
                     <div v-if="submission.article_word_count !== null &&
-                      submission.article_word_count !== undefined" class="text-muted small mt-1">
+                      submission.article_word_count !== undefined"
+class="text-muted small mt-1">
                       <i class="fas fa-clock me-1"></i>Original bytes:
                       {{ formatByteCountWithExact(submission.article_word_count) }}
                     </div>
@@ -211,8 +223,10 @@
                          - Down arrow for negative (bytes decreased)
                          - Left-right arrow for zero change -->
                     <div v-if="submission.article_expansion_bytes !== null &&
-                      submission.article_expansion_bytes !== undefined" class="text-muted small mt-1">
-                      <i class="me-1" :class="submission.article_expansion_bytes > 0
+                      submission.article_expansion_bytes !== undefined"
+class="text-muted small mt-1">
+                      <i class="me-1"
+:class="submission.article_expansion_bytes > 0
                         ? 'fas fa-arrow-up'
                         : submission.article_expansion_bytes < 0
                           ? 'fas fa-arrow-down'
@@ -239,7 +253,8 @@
                       <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
                     </div>
                     <!-- Latest revision author (from latest revision, shown below original) -->
-                    <div v-if="submission.latest_revision_author" class="mt-2 pt-2"
+                    <div v-if="submission.latest_revision_author"
+class="mt-2 pt-2"
                       style="border-top: 1px solid #dee2e6;">
                       <div>
                         <i class="fas fa-user me-1"></i>{{ submission.latest_revision_author }}
@@ -264,7 +279,8 @@
                   <td>{{ submission.score || 0 }}</td>
                   <td>{{ formatDate(submission.submitted_at) }}</td>
                   <td>
-                    <button @click="showArticlePreview(submission)" class="btn btn-sm btn-outline-primary"
+                    <button @click="showArticlePreview(submission)"
+class="btn btn-sm btn-outline-primary"
                       title="Preview Article">
                       <i class="fas fa-eye"></i>
                     </button>
@@ -291,20 +307,26 @@
         <!-- Main submit button shown at the bottom of the page -->
         <!-- Simple rule: show only for logged-in users when contest is current and they are not jury/creator -->
         <button v-if="contest?.status === 'current' && isAuthenticated && !canViewSubmissions"
-          class="btn btn-primary ms-auto" @click="handleSubmitArticle">
+          class="btn btn-primary ms-auto"
+@click="handleSubmitArticle">
           <i class="fas fa-paper-plane me-2"></i>Submit Article
         </button>
       </div>
     </div>
 
     <!-- Submit Article Modal -->
-    <SubmitArticleModal v-if="submittingToContestId" :contest-id="submittingToContestId"
+    <SubmitArticleModal v-if="submittingToContestId"
+:contest-id="submittingToContestId"
       @submitted="handleArticleSubmitted" />
 
     <!-- Article Preview Modal - Pass computed currentSubmission -->
-    <ArticlePreviewModal v-if="!!currentSubmission" :can-review="canUserReview"
-      :article-url="currentSubmission.article_link" :article-title="currentSubmission.article_title"
-      :submission-id="currentSubmission.id" :submission="currentSubmission" @reviewed="handleSubmissionReviewed" />
+    <ArticlePreviewModal v-if="!!currentSubmission"
+:can-review="canUserReview"
+      :article-url="currentSubmission.article_link"
+:article-title="currentSubmission.article_title"
+      :submission-id="currentSubmission.id"
+:submission="currentSubmission"
+@reviewed="handleSubmissionReviewed" />
   </div>
   <!-- Edit Contest Modal -->
   <div class="modal fade" id="editContestModal" tabindex="-1">
@@ -373,8 +395,10 @@
                 <small v-if="editForm.selectedJuryMembers.length === 0" class="text-muted">
                   No jury members selected
                 </small>
-                <span v-for="username in editForm.selectedJuryMembers" :key="username"
-                  class="badge bg-primary me-2 mb-2" style="font-size: 0.9rem; cursor: pointer;">
+                <span v-for="username in editForm.selectedJuryMembers"
+:key="username"
+                  class="badge bg-primary me-2 mb-2"
+style="font-size: 0.9rem; cursor: pointer;">
                   {{ username }}
                   <i class="fas fa-times ms-1" @click="removeJuryMember(username)"></i>
                 </span>
@@ -382,15 +406,22 @@
 
               <!-- Jury Search Input with Autocomplete -->
               <div style="position: relative;">
-                <input type="text" class="form-control" v-model="jurySearchQuery" @input="searchJuryMembers"
-                  placeholder="Type username to search and add..." autocomplete="off" />
+                <input type="text"
+class="form-control"
+v-model="jurySearchQuery"
+@input="searchJuryMembers"
+                  placeholder="Type username to search and add..."
+autocomplete="off" />
 
                 <!-- Autocomplete Dropdown -->
                 <div v-if="jurySearchResults.length > 0 && jurySearchQuery.length >= 2"
                   class="jury-autocomplete position-absolute w-100 border rounded-bottom"
                   style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div v-for="user in jurySearchResults" :key="user.username" class="p-2 border-bottom cursor-pointer"
-                    :class="{ 'bg-warning-subtle': isCurrentUser(user.username) }" style="cursor: pointer;"
+                  <div v-for="user in jurySearchResults"
+:key="user.username"
+class="p-2 border-bottom cursor-pointer"
+                    :class="{ 'bg-warning-subtle': isCurrentUser(user.username) }"
+style="cursor: pointer;"
                     @click="addJuryMember(user.username)">
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="d-flex align-items-center">
@@ -423,7 +454,9 @@
 
             <div class="mb-3">
               <label class="form-label">Code Link (optional)</label>
-              <input type="text" class="form-control" v-model="editForm.code_link"
+              <input type="text"
+class="form-control"
+v-model="editForm.code_link"
                 placeholder="Optional: Add Code Link" />
             </div>
 
@@ -820,7 +853,7 @@ export default {
       try {
         await api.delete(`/contest/${contest.value.id}`)
         showAlert('Contest deleted successfully', 'success')
-        // Navigate back to contests list 
+        // Navigate back to contests list
         router.push({ name: 'Contests' })
       } catch (error) {
         console.error('Failed to delete contest:', error)
@@ -1101,8 +1134,8 @@ export default {
           return true
         }
       }
-console.log('Current user:', currentUser.value?.username)
-console.log('Jury members:', contest.value?.jury_members)
+      console.log('Current user:', currentUser.value?.username)
+      console.log('Jury members:', contest.value?.jury_members)
 
       return false
     })

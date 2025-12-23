@@ -8,6 +8,7 @@ Create Date: 2025-12-21 07:23:55.291006
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
+from sqlalchemy import inspect
 
 # revision identifiers, used by Alembic.
 revision = '51004fa44a6b'
@@ -20,11 +21,22 @@ def upgrade() -> None:
     # Add byte count range fields to contests table
     # These fields define the allowed byte count range for article submissions
     # None means no limit (no minimum or no maximum)
-    op.add_column('contests', sa.Column('min_byte_count', sa.Integer(), nullable=True))
-    op.add_column('contests', sa.Column('max_byte_count', sa.Integer(), nullable=True))
+    # Check if columns exist before adding to handle partial migration scenarios
+    conn = op.get_bind()
+    inspector = inspect(conn)
+    columns = [col['name'] for col in inspector.get_columns('contests')]
+    
+    # Add min_byte_count if it doesn't exist
+    if 'min_byte_count' not in columns:
+        op.add_column('contests', sa.Column('min_byte_count', sa.Integer(), nullable=True))
+    
+    # Add max_byte_count if it doesn't exist
+    if 'max_byte_count' not in columns:
+        op.add_column('contests', sa.Column('max_byte_count', sa.Integer(), nullable=True))
     
     # Remove old required_bytes column if it exists (legacy field, no longer used)
-    op.drop_column('contests', 'required_bytes')
+    if 'required_bytes' in columns:
+        op.drop_column('contests', 'required_bytes')
 
 
 def downgrade() -> None:

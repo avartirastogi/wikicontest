@@ -1,6 +1,10 @@
 <template>
-  <div class="modal fade" id="reviewSubmissionModal" tabindex="-1" 
-       data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+  <div class="modal fade"
+id="reviewSubmissionModal"
+tabindex="-1"
+       data-bs-backdrop="static"
+data-bs-keyboard="false"
+aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg review-dialog">
       <div class="modal-content review-modal">
 
@@ -9,7 +13,10 @@
           <h5 class="modal-title">
             <i class="fas fa-gavel me-2"></i>Review Submission
           </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button"
+class="btn-close"
+data-bs-dismiss="modal"
+aria-label="Close"></button>
         </div>
 
         <!-- Body -->
@@ -43,26 +50,26 @@
               Points to be Awarded
               <span v-if="status === 'rejected'" class="text-muted">(Disabled for rejected)</span>
             </label>
-            <input 
-              type="number" 
-              class="form-control" 
-              v-model.number="score" 
-              :disabled="status === 'rejected'" 
+            <input
+              type="number"
+              class="form-control"
+              v-model.number="score"
+              :disabled="status === 'rejected'"
               min="0"
-              max="100" 
+              max="100"
               placeholder="Enter score (0-100)" />
           </div>
 
           <!-- Comment -->
           <div>
             <label class="form-label fw-semibold">
-              Reviewer Comment 
+              Reviewer Comment
               <span class="text-muted">(optional)</span>
             </label>
-            <textarea 
-              class="form-control" 
-              rows="4" 
-              v-model="comment" 
+            <textarea
+              class="form-control"
+              rows="4"
+              v-model="comment"
               placeholder="Provide feedback for the participant..."></textarea>
           </div>
         </div>
@@ -73,9 +80,9 @@
             <i class="fas fa-times me-2"></i>Cancel
           </button>
 
-          <button 
-            class="btn btn-success" 
-            :disabled="submitting || !status" 
+          <button
+            class="btn btn-success"
+            :disabled="submitting || !status"
             @click="submitReview">
             <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
             <i v-else class="fas fa-check me-2"></i>

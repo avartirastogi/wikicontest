@@ -110,14 +110,20 @@ backend/
    FLASK_ENV=development
    ```
 
-6. **Initialize the database:**
+6. **Set up the database with Alembic migrations:**
    ```bash
-   # Create tables only
-   python scripts/init_db.py
+   # Apply all migrations to create database schema
+   python -m alembic upgrade head
    
-   # Reset database (drops all tables and recreates)
-   python scripts/init_db.py reset
+   # Verify migrations were applied
+   python -m alembic current
    ```
+   
+   **For detailed setup instructions, see:** [`docs/SETUP_NEW_DATABASE.md`](docs/SETUP_NEW_DATABASE.md)
+   
+   **Important:** This project uses **Alembic exclusively** for database schema management. 
+   All tables are created automatically by running migrations. Do not use `init_db.py` or 
+   any other scripts to create tables manually.
 
 ## Running the Application
 

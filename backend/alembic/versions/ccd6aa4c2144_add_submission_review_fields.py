@@ -17,9 +17,11 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # Add review fields to submissions table
+    # reviewed_by references users.id (Integer), not users.username
     op.add_column(
         'submissions',
-        sa.Column('reviewed_by', sa.String(length=50), nullable=True)
+        sa.Column('reviewed_by', sa.Integer(), nullable=True)
     )
     op.add_column(
         'submissions',
@@ -30,12 +32,13 @@ def upgrade() -> None:
         sa.Column('review_comment', sa.Text(), nullable=True)
     )
 
+    # Create foreign key constraint: reviewed_by -> users.id
     op.create_foreign_key(
         'fk_submissions_reviewed_by_users',
         'submissions',
         'users',
         ['reviewed_by'],
-        ['username']
+        ['id']
     )
 
 
