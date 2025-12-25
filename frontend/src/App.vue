@@ -79,8 +79,8 @@
                       </router-link>
                     </li>
                     <li>
-                      <router-link class="dropdown-item" to="/dashboard">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                      <router-link class="dropdown-item" to="/jurydashboard">
+                        <i class="fas fa-tachometer-alt me-2"></i>Jury Dashboard
                       </router-link>
                     </li>
                     <li><hr class="dropdown-divider"/></li>
