@@ -11,7 +11,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Contests from '../views/Contests.vue'
 import ContestView from '../views/ContestView.vue'
-// import Dashboard from '../views/Dashboard.vue'
+import Dashboard from '../views/Dashboard.vue'
 import Profile from '../views/Profile.vue'
 import JuryDashboard from '../components/JuryDashboard.vue'
 // Import store function - will be used in navigation guard
@@ -43,6 +43,13 @@ const routes = [
     path: '/jurydashboard',
     name: 'JuryDashboard',
     component: JuryDashboard,
+    // Require authentication
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: Dashboard,
     // Require authentication
     meta: { requiresAuth: true }
   },
