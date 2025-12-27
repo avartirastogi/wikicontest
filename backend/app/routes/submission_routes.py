@@ -4,6 +4,7 @@ Handles submission management and review functionality
 """
 
 from urllib.parse import urlparse
+from datetime import datetime
 
 import requests
 from flask import Blueprint, jsonify, request
@@ -427,7 +428,22 @@ def refresh_metadata(contest_id):
             if info.get('article_author') and not submission.article_author:
                 submission.article_author = info['article_author']
             if info.get('article_created_at') and not submission.article_created_at:
-                submission.article_created_at = info['article_created_at']
+                # Parse ISO 8601 timestamp string to datetime object
+                timestamp_str = info['article_created_at']
+                if isinstance(timestamp_str, str):
+                    # MediaWiki API returns timestamps in ISO 8601 format with 'Z' suffix
+                    # Replace 'Z' with '+00:00' for UTC timezone, then parse
+                    timestamp_str = timestamp_str.replace('Z', '+00:00')
+                    try:
+                        submission.article_created_at = datetime.fromisoformat(timestamp_str)
+                    except (ValueError, AttributeError):
+                        # If parsing fails, set to None
+                        submission.article_created_at = None
+                elif isinstance(timestamp_str, datetime):
+                    # Already a datetime object
+                    submission.article_created_at = timestamp_str
+                else:
+                    submission.article_created_at = None
             # Do NOT update article_word_count - it should remain fixed at submission time
             # article_word_count represents the size at the time of submission
             if info.get('article_page_id'):

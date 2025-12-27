@@ -117,8 +117,11 @@
               </div>
             </div>
 
-            <div v-if="error" class="alert alert-danger" role="alert">
-              {{ error }}
+            <div v-if="error"
+class="alert alert-danger"
+role="alert"
+style="white-space: pre-wrap; word-wrap: break-word;">
+              <strong>Error:</strong><br/>{{ error }}
             </div>
           </form>
         </div>
@@ -547,9 +550,30 @@ export default {
       } catch (err) {
         submissionProgress.stage = 'error'
 
-        // Extract error message
-        const errorMessage = err.message || 'Failed to submit article'
-        error.value = errorMessage
+        // Extract error message from response
+        const errorData = err.response?.data || {}
+        const errorMessage = errorData.error || err.message || 'Failed to submit article'
+
+        // Build detailed error message
+        let detailedError = errorMessage
+        if (errorData.details) {
+          detailedError += `\n\nDetails: ${errorData.details}`
+        }
+        if (errorData.error_type) {
+          detailedError += `\n\nError Type: ${errorData.error_type}`
+        }
+        if (errorData.traceback && process.env.NODE_ENV === 'development') {
+          detailedError += `\n\nTraceback:\n${errorData.traceback}`
+        }
+
+        // Log full error for debugging
+        console.error('Submission error:', {
+          status: err.response?.status,
+          error: errorData,
+          fullError: err
+        })
+
+        error.value = detailedError
 
         // If error is about byte count, update validation checklist
         if (errorMessage.toLowerCase().includes('byte count')) {

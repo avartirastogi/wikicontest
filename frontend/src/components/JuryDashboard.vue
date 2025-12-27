@@ -109,7 +109,7 @@ import api from '../services/api'
 export default {
   name: 'JuryDashboard',
 
-  setup () {
+  setup() {
     const router = useRouter()
     const juryContests = ref([])
     const loading = ref(false)

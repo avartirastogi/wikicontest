@@ -80,9 +80,10 @@ class Submission(BaseModel):
     contest = db.relationship("Contest", back_populates="submissions")
 
     # Constraints
+    # Allow multiple submissions per user per contest, but prevent duplicate article submissions
     __table_args__ = (
         db.UniqueConstraint(
-            "user_id", "contest_id", name="unique_user_contest_submission"
+            "user_id", "contest_id", "article_link", name="unique_user_contest_article_submission"
         ),
     )
 
@@ -281,7 +282,9 @@ class Submission(BaseModel):
             ),
             # Article metadata for judges and organizers
             "article_author": self.article_author,
-            "article_created_at": self.article_created_at,
+            "article_created_at": (
+                (self.article_created_at.isoformat() + "Z") if self.article_created_at else None
+            ),
             "article_word_count": self.article_word_count,
             "article_page_id": self.article_page_id,
             "article_size_at_start": self.article_size_at_start,

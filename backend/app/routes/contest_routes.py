@@ -3,10 +3,11 @@ Contest Routes for WikiContest Application
 Handles contest creation, retrieval, and management functionality
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 import traceback
 
 from flask import Blueprint, request, jsonify, current_app
+from sqlalchemy.exc import IntegrityError
 
 from app.database import db
 from app.middleware.auth import require_auth, handle_errors, validate_json_data
@@ -546,14 +547,15 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             return jsonify({'error': 'Contest has ended'}), 400
         return jsonify({'error': 'Contest is not active'}), 400
 
-    # Check if user already submitted to this contest
+    # Check if user already submitted this specific article to this contest
     existing_submission = Submission.query.filter_by(
         user_id=user.id,
-        contest_id=contest_id
+        contest_id=contest_id,
+        article_link=article_link
     ).first()
 
     if existing_submission:
-        return jsonify({'error': 'You have already submitted to this contest'}), 400
+        return jsonify({'error': 'You have already submitted this article to this contest'}), 400
 
     # Fetch article information from MediaWiki API
     article_title = None
@@ -644,7 +646,19 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                     oldest_revision = revisions[0]
 
                                 # Get creation date from oldest revision
-                                article_created_at = oldest_revision.get('timestamp', '')
+                                # Parse ISO 8601 timestamp string to datetime object
+                                timestamp_str = oldest_revision.get('timestamp', '')
+                                if timestamp_str:
+                                    # MediaWiki API returns timestamps in ISO 8601 format with 'Z' suffix
+                                    # Replace 'Z' with '+00:00' for UTC timezone, then parse
+                                    timestamp_str = timestamp_str.replace('Z', '+00:00')
+                                    try:
+                                        article_created_at = datetime.fromisoformat(timestamp_str)
+                                    except (ValueError, AttributeError):
+                                        # If parsing fails, set to None
+                                        article_created_at = None
+                                else:
+                                    article_created_at = None
                                 article_page_id = page_id
 
                                 # Debug logging to help diagnose issues
@@ -715,7 +729,19 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                                     oldest_rev = rev_revisions[-1]
                                                 else:
                                                     oldest_rev = rev_revisions[0]
-                                                article_created_at = oldest_rev.get('timestamp', '')
+                                                # Parse ISO 8601 timestamp string to datetime object
+                                                timestamp_str = oldest_rev.get('timestamp', '')
+                                                if timestamp_str:
+                                                    # MediaWiki API returns timestamps in ISO 8601 format with 'Z' suffix
+                                                    # Replace 'Z' with '+00:00' for UTC timezone, then parse
+                                                    timestamp_str = timestamp_str.replace('Z', '+00:00')
+                                                    try:
+                                                        article_created_at = datetime.fromisoformat(timestamp_str)
+                                                    except (ValueError, AttributeError):
+                                                        # If parsing fails, set to None
+                                                        article_created_at = None
+                                                else:
+                                                    article_created_at = None
                                                 article_page_id = page_id
 
                                                 try:
@@ -879,9 +905,40 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             'article_expansion_bytes': article_expansion_bytes
         }), 201
 
-    except Exception:  # pylint: disable=broad-exception-caught
-        # Log error for debugging but don't expose details to client
-        return jsonify({'error': 'Failed to create submission'}), 500
+    except IntegrityError as e:
+        # Rollback the session on integrity error
+        db.session.rollback()
+        # Log the actual error for debugging
+        error_str = str(e)
+        error_orig = str(e.orig) if hasattr(e, 'orig') else ''
+        full_error = f'{error_str} | Original: {error_orig}'
+        current_app.logger.error(f'Integrity error creating submission: {full_error}')
+        current_app.logger.error(f'Traceback: {traceback.format_exc()}')
+        # Check if it's a duplicate submission error
+        if 'unique_user_contest_article_submission' in error_orig or 'unique_user_contest_article_submission' in error_str:
+            return jsonify({'error': 'You have already submitted this article to this contest'}), 400
+        # Return detailed error for debugging
+        return jsonify({
+            'error': 'Failed to create submission: duplicate entry or constraint violation',
+            'details': full_error,
+            'traceback': traceback.format_exc() if current_app.debug else None
+        }), 400
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        # Rollback the session on any error
+        db.session.rollback()
+        # Log error for debugging
+        error_str = str(e)
+        error_type = type(e).__name__
+        full_error = f'{error_type}: {error_str}'
+        current_app.logger.error(f'Error creating submission: {full_error}')
+        current_app.logger.error(f'Traceback: {traceback.format_exc()}')
+        # Return detailed error for debugging
+        return jsonify({
+            'error': 'Failed to create submission',
+            'details': full_error,
+            'error_type': error_type,
+            'traceback': traceback.format_exc() if current_app.debug else None
+        }), 500
 
 @contest_bp.route('/<int:contest_id>/submissions', methods=['GET'])
 @require_auth
