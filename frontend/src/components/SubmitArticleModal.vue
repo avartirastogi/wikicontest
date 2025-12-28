@@ -36,7 +36,7 @@
             </div>
 
             <!-- Validation Checklist -->
-            <div class="mb-3" v-if="contest && (contest.min_byte_count || contest.max_byte_count)">
+            <div class="mb-3" v-if="contest">
               <label class="form-label">
                 <i class="fas fa-check-circle me-2 text-primary"></i>Validation Checklist
               </label>
@@ -194,8 +194,7 @@ export default {
         const data = await api.get(`/contest/${props.contestId}`)
         contest.value = data
         submissionProgress.contestByteRequirements = {
-          min: data.min_byte_count,
-          max: data.max_byte_count
+          min: data.min_byte_count
         }
       } catch (err) {
         console.error('Error loading contest:', err)
@@ -294,15 +293,9 @@ export default {
       const req = submissionProgress.contestByteRequirements
       const count = submissionProgress.articleByteCount
 
-      if (!req || (!req.min && !req.max)) {
-        return 'No byte count restrictions'
-      }
-
-      if (count !== null) {
-        const minText = req.min ? `min: ${req.min.toLocaleString()}` : ''
-        const maxText = req.max ? `max: ${req.max.toLocaleString()}` : ''
-        const rangeText = [minText, maxText].filter(Boolean).join(', ')
-        return `Article: ${count.toLocaleString()} bytes | Required: ${rangeText}`
+      if (count !== null && req && req.min !== null && req.min !== undefined) {
+        const minText = `min: ${req.min.toLocaleString()}`
+        return `Article: ${count.toLocaleString()} bytes | Required: ${minText}`
       }
 
       return 'Checking...'
@@ -339,11 +332,7 @@ export default {
 
     // Check if all validations have passed - used to enable/disable submit button
     const canSubmit = computed(() => {
-      // If contest has no byte count requirements, only URL validation is needed
-      if (!contest.value || (!contest.value.min_byte_count && !contest.value.max_byte_count)) {
-        return validationChecklist[0].checked
-      }
-      // If contest has byte count requirements, both checks must pass
+      // min_byte_count is always required, so both checks must pass
       return validationChecklist[0].checked && validationChecklist[1].checked
     })
 
@@ -408,40 +397,24 @@ export default {
         }
 
         // Validate byte count against contest requirements
-        // Only validate if contest has byte count requirements
-        if (req && (req.min !== null || req.max !== null)) {
-          let isValid = true
-          let errorMessage = null
-
+        // min_byte_count is always required
+        if (req && req.min !== null && req.min !== undefined) {
           // Check minimum byte count - show exact error message matching backend format
-          if (req.min !== null && articleByteCount < req.min) {
-            isValid = false
-            errorMessage = `Article byte count (${articleByteCount.toLocaleString()}) is below the minimum required (${req.min.toLocaleString()} bytes)`
-          }
-          // Check maximum byte count - show exact error message matching backend format
-          if (req.max !== null && articleByteCount > req.max) {
-            isValid = false
-            errorMessage = `Article byte count (${articleByteCount.toLocaleString()}) exceeds the maximum allowed (${req.max.toLocaleString()} bytes)`
-          }
-
-          if (isValid) {
-            validationChecklist[1].checked = true
-            const minText = req.min ? `min: ${req.min.toLocaleString()}` : ''
-            const maxText = req.max ? `max: ${req.max.toLocaleString()}` : ''
-            const rangeText = [minText, maxText].filter(Boolean).join(', ')
-            validationChecklist[1].detail = `${articleByteCount.toLocaleString()} bytes (Required: ${rangeText})`
-            return true
-          } else {
+          if (articleByteCount < req.min) {
             validationChecklist[1].checked = false
-            // Show the exact error message with article byte count
-            validationChecklist[1].detail = errorMessage
+            validationChecklist[1].detail = `Article byte count (${articleByteCount.toLocaleString()}) is below the minimum required (${req.min.toLocaleString()} bytes)`
             return false
           }
-        } else {
-          // No byte count requirements
+
+          // Byte count meets the requirement
           validationChecklist[1].checked = true
-          validationChecklist[1].detail = `${articleByteCount.toLocaleString()} bytes (No restrictions)`
+          validationChecklist[1].detail = `${articleByteCount.toLocaleString()} bytes (Required: min: ${req.min.toLocaleString()})`
           return true
+        } else {
+          // Contest should always have min_byte_count, but handle gracefully
+          validationChecklist[1].checked = false
+          validationChecklist[1].detail = 'Contest byte count requirement not found'
+          return false
         }
       } catch (err) {
         validationChecklist[1].checked = false
