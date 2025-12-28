@@ -89,7 +89,6 @@ def create_contest():
         name: Name of the contest
         project_name: Name of the associated project
         jury_members: List of jury member usernames
-        code_link: Optional link to contest's code repository
         description: Optional description of the contest
         start_date: Optional start date (YYYY-MM-DD)
         end_date: Optional end date (YYYY-MM-DD)
@@ -126,13 +125,6 @@ def create_contest():
         return jsonify({'error': f'These jury members do not exist: {", ".join(missing_users)}'}), 400
 
     # Parse optional fields
-    # Handle code_link: can be None (from frontend), empty string, or a URL
-    code_link_value = data.get('code_link')
-    if code_link_value is None or code_link_value == '':
-        code_link = None
-    else:
-        code_link = str(code_link_value).strip() or None
-
     # Handle description: can be None, empty string, or text
     description_value = data.get('description')
     if description_value is None or description_value == '':
@@ -197,7 +189,6 @@ def create_contest():
             name=name,
             project_name=project_name,
             created_by=user.username,
-            code_link=code_link,
             description=description,
             start_date=start_date,
             end_date=end_date,
@@ -478,11 +469,6 @@ def update_contest(contest_id):  # pylint: disable=too-many-return-statements
                 contest.set_jury_members(arr)
             else:
                 contest.set_jury_members([])
-
-        # --- Code link ---
-        if 'code_link' in data:
-            link = data.get('code_link')
-            contest.code_link = link.strip() if isinstance(link, str) and link.strip() else None
 
         # Persist
         db.session.add(contest)

@@ -135,22 +135,6 @@ class="btn btn-danger"
           <p>{{ contest.jury_members.join(', ') }}</p>
         </div>
       </div>
-      <div class="card mb-4">
-        <div class="card-header">
-          <label class="form-label">Code Link</label>
-        </div>
-        <div class="card-body">
-          <p class="code-link-text">
-            <a v-if="contest.code_link"
-:href="contest.code_link"
-target="_blank"
-rel="noopener noreferrer">
-              {{ contest.code_link }}
-            </a>
-            <span v-else class="text-muted">No code link provided</span>
-          </p>
-        </div>
-      </div>
 
       <!-- Submissions Section (for jury and contest creators) -->
       <div v-if="canViewSubmissions" class="card mb-4">
@@ -450,14 +434,6 @@ style="cursor: pointer;"
             <div class="mb-3">
               <label class="form-label">Rejected Points</label>
               <input type="number" v-model.number="editForm.marks_setting_rejected" class="form-control" />
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Code Link (optional)</label>
-              <input type="text"
-class="form-control"
-v-model="editForm.code_link"
-                placeholder="Optional: Add Code Link" />
             </div>
 
           </form>
@@ -967,7 +943,6 @@ export default {
       marks_setting_accepted: 0,
       marks_setting_rejected: 0,
       jury_members: '',
-      code_link: '',
       allowed_submission_type: '',
       selectedJuryMembers: []
     })
@@ -1074,10 +1049,6 @@ export default {
       jurySearchQuery.value = ''
       jurySearchResults.value = []
 
-
-      editForm.code_link = contest.value?.code_link ?? ''
-
-
       editModal.show()
     }
 
@@ -1094,7 +1065,6 @@ export default {
           marks_setting_accepted: Number(editForm.marks_setting_accepted) || 0,
           marks_setting_rejected: Number(editForm.marks_setting_rejected) || 0,
           jury_members: editForm.selectedJuryMembers,
-          code_link: editForm.code_link?.trim() || null,
           allowed_submission_type: editForm.allowed_submission_type
         }
 

@@ -179,18 +179,6 @@ min="0"
               </div>
             </div>
 
-            <div class="mb-3">
-              <label for="codeLink" class="form-label">
-                Code Repository Link <span class="text-muted">(Optional)</span>
-              </label>
-              <input type="text"
-class="form-control"
-id="codeLink"
-v-model="formData.code_link"
-                placeholder="https://github.com/..." />
-            </div>
-
-
           </form>
         </div>
         <div class="modal-footer">
@@ -249,7 +237,6 @@ export default {
       jury_members: [],
       marks_setting_accepted: 10,
       marks_setting_rejected: 0,
-      code_link: null,
       rules_text: '',
       allowed_submission_type: 'both',
       min_byte_count: null,
@@ -436,7 +423,6 @@ export default {
         const contestData = {
           ...formData,
           jury_members: selectedJury.value,
-          code_link: formData.code_link?.trim() || null,
           rules: {
             text: formData.rules_text.trim()
           },
@@ -484,7 +470,6 @@ export default {
       formData.name = ''
       formData.project_name = ''
       formData.description = ''
-      formData.code_link = null
       selectedJury.value = []
       formData.jury_members = []
       formData.rules_text = ''

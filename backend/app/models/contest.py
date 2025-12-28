@@ -17,7 +17,6 @@ class Contest(BaseModel):
     Attributes:
         id: Primary key, auto-incrementing integer
         name: Name of the contest
-        code_link: Optional link to contest's code repository
         project_name: Name of the associated project (e.g., 'Wikimedia')
         created_by: Username of the user who created the contest
         description: Description of the contest
@@ -37,7 +36,6 @@ class Contest(BaseModel):
 
     # Contest basic information
     name = db.Column(db.String(200), nullable=False)
-    code_link = db.Column(db.String(500), nullable=True)
     project_name = db.Column(db.String(100), nullable=False)
 
     # Contest creator (foreign key to users.username)
@@ -87,20 +85,12 @@ class Contest(BaseModel):
         self.created_by = created_by
 
         # Set optional attributes
-        self.code_link = kwargs.get("code_link")
         self.description = kwargs.get("description")
         self.start_date = kwargs.get("start_date")
         self.end_date = kwargs.get("end_date")
         self.marks_setting_accepted = kwargs.get("marks_setting_accepted", 0)
         self.marks_setting_rejected = kwargs.get("marks_setting_rejected", 0)
         self.allowed_submission_type = kwargs.get("allowed_submission_type", "both")
-        self.code_link = kwargs.get('code_link')
-        self.description = kwargs.get('description')
-        self.start_date = kwargs.get('start_date')
-        self.end_date = kwargs.get('end_date')
-        self.marks_setting_accepted = kwargs.get('marks_setting_accepted', 0)
-        self.marks_setting_rejected = kwargs.get('marks_setting_rejected', 0)
-        self.allowed_submission_type = kwargs.get('allowed_submission_type', 'both')
 
         # Byte count range (optional - None means no limit)
         # If provided, articles must have byte count within this range
@@ -300,7 +290,6 @@ class Contest(BaseModel):
         return {
             'id': self.id,
             'name': self.name,
-            'code_link': self.code_link,
             'project_name': self.project_name,
             'created_by': self.created_by,
             'description': self.description,
