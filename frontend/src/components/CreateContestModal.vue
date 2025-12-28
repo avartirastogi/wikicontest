@@ -141,6 +141,9 @@ class="form-control"
 id="marksAccepted"
                   v-model.number="formData.marks_setting_accepted"
 min="0" />
+                <small class="form-text text-muted">
+                  Maximum points that can be awarded. Jury can assign points from 0 up to this value for accepted submissions.
+                </small>
               </div>
               <div class="col-md-6 mb-3">
                 <label for="marksRejected" class="form-label">Points for Rejected Submissions</label>
@@ -149,34 +152,24 @@ class="form-control"
 id="marksRejected"
                   v-model.number="formData.marks_setting_rejected"
 min="0" />
+                <small class="form-text text-muted">
+                  Fixed points awarded automatically for rejected submissions (usually 0 or negative).
+                </small>
               </div>
             </div>
 
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="minByteCount" class="form-label">
-                  Minimum Byte Count <span class="text-muted">(Optional)</span>
-                </label>
-                <input type="number"
+            <div class="mb-3">
+              <label for="minByteCount" class="form-label">
+                Minimum Byte Count *
+              </label>
+              <input type="number"
 class="form-control"
 id="minByteCount"
-                  v-model.number="formData.min_byte_count"
+                v-model.number="formData.min_byte_count"
 min="0"
-                  placeholder="e.g., 1000" />
-                <small class="form-text text-muted">Articles must have at least this many bytes</small>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="maxByteCount" class="form-label">
-                  Maximum Byte Count <span class="text-muted">(Optional)</span>
-                </label>
-                <input type="number"
-class="form-control"
-id="maxByteCount"
-                  v-model.number="formData.max_byte_count"
-min="0"
-                  placeholder="e.g., 50000" />
-                <small class="form-text text-muted">Articles must not exceed this many bytes</small>
-              </div>
+                placeholder="e.g., 1000"
+                required />
+              <small class="form-text text-muted">Articles must have at least this many bytes</small>
             </div>
 
           </form>
@@ -239,8 +232,7 @@ export default {
       marks_setting_rejected: 0,
       rules_text: '',
       allowed_submission_type: 'both',
-      min_byte_count: null,
-      max_byte_count: null
+      min_byte_count: 0
     })
 
     // Set default dates and ensure user is loaded
@@ -409,14 +401,11 @@ export default {
         showAlert('End date must be after start date', 'warning')
         return
       }
-
-      // Validate byte count range
-      if (formData.min_byte_count !== null && formData.max_byte_count !== null) {
-        if (formData.min_byte_count > formData.max_byte_count) {
-          showAlert('Minimum byte count must be less than or equal to maximum byte count', 'warning')
-          return
-        }
+      if (formData.min_byte_count === null || formData.min_byte_count === undefined || isNaN(formData.min_byte_count) || formData.min_byte_count < 0) {
+        showAlert('Minimum byte count is required and must be a non-negative number', 'warning')
+        return
       }
+
 
       loading.value = true
       try {
@@ -426,21 +415,8 @@ export default {
           rules: {
             text: formData.rules_text.trim()
           },
-          // Byte count fields: null if not set or invalid, otherwise use the value (including 0)
-          min_byte_count: (
-            formData.min_byte_count === null ||
-            formData.min_byte_count === undefined ||
-            isNaN(formData.min_byte_count)
-          )
-            ? null
-            : Number(formData.min_byte_count),
-          max_byte_count: (
-            formData.max_byte_count === null ||
-            formData.max_byte_count === undefined ||
-            isNaN(formData.max_byte_count)
-          )
-            ? null
-            : Number(formData.max_byte_count)
+          // Byte count field: required, must be a valid non-negative number
+          min_byte_count: Number(formData.min_byte_count)
         }
 
         const result = await store.createContest(contestData)
@@ -473,8 +449,7 @@ export default {
       selectedJury.value = []
       formData.jury_members = []
       formData.rules_text = ''
-      formData.min_byte_count = null
-      formData.max_byte_count = null
+      formData.min_byte_count = 0
 
       // Reset dates
       const today = new Date()

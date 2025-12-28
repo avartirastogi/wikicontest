@@ -428,12 +428,35 @@ style="cursor: pointer;"
 
             <div class="mb-3">
               <label class="form-label">Accepted Points</label>
-              <input type="number" v-model.number="editForm.marks_setting_accepted" class="form-control" />
+              <input type="number"
+v-model.number="editForm.marks_setting_accepted"
+class="form-control"
+min="0" />
+              <small class="form-text text-muted">
+                Maximum points that can be awarded. Jury can assign points from 0 up to this value for accepted submissions.
+              </small>
             </div>
 
             <div class="mb-3">
               <label class="form-label">Rejected Points</label>
-              <input type="number" v-model.number="editForm.marks_setting_rejected" class="form-control" />
+              <input type="number"
+v-model.number="editForm.marks_setting_rejected"
+class="form-control"
+min="0" />
+              <small class="form-text text-muted">
+                Fixed points awarded automatically for rejected submissions (usually 0 or negative).
+              </small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Minimum Byte Count *</label>
+              <input type="number"
+                     v-model.number="editForm.min_byte_count"
+                     class="form-control"
+                     min="0"
+                     placeholder="e.g., 1000"
+                     required />
+              <small class="form-text text-muted">Articles must have at least this many bytes</small>
             </div>
 
           </form>
@@ -944,7 +967,8 @@ export default {
       marks_setting_rejected: 0,
       jury_members: '',
       allowed_submission_type: '',
-      selectedJuryMembers: []
+      selectedJuryMembers: [],
+      min_byte_count: 0
     })
 
     onMounted(() => {
@@ -1037,6 +1061,7 @@ export default {
 
       editForm.marks_setting_accepted = Number(contest.value.marks_setting_accepted ?? 0)
       editForm.marks_setting_rejected = Number(contest.value.marks_setting_rejected ?? 0)
+      editForm.min_byte_count = Number(contest.value.min_byte_count ?? 0)
       if (Array.isArray(contest.value.jury_members)) {
         editForm.selectedJuryMembers = [...contest.value.jury_members]
       } else {
@@ -1065,7 +1090,8 @@ export default {
           marks_setting_accepted: Number(editForm.marks_setting_accepted) || 0,
           marks_setting_rejected: Number(editForm.marks_setting_rejected) || 0,
           jury_members: editForm.selectedJuryMembers,
-          allowed_submission_type: editForm.allowed_submission_type
+          allowed_submission_type: editForm.allowed_submission_type,
+          min_byte_count: Number(editForm.min_byte_count) || 0
         }
 
         // console.log("FINAL PAYLOAD SENT →", payload);

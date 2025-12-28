@@ -54,10 +54,9 @@ class Contest(BaseModel):
     marks_setting_rejected = db.Column(db.Integer, default=0, nullable=False)
     allowed_submission_type = db.Column(db.String(20), default="both", nullable=False)
 
-    # Byte count range for article submissions
-    # Articles must have byte count between min_byte_count and max_byte_count (inclusive)
-    min_byte_count = db.Column(db.Integer, nullable=True)  # Minimum byte count (None = no minimum)
-    max_byte_count = db.Column(db.Integer, nullable=True)  # Maximum byte count (None = no maximum)
+    # Byte count requirement for article submissions
+    # Articles must have byte count at least min_byte_count
+    min_byte_count = db.Column(db.Integer, nullable=False)  # Minimum byte count (required)
 
     # Jury members (comma-separated usernames)
     jury_members = db.Column(db.Text, nullable=True)
@@ -92,10 +91,9 @@ class Contest(BaseModel):
         self.marks_setting_rejected = kwargs.get("marks_setting_rejected", 0)
         self.allowed_submission_type = kwargs.get("allowed_submission_type", "both")
 
-        # Byte count range (optional - None means no limit)
-        # If provided, articles must have byte count within this range
-        self.min_byte_count = kwargs.get('min_byte_count', None)
-        self.max_byte_count = kwargs.get('max_byte_count', None)
+        # Byte count requirement (required)
+        # Articles must have byte count at least this value
+        self.min_byte_count = kwargs.get('min_byte_count', 0)
 
         # Handle rules and jury_members
         self.set_rules(kwargs.get("rules", {}))
@@ -156,7 +154,7 @@ class Contest(BaseModel):
 
     def validate_byte_count(self, byte_count):
         """
-        Validate if article byte count is within the contest's allowed range
+        Validate if article byte count meets the contest's minimum requirement
 
         Args:
             byte_count: Article byte count to validate (can be None)
@@ -168,19 +166,13 @@ class Contest(BaseModel):
         # If byte count is None, we can't validate it
         # This might happen if MediaWiki API fails to fetch the size
         if byte_count is None:
-            # If contest has byte count requirements, we need the value
-            if self.min_byte_count is not None or self.max_byte_count is not None:
-                return False, 'Article byte count could not be determined. Please ensure the article exists and try again.'
+            return False, 'Article byte count could not be determined. Please ensure the article exists and try again.'
 
-        # Check minimum byte count
-        if self.min_byte_count is not None and byte_count < self.min_byte_count:
+        # Check minimum byte count (always required)
+        if byte_count < self.min_byte_count:
             return False, f'Article byte count ({byte_count}) is below the minimum required ({self.min_byte_count} bytes)'
 
-        # Check maximum byte count
-        if self.max_byte_count is not None and byte_count > self.max_byte_count:
-            return False, f'Article byte count ({byte_count}) exceeds the maximum allowed ({self.max_byte_count} bytes)'
-
-        # Byte count is within valid range
+        # Byte count meets the requirement
         return True, None
 
     def is_active(self):
@@ -300,7 +292,6 @@ class Contest(BaseModel):
             'marks_setting_rejected': self.marks_setting_rejected,
             'allowed_submission_type': self.allowed_submission_type,
             'min_byte_count': self.min_byte_count,
-            'max_byte_count': self.max_byte_count,
             'jury_members': self.get_jury_members(),
             # Format datetime as ISO string with 'Z' suffix to indicate UTC
             # This ensures JavaScript interprets it as UTC, not local time
