@@ -8,12 +8,7 @@
           WikiContest
         </router-link>
 
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -38,24 +33,16 @@
           <ul class="navbar-nav">
             <!-- Theme Toggle Button - Always visible -->
             <li class="nav-item me-2">
-              <button
-                class="btn btn-outline-secondary theme-toggle"
-                type="button"
-                @click="toggleTheme"
-                :title="theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'"
-              >
+              <button class="btn btn-outline-secondary theme-toggle" type="button" @click="toggleTheme"
+                :title="theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'">
                 <i :class="theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'"></i>
               </button>
             </li>
             <!-- Show login button when not authenticated -->
             <template v-if="!isAuthenticated">
               <li class="nav-item">
-                <a
-                  :href="`${getApiBaseUrl()}/user/oauth/login`"
-                  class="btn btn-login-brand"
-                  style="text-decoration: none; display: inline-block;"
-                  title="Log in using Wikimedia OAuth 1.0a"
-                >
+                <a :href="`${getApiBaseUrl()}/user/oauth/login`" class="btn btn-login-brand"
+                  style="text-decoration: none; display: inline-block;" title="Log in using Wikimedia OAuth 1.0a">
                   <i class="fab fa-wikipedia-w me-2"></i>Log in
                 </a>
               </li>
@@ -64,12 +51,8 @@
             <template v-else>
               <li class="nav-item">
                 <div class="dropdown">
-                  <button
-                    class="btn btn-outline-secondary dropdown-toggle"
-                    type="button"
-                    id="userDropdown"
-                    data-bs-toggle="dropdown"
-                  >
+                  <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown"
+                    data-bs-toggle="dropdown">
                     <i class="fas fa-user me-1"></i>{{ currentUser?.username || 'User' }}
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end">
@@ -78,12 +61,14 @@
                         <i class="fas fa-user me-2"></i>Profile
                       </router-link>
                     </li>
-                    <li>
+                    <li v-if="isJury">
                       <router-link class="dropdown-item" to="/jurydashboard">
                         <i class="fas fa-tachometer-alt me-2"></i>Jury Dashboard
                       </router-link>
                     </li>
-                    <li><hr class="dropdown-divider"/></li>
+                    <li>
+                      <hr class="dropdown-divider" />
+                    </li>
                     <li>
                       <a class="dropdown-item text-danger" href="#" @click.prevent="handleLogout">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout
@@ -109,10 +94,11 @@
 </template>
 
 <script>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useStore } from './store'
 import { useRouter } from 'vue-router'
 import AlertContainer from './components/AlertContainer.vue'
+import api from './services/api'
 
 export default {
   name: 'App',
@@ -122,6 +108,7 @@ export default {
   setup() {
     const store = useStore()
     const router = useRouter()
+    const isJury = ref(false)
 
     // Use store's computed properties directly - they are already reactive
     // Don't wrap them in another computed() - that breaks reactivity
@@ -162,6 +149,14 @@ export default {
         // checkAuth already clears state on error
         console.log('Auth check completed - user not logged in')
       }
+      try {
+        const data = await api.get('/user/dashboard')
+
+        // 👇 FRONTEND-ONLY JURY CHECK
+        isJury.value = Array.isArray(data.jury_contests) && data.jury_contests.length > 0
+      } catch (e) {
+        isJury.value = false
+      }
     })
 
     // Logout handler
@@ -200,7 +195,8 @@ export default {
       theme,
       toggleTheme,
       handleLogout,
-      getApiBaseUrl
+      getApiBaseUrl,
+      isJury
     }
   }
 }
@@ -228,20 +224,22 @@ export default {
   /* UI Shades */
   --nav-bg-light: #ffffff;
   --nav-bg-dark: #1b1b1b;
-  --hover-bg-light: rgba(0,0,0,0.05);
-  --hover-bg-dark: rgba(255,255,255,0.1);
+  --hover-bg-light: rgba(0, 0, 0, 0.05);
+  --hover-bg-dark: rgba(255, 255, 255, 0.1);
 
   --text-dark: #2b2b2b;
   --text-light: #f1f1f1;
 
-  --border-light: rgba(0,0,0,0.12);
-  --border-dark: rgba(255,255,255,0.15);
+  --border-light: rgba(0, 0, 0, 0.12);
+  --border-dark: rgba(255, 255, 255, 0.15);
 
   --transition: 0.25s ease;
 }
 
 /* Typography Upgrade - Using Google Fonts Inter */
-body, button, input {
+body,
+button,
+input {
   font-family: 'Inter', "Segoe UI", system-ui, sans-serif;
   letter-spacing: 0.2px;
 }
@@ -321,7 +319,8 @@ body, button, input {
   font-weight: 600;
   /* Add bottom border as active indicator */
   border-bottom: 2px solid var(--wiki-primary);
-  padding-bottom: calc(0.5rem - 2px); /* Adjust padding to account for border */
+  padding-bottom: calc(0.5rem - 2px);
+  /* Adjust padding to account for border */
 }
 
 /* Active link in dark mode */
