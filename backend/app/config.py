@@ -99,12 +99,6 @@ class Config:
     CONSUMER_KEY = os.getenv('CONSUMER_KEY', '')
     CONSUMER_SECRET = os.getenv('CONSUMER_SECRET', '')
 
-    # MediaWiki API OAuth credentials for editing articles
-    # Used for template enforcement feature - can be same as CONSUMER_KEY/SECRET or different
-    MEDIAWIKI_CONSUMER_KEY = os.getenv('MEDIAWIKI_CONSUMER_KEY', os.getenv('CONSUMER_KEY', ''))
-    MEDIAWIKI_CONSUMER_SECRET = os.getenv('MEDIAWIKI_CONSUMER_SECRET', os.getenv('CONSUMER_SECRET', ''))
-
-
 class DevelopmentConfig(Config):
     """
     Development environment configuration.
