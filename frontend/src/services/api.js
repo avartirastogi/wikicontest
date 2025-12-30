@@ -91,6 +91,9 @@ export default {
   delete: (url, config = {}) => api.delete(url, config),
 
   // PATCH request
-  patch: (url, data = {}, config = {}) => api.patch(url, data, config)
+  patch: (url, data = {}, config = {}) => api.patch(url, data, config),
+
+  // Delete a submission
+  deleteSubmission: (submissionId) => api.delete(`/submission/${submissionId}`)
 }
 
