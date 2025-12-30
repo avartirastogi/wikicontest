@@ -65,6 +65,10 @@ class Contest(BaseModel):
     # Jury members (comma-separated usernames)
     jury_members = db.Column(db.Text, nullable=True)
 
+    # Template link for contest (URL to Wiki template page)
+    # Used to enforce template attachment on submitted articles
+    template_link = db.Column(db.Text, nullable=True)
+
     # Timestamp
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -105,6 +109,9 @@ class Contest(BaseModel):
         # Handle rules and jury_members
         self.set_rules(kwargs.get("rules", {}))
         self.set_jury_members(kwargs.get("jury_members", []))
+
+        # Template link for contest template enforcement
+        self.template_link = kwargs.get("template_link")
 
     def set_rules(self, rules_dict):
         """
@@ -327,6 +334,7 @@ class Contest(BaseModel):
             'min_byte_count': self.min_byte_count,
             'categories': self.get_categories(),
             'jury_members': self.get_jury_members(),
+            'template_link': self.template_link,
             # Format datetime as ISO string with 'Z' suffix to indicate UTC
             # This ensures JavaScript interprets it as UTC, not local time
             "created_at": (
