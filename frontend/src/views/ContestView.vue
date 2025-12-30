@@ -5,12 +5,12 @@
       <button class="btn btn-outline-secondary" @click="goBack">
         <i class="fas fa-arrow-left me-2"></i>Back to Contests
       </button>
-
       <div class="d-flex gap-2">
-        <button v-if="canDeleteContest"
-class="btn btn-danger"
-@click="handleDeleteContest"
-:disabled="deletingContest">
+        <button v-if="contest" class="btn btn-primary text-white" @click="goToLeaderboard"
+          title="View Contest Leaderboard">
+          <i class="fas fa-trophy me-2"></i>Leaderboard
+        </button>
+        <button v-if="canDeleteContest" class="btn btn-danger" @click="handleDeleteContest" :disabled="deletingContest">
           <span v-if="deletingContest" class="spinner-border spinner-border-sm me-2"></span>
           <i v-else class="fas fa-trash me-2"></i>
           {{ deletingContest ? 'Deleting...' : 'Delete Contest' }}
@@ -119,7 +119,8 @@ class="btn btn-danger"
           <p class="mt-2 small text-muted">
             <em>
               • <strong>New Articles</strong> = Completely new Wikipedia article created during the contest.<br />
-              • <strong>Improved Articles</strong> = An existing article improved or expanded with substantial content.
+              • <strong>Improved Articles</strong> = An existing article improved or expanded with substantial
+              content.
             </em>
           </p>
         </div>
@@ -136,10 +137,7 @@ class="btn btn-danger"
           </p>
           <ul class="list-unstyled">
             <li v-for="(category, index) in contest.categories" :key="index" class="mb-2">
-              <a :href="category"
-target="_blank"
-rel="noopener noreferrer"
-class="text-decoration-none">
+              <a :href="category" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
                 <i class="fas fa-external-link-alt me-2"></i>{{ getCategoryName(category) }}
               </a>
             </li>
@@ -170,11 +168,8 @@ class="text-decoration-none">
               <span class="spinner-border spinner-border-sm me-2"></span>
               {{ loadingSubmissions ? 'Loading...' : 'Refreshing...' }}
             </button>
-            <button v-else
-class="btn btn-sm btn-outline-light"
-@click="refreshMetadata"
-              :disabled="submissions.length === 0"
-title="Refresh article metadata"
+            <button v-else class="btn btn-sm btn-outline-light" @click="refreshMetadata"
+              :disabled="submissions.length === 0" title="Refresh article metadata"
               style="color: white; border-color: white;">
               <i class="fas fa-database me-1"></i>Refresh Metadata
             </button>
@@ -201,10 +196,8 @@ title="Refresh article metadata"
               <tbody>
                 <tr v-for="submission in submissions" :key="submission.id">
                   <td>
-                    <a href="#"
-@click.prevent="showArticlePreview(submission)"
-                      class="text-decoration-none article-title-link"
-:title="submission.article_link">
+                    <a href="#" @click.prevent="showArticlePreview(submission)"
+                      class="text-decoration-none article-title-link" :title="submission.article_link">
                       {{ submission.article_title }}
                       <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
                     </a>
@@ -221,8 +214,7 @@ title="Refresh article metadata"
                          The previous extra "word count" line was removed to avoid duplicate numbers
                          and to match the simplified UI requested by the user. -->
                     <div v-if="submission.article_word_count !== null &&
-                      submission.article_word_count !== undefined"
-class="text-muted small mt-1">
+                      submission.article_word_count !== undefined" class="text-muted small mt-1">
                       <i class="fas fa-clock me-1"></i>Original bytes:
                       {{ formatByteCountWithExact(submission.article_word_count) }}
                     </div>
@@ -232,10 +224,8 @@ class="text-muted small mt-1">
                          - Down arrow for negative (bytes decreased)
                          - Left-right arrow for zero change -->
                     <div v-if="submission.article_expansion_bytes !== null &&
-                      submission.article_expansion_bytes !== undefined"
-class="text-muted small mt-1">
-                      <i class="me-1"
-:class="submission.article_expansion_bytes > 0
+                      submission.article_expansion_bytes !== undefined" class="text-muted small mt-1">
+                      <i class="me-1" :class="submission.article_expansion_bytes > 0
                         ? 'fas fa-arrow-up'
                         : submission.article_expansion_bytes < 0
                           ? 'fas fa-arrow-down'
@@ -262,8 +252,7 @@ class="text-muted small mt-1">
                       <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
                     </div>
                     <!-- Latest revision author (from latest revision, shown below original) -->
-                    <div v-if="submission.latest_revision_author"
-class="mt-2 pt-2"
+                    <div v-if="submission.latest_revision_author" class="mt-2 pt-2"
                       style="border-top: 1px solid #dee2e6;">
                       <div>
                         <i class="fas fa-user me-1"></i>{{ submission.latest_revision_author }}
@@ -288,8 +277,7 @@ class="mt-2 pt-2"
                   <td>{{ submission.score || 0 }}</td>
                   <td>{{ formatDate(submission.submitted_at) }}</td>
                   <td>
-                    <button @click="showArticlePreview(submission)"
-class="btn btn-sm btn-outline-primary"
+                    <button @click="showArticlePreview(submission)" class="btn btn-sm btn-outline-primary"
                       title="Preview Article">
                       <i class="fas fa-eye"></i>
                     </button>
@@ -316,26 +304,20 @@ class="btn btn-sm btn-outline-primary"
         <!-- Main submit button shown at the bottom of the page -->
         <!-- Simple rule: show only for logged-in users when contest is current and they are not jury/creator -->
         <button v-if="contest?.status === 'current' && isAuthenticated && !canViewSubmissions"
-          class="btn btn-primary ms-auto"
-@click="handleSubmitArticle">
+          class="btn btn-primary ms-auto" @click="handleSubmitArticle">
           <i class="fas fa-paper-plane me-2"></i>Submit Article
         </button>
       </div>
     </div>
 
     <!-- Submit Article Modal -->
-    <SubmitArticleModal v-if="submittingToContestId"
-:contest-id="submittingToContestId"
+    <SubmitArticleModal v-if="submittingToContestId" :contest-id="submittingToContestId"
       @submitted="handleArticleSubmitted" />
 
     <!-- Article Preview Modal - Pass computed currentSubmission -->
-    <ArticlePreviewModal v-if="!!currentSubmission"
-:can-review="canUserReview"
-      :article-url="currentSubmission.article_link"
-:article-title="currentSubmission.article_title"
-      :submission-id="currentSubmission.id"
-:submission="currentSubmission"
-@reviewed="handleSubmissionReviewed" />
+    <ArticlePreviewModal v-if="!!currentSubmission" :can-review="canUserReview"
+      :article-url="currentSubmission.article_link" :article-title="currentSubmission.article_title"
+      :submission-id="currentSubmission.id" :submission="currentSubmission" @reviewed="handleSubmissionReviewed" />
   </div>
   <!-- Edit Contest Modal -->
   <div class="modal fade" id="editContestModal" tabindex="-1">
@@ -404,10 +386,8 @@ class="btn btn-sm btn-outline-primary"
                 <small v-if="editForm.selectedJuryMembers.length === 0" class="text-muted">
                   No jury members selected
                 </small>
-                <span v-for="username in editForm.selectedJuryMembers"
-:key="username"
-                  class="badge bg-primary me-2 mb-2"
-style="font-size: 0.9rem; cursor: pointer;">
+                <span v-for="username in editForm.selectedJuryMembers" :key="username"
+                  class="badge bg-primary me-2 mb-2" style="font-size: 0.9rem; cursor: pointer;">
                   {{ username }}
                   <i class="fas fa-times ms-1" @click="removeJuryMember(username)"></i>
                 </span>
@@ -415,22 +395,15 @@ style="font-size: 0.9rem; cursor: pointer;">
 
               <!-- Jury Search Input with Autocomplete -->
               <div style="position: relative;">
-                <input type="text"
-class="form-control"
-v-model="jurySearchQuery"
-@input="searchJuryMembers"
-                  placeholder="Type username to search and add..."
-autocomplete="off" />
+                <input type="text" class="form-control" v-model="jurySearchQuery" @input="searchJuryMembers"
+                  placeholder="Type username to search and add..." autocomplete="off" />
 
                 <!-- Autocomplete Dropdown -->
                 <div v-if="jurySearchResults.length > 0 && jurySearchQuery.length >= 2"
                   class="jury-autocomplete position-absolute w-100 border rounded-bottom"
                   style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div v-for="user in jurySearchResults"
-:key="user.username"
-class="p-2 border-bottom cursor-pointer"
-                    :class="{ 'bg-warning-subtle': isCurrentUser(user.username) }"
-style="cursor: pointer;"
+                  <div v-for="user in jurySearchResults" :key="user.username" class="p-2 border-bottom cursor-pointer"
+                    :class="{ 'bg-warning-subtle': isCurrentUser(user.username) }" style="cursor: pointer;"
                     @click="addJuryMember(user.username)">
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="d-flex align-items-center">
@@ -453,10 +426,7 @@ style="cursor: pointer;"
 
             <div class="mb-3">
               <label class="form-label">Accepted Points</label>
-              <input type="number"
-v-model.number="editForm.marks_setting_accepted"
-class="form-control"
-min="0" />
+              <input type="number" v-model.number="editForm.marks_setting_accepted" class="form-control" min="0" />
               <small class="form-text text-muted">
                 Maximum points that can be awarded. Jury can assign points from 0 up to
                 this value for accepted submissions.
@@ -465,10 +435,7 @@ min="0" />
 
             <div class="mb-3">
               <label class="form-label">Rejected Points</label>
-              <input type="number"
-v-model.number="editForm.marks_setting_rejected"
-class="form-control"
-min="0" />
+              <input type="number" v-model.number="editForm.marks_setting_rejected" class="form-control" min="0" />
               <small class="form-text text-muted">
                 Fixed points awarded automatically for rejected submissions (usually 0 or negative).
               </small>
@@ -476,12 +443,8 @@ min="0" />
 
             <div class="mb-3">
               <label class="form-label">Minimum Byte Count *</label>
-              <input type="number"
-                     v-model.number="editForm.min_byte_count"
-                     class="form-control"
-                     min="0"
-                     placeholder="e.g., 1000"
-                     required />
+              <input type="number" v-model.number="editForm.min_byte_count" class="form-control" min="0"
+                placeholder="e.g., 1000" required />
               <small class="form-text text-muted">Articles must have at least this many bytes</small>
             </div>
 
@@ -494,24 +457,17 @@ min="0" />
 
               <div v-for="(category, index) in editForm.categories" :key="index" class="mb-2">
                 <div class="input-group">
-                  <input type="url"
-                         class="form-control"
-                         v-model="editForm.categories[index]"
-                         :placeholder="index === 0 ? 'https://en.wikipedia.org/wiki/Category:Example' : 'Add another category URL'"
-                         required />
-                  <button v-if="editForm.categories.length > 1"
-                          type="button"
-                          class="btn btn-outline-danger"
-                          @click="removeCategory(index)"
-                          title="Remove category">
+                  <input type="url" class="form-control" v-model="editForm.categories[index]"
+                    :placeholder="index === 0 ? 'https://en.wikipedia.org/wiki/Category:Example' : 'Add another category URL'"
+                    required />
+                  <button v-if="editForm.categories.length > 1" type="button" class="btn btn-outline-danger"
+                    @click="removeCategory(index)" title="Remove category">
                     <i class="fas fa-times"></i>
                   </button>
                 </div>
               </div>
 
-              <button type="button"
-                      class="btn btn-outline-primary btn-sm"
-                      @click="addCategory">
+              <button type="button" class="btn btn-outline-primary btn-sm" @click="addCategory">
                 <i class="fas fa-plus me-1"></i>Add Category
               </button>
 
@@ -533,6 +489,7 @@ min="0" />
       </div>
     </div>
   </div>
+
 </template>
 
 <script>
@@ -1265,6 +1222,14 @@ export default {
 
       return false
     })
+    const goToLeaderboard = () => {
+      if (!contest.value) return
+
+      router.push({
+        name: 'ContestLeaderboard',
+        params: { name: route.params.name }
+      })
+    }
 
 
     return {
@@ -1312,7 +1277,8 @@ export default {
       editForm,
       openEditModal,
       saveContestEdits,
-      canUserReview
+      canUserReview,
+      goToLeaderboard
     }
   }
 }

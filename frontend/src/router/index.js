@@ -14,6 +14,7 @@ import ContestView from '../views/ContestView.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Profile from '../views/Profile.vue'
 import JuryDashboard from '../components/JuryDashboard.vue'
+import ContestLeaderboard from '../components/ContestLeaderboard.vue'
 // Import store function - will be used in navigation guard
 let storeModule = null
 
@@ -58,6 +59,12 @@ const routes = [
     name: 'Profile',
     component: Profile,
     // Require authentication
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/contest/:name/leaderboard',
+    name: 'ContestLeaderboard',
+    component: ContestLeaderboard,
     meta: { requiresAuth: true }
   },
   {

@@ -20,11 +20,12 @@ from app.utils import (
     extract_page_title_from_url,
     get_latest_revision_author,
     build_mediawiki_revisions_api_params,
-    get_mediawiki_headers
+    get_mediawiki_headers,
 )
 
 # Create blueprint
-contest_bp = Blueprint('contest', __name__)
+contest_bp = Blueprint("contest", __name__)
+
 
 def validate_date_string(date_str):
     """
@@ -40,11 +41,12 @@ def validate_date_string(date_str):
         return None
 
     try:
-        return datetime.strptime(date_str, '%Y-%m-%d').date()
+        return datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
         return None
 
-@contest_bp.route('/', methods=['GET'])
+
+@contest_bp.route("/", methods=["GET"])
 @require_auth
 @handle_errors
 def get_all_contests():
@@ -71,16 +73,13 @@ def get_all_contests():
         elif contest.is_past():
             past.append(contest_data)
 
-    return jsonify({
-        'current': current,
-        'upcoming': upcoming,
-        'past': past
-    }), 200
+    return jsonify({"current": current, "upcoming": upcoming, "past": past}), 200
 
-@contest_bp.route('/', methods=['POST'])
+
+@contest_bp.route("/", methods=["POST"])
 @require_auth
 @handle_errors
-@validate_json_data(['name', 'project_name', 'jury_members'])
+@validate_json_data(["name", "project_name", "jury_members"])
 def create_contest():
     """
     Create a new contest
@@ -103,86 +102,106 @@ def create_contest():
     data = request.validated_data
 
     # Validate required fields
-    name = data['name'].strip()
-    project_name = data['project_name'].strip()
-    jury_members = data['jury_members']
+    name = data["name"].strip()
+    project_name = data["project_name"].strip()
+    jury_members = data["jury_members"]
 
     if not name:
-        return jsonify({'error': 'Contest name is required'}), 400
+        return jsonify({"error": "Contest name is required"}), 400
 
     if not project_name:
-        return jsonify({'error': 'Project name is required'}), 400
+        return jsonify({"error": "Project name is required"}), 400
 
     if not isinstance(jury_members, list) or len(jury_members) == 0:
-        return jsonify({'error': 'Jury members must be a non-empty array of usernames'}), 400
+        return (
+            jsonify({"error": "Jury members must be a non-empty array of usernames"}),
+            400,
+        )
 
     # Validate jury members exist
     existing_users = User.query.filter(User.username.in_(jury_members)).all()
     existing_usernames = [user.username for user in existing_users]
-    missing_users = [username for username in jury_members if username not in existing_usernames]
+    missing_users = [
+        username for username in jury_members if username not in existing_usernames
+    ]
 
     if missing_users:
-        return jsonify({'error': f'These jury members do not exist: {", ".join(missing_users)}'}), 400
+        return (
+            jsonify(
+                {
+                    "error": f'These jury members do not exist: {", ".join(missing_users)}'
+                }
+            ),
+            400,
+        )
 
     # Parse optional fields
     # Handle description: can be None, empty string, or text
-    description_value = data.get('description')
-    if description_value is None or description_value == '':
+    description_value = data.get("description")
+    if description_value is None or description_value == "":
         description = None
     else:
         description = str(description_value).strip() or None
 
     # Parse dates
-    start_date = validate_date_string(data.get('start_date'))
-    end_date = validate_date_string(data.get('end_date'))
+    start_date = validate_date_string(data.get("start_date"))
+    end_date = validate_date_string(data.get("end_date"))
 
     # Validate date logic
     if start_date and end_date and start_date >= end_date:
-        return jsonify({'error': 'End date must be after start date'}), 400
+        return jsonify({"error": "End date must be after start date"}), 400
 
     # Parse rules
-    rules = data.get('rules', {})
+    rules = data.get("rules", {})
     if not isinstance(rules, dict):
         rules = {}
 
     # Parse scoring settings
-    marks_accepted = data.get('marks_setting_accepted', 0)
-    marks_rejected = data.get('marks_setting_rejected', 0)
+    marks_accepted = data.get("marks_setting_accepted", 0)
+    marks_rejected = data.get("marks_setting_rejected", 0)
     allowed_submission_type = data.get("allowed_submission_type", "both")
 
     try:
         marks_accepted = int(marks_accepted)
         marks_rejected = int(marks_rejected)
     except (ValueError, TypeError):
-        return jsonify({'error': 'Marks settings must be valid integers'}), 400
+        return jsonify({"error": "Marks settings must be valid integers"}), 400
 
     # Parse minimum byte count (required)
     # This field defines the minimum byte count required for article submissions
-    min_byte_count = data.get('min_byte_count')
+    min_byte_count = data.get("min_byte_count")
 
     # Validate that min_byte_count is provided
     if min_byte_count is None:
-        return jsonify({'error': 'Minimum byte count is required'}), 400
+        return jsonify({"error": "Minimum byte count is required"}), 400
 
     # Convert to integer
     try:
         min_byte_count = int(min_byte_count)
         if min_byte_count < 0:
-            return jsonify({'error': 'Minimum byte count must be non-negative'}), 400
+            return jsonify({"error": "Minimum byte count must be non-negative"}), 400
     except (ValueError, TypeError):
-        return jsonify({'error': 'Minimum byte count must be a valid integer'}), 400
+        return jsonify({"error": "Minimum byte count must be a valid integer"}), 400
 
     # Parse categories (required - list of category URLs)
-    categories = data.get('categories')
+    categories = data.get("categories")
     if not categories or not isinstance(categories, list) or len(categories) == 0:
-        return jsonify({'error': 'At least one category URL is required'}), 400
+        return jsonify({"error": "At least one category URL is required"}), 400
 
     # Validate category URLs
     for category_url in categories:
         if not isinstance(category_url, str) or not category_url.strip():
-            return jsonify({'error': 'All category URLs must be non-empty strings'}), 400
-        if not (category_url.startswith('http://') or category_url.startswith('https://')):
-            return jsonify({'error': 'All category URLs must be valid HTTP/HTTPS URLs'}), 400
+            return (
+                jsonify({"error": "All category URLs must be non-empty strings"}),
+                400,
+            )
+        if not (
+            category_url.startswith("http://") or category_url.startswith("https://")
+        ):
+            return (
+                jsonify({"error": "All category URLs must be valid HTTP/HTTPS URLs"}),
+                400,
+            )
 
     # Create contest
     try:
@@ -199,21 +218,24 @@ def create_contest():
             jury_members=jury_members,
             allowed_submission_type=allowed_submission_type,
             min_byte_count=min_byte_count,
-            categories=categories
+            categories=categories,
         )
 
         contest.save()
 
-        return jsonify({
-            'message': 'Contest created successfully',
-            'contestId': contest.id
-        }), 201
+        return (
+            jsonify(
+                {"message": "Contest created successfully", "contestId": contest.id}
+            ),
+            201,
+        )
 
     except Exception:  # pylint: disable=broad-exception-caught
         # Log error for debugging but don't expose details to client
-        return jsonify({'error': 'Failed to create contest'}), 500
+        return jsonify({"error": "Failed to create contest"}), 500
 
-@contest_bp.route('/<int:contest_id>', methods=['GET'])
+
+@contest_bp.route("/<int:contest_id>", methods=["GET"])
 @require_auth
 @handle_errors
 def get_contest_by_id(contest_id):
@@ -230,11 +252,12 @@ def get_contest_by_id(contest_id):
     contest = Contest.query.get(contest_id)
 
     if not contest:
-        return jsonify({'error': 'Contest not found'}), 404
+        return jsonify({"error": "Contest not found"}), 404
 
     return jsonify(contest.to_dict()), 200
 
-@contest_bp.route('/name/<name>', methods=['GET'])
+
+@contest_bp.route("/name/<name>", methods=["GET"])
 @require_auth
 @handle_errors
 def get_contest_by_name(name):
@@ -256,19 +279,19 @@ def get_contest_by_name(name):
     contest = None
 
     # Normalize the input slug (lowercase, remove extra hyphens)
-    normalized_slug = re.sub(r'[-\s]+', '-', name.lower().strip())
+    normalized_slug = re.sub(r"[-\s]+", "-", name.lower().strip())
 
     for contest_item in contests:
         # Create slug from contest name (same logic as frontend slugify)
         contest_slug = contest_item.name.lower().strip()
         # Replace spaces with hyphens
-        contest_slug = re.sub(r'\s+', '-', contest_slug)
+        contest_slug = re.sub(r"\s+", "-", contest_slug)
         # Remove special characters except hyphens
-        contest_slug = re.sub(r'[^\w\-]+', '', contest_slug)
+        contest_slug = re.sub(r"[^\w\-]+", "", contest_slug)
         # Replace multiple hyphens with single hyphen
-        contest_slug = re.sub(r'\-\-+', '-', contest_slug)
+        contest_slug = re.sub(r"\-\-+", "-", contest_slug)
         # Remove leading/trailing hyphens
-        contest_slug = contest_slug.strip('-')
+        contest_slug = contest_slug.strip("-")
 
         # Compare normalized slugs
         if contest_slug == normalized_slug:
@@ -276,34 +299,163 @@ def get_contest_by_name(name):
             break
 
     if not contest:
-        return jsonify({'error': 'Contest not found'}), 404
+        return jsonify({"error": "Contest not found"}), 404
 
     return jsonify(contest.to_dict()), 200
 
-@contest_bp.route('/<int:contest_id>/leaderboard', methods=['GET'])
+
+@contest_bp.route("/<int:contest_id>/leaderboard", methods=["GET"])
 @require_auth
 @handle_errors
-def get_contest_leaderboard(contest_id):
+def get_contest_leaderboard_detailed(contest_id):
     """
-    Get leaderboard for a specific contest
-    Requires authentication - users must be logged in to view leaderboard.
+    Get detailed leaderboard for a specific contest with user statistics
 
-    Args:
-        contest_id: Contest ID
+    Query Parameters:
+        filter: 'reviewed', 'pending', or 'all' (default: 'all')
+        min_marks: Minimum marks threshold (optional)
+        sort_by: 'marks' or 'submissions' (default: 'marks')
+        page: Page number for pagination (default: 1)
+        per_page: Results per page (default: 50)
 
     Returns:
-        JSON response with leaderboard data
+        JSON response with:
+        - contest_stats: Overall contest statistics
+        - leaderboard: Ranked list of users with their stats
+        - pagination: Pagination metadata
     """
+    from sqlalchemy import func, case
+
+    # Get contest
     contest = Contest.query.get(contest_id)
-
     if not contest:
-        return jsonify({'error': 'Contest not found'}), 404
+        return jsonify({"error": "Contest not found"}), 404
 
-    leaderboard = contest.get_leaderboard()
+    # Parse query parameters
+    filter_type = request.args.get("filter", "all")
+    min_marks = request.args.get("min_marks", type=int)
+    sort_by = request.args.get("sort_by", "marks")
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 50, type=int)
 
-    return jsonify(leaderboard), 200
+    # Build base query - aggregate submissions per user
+    base_query = (
+        db.session.query(
+            User.id.label("user_id"),
+            User.username,
+            func.count(Submission.id).label("total_submissions"),
+            func.sum(Submission.score).label("total_marks"),
+            func.sum(
+                case((Submission.status.in_(["accepted", "rejected"]), 1), else_=0)
+            ).label("reviewed_count"),
+            func.sum(case((Submission.status == "pending", 1), else_=0)).label(
+                "pending_count"
+            ),
+        )
+        .select_from(User)
+        .join(Submission, User.id == Submission.user_id)
+        .filter(Submission.contest_id == contest_id)
+        .group_by(User.id, User.username)
+    )
 
-@contest_bp.route('/<int:contest_id>', methods=['DELETE'])
+    # Apply filters
+    if filter_type == "reviewed":
+        # Only users with at least one reviewed submission
+        base_query = base_query.having(
+            func.sum(
+                case((Submission.status.in_(["accepted", "rejected"]), 1), else_=0)
+            )
+            > 0
+        )
+    elif filter_type == "pending":
+        # Only users with at least one pending submission
+        base_query = base_query.having(
+            func.sum(case((Submission.status == "pending", 1), else_=0)) > 0
+        )
+
+    # Apply minimum marks filter
+    if min_marks is not None:
+        base_query = base_query.having(func.sum(Submission.score) >= min_marks)
+
+    # Apply sorting
+    if sort_by == "submissions":
+        base_query = base_query.order_by(
+            func.count(Submission.id).desc(), func.sum(Submission.score).desc()
+        )
+    else:  # Default: sort by marks
+        base_query = base_query.order_by(
+            func.sum(Submission.score).desc(), func.count(Submission.id).desc()
+        )
+
+    # Execute query with pagination
+    paginated = base_query.paginate(page=page, per_page=per_page, error_out=False)
+
+    # Build leaderboard with ranks
+    leaderboard = []
+    for index, row in enumerate(paginated.items, start=(page - 1) * per_page + 1):
+        leaderboard.append(
+            {
+                "rank": index,
+                "user_id": row.user_id,
+                "username": row.username,
+                "total_submissions": row.total_submissions or 0,
+                "total_marks": int(row.total_marks or 0),
+                "reviewed_count": row.reviewed_count or 0,
+                "pending_count": row.pending_count or 0,
+            }
+        )
+
+    # Get contest-wide statistics
+    contest_stats_query = (
+        db.session.query(
+            func.count(Submission.id).label("total_submissions"),
+            func.sum(
+                case((Submission.status.in_(["accepted", "rejected"]), 1), else_=0)
+            ).label("total_reviewed"),
+            func.sum(case((Submission.status == "pending", 1), else_=0)).label(
+                "total_pending"
+            ),
+            func.sum(Submission.score).label("total_marks_awarded"),
+        )
+        .filter(Submission.contest_id == contest_id)
+        .first()
+    )
+
+    contest_stats = {
+        "total_submissions": contest_stats_query.total_submissions or 0,
+        "total_reviewed": contest_stats_query.total_reviewed or 0,
+        "total_pending": contest_stats_query.total_pending or 0,
+        "total_marks_awarded": int(contest_stats_query.total_marks_awarded or 0),
+    }
+
+    return (
+        jsonify(
+            {
+                "contest": {
+                    "id": contest.id,
+                    "name": contest.name,
+                    "status": contest.get_status(),
+                },
+                "contest_stats": contest_stats,
+                "leaderboard": leaderboard,
+                "pagination": {
+                    "page": page,
+                    "per_page": per_page,
+                    "total_pages": paginated.pages,
+                    "total_results": paginated.total,
+                },
+                "filters": {
+                    "filter_type": filter_type,
+                    "min_marks": min_marks,
+                    "sort_by": sort_by,
+                },
+            }
+        ),
+        200,
+    )
+
+
+@contest_bp.route("/<int:contest_id>", methods=["DELETE"])
 @require_auth
 @handle_errors
 def delete_contest(contest_id):
@@ -320,11 +472,11 @@ def delete_contest(contest_id):
     contest = Contest.query.get(contest_id)
 
     if not contest:
-        return jsonify({'error': 'Contest not found'}), 404
+        return jsonify({"error": "Contest not found"}), 404
 
     # Check permissions
     if not (user.is_admin() or user.is_contest_creator(contest)):
-        return jsonify({'error': 'You are not allowed to delete this contest'}), 403
+        return jsonify({"error": "You are not allowed to delete this contest"}), 403
 
     try:
         # Delete associated submissions first
@@ -333,11 +485,11 @@ def delete_contest(contest_id):
         # Delete contest
         contest.delete()
 
-        return jsonify({'message': 'Contest deleted successfully'}), 200
+        return jsonify({"message": "Contest deleted successfully"}), 200
 
     except Exception:  # pylint: disable=broad-exception-caught
         # Log error for debugging but don't expose details to client
-        return jsonify({'error': 'Failed to delete contest'}), 500
+        return jsonify({"error": "Failed to delete contest"}), 500
 
 
 def parse_date_or_none(date_str):
@@ -352,7 +504,8 @@ def parse_date_or_none(date_str):
         except ValueError:
             return None
 
-@contest_bp.route('/<int:contest_id>', methods=['PUT'])
+
+@contest_bp.route("/<int:contest_id>", methods=["PUT"])
 @require_auth
 def update_contest(contest_id):  # pylint: disable=too-many-return-statements
     user = request.current_user
@@ -366,29 +519,32 @@ def update_contest(contest_id):  # pylint: disable=too-many-return-statements
 
         contest = Contest.query.get(contest_id)
         if not contest:
-            return jsonify({'error': 'Contest not found'}), 404
+            return jsonify({"error": "Contest not found"}), 404
 
         # permission: creator or admin (adjust to your auth model)
-        if not (hasattr(user, 'is_admin') and user.is_admin()) and user.username != contest.created_by:
-            return jsonify({'error': 'Permission denied'}), 403
+        if (
+            not (hasattr(user, "is_admin") and user.is_admin())
+            and user.username != contest.created_by
+        ):
+            return jsonify({"error": "Permission denied"}), 403
 
         # --- Basic fields ---
-        if 'name' in data:
-            contest.name = data.get('name') or contest.name
-        if 'project_name' in data:
-            contest.project_name = data.get('project_name') or contest.project_name
+        if "name" in data:
+            contest.name = data.get("name") or contest.name
+        if "project_name" in data:
+            contest.project_name = data.get("project_name") or contest.project_name
 
-        if 'description' in data:
-            contest.description = data.get('description')
+        if "description" in data:
+            contest.description = data.get("description")
 
-        rules_payload = data.get('rules', None)
+        rules_payload = data.get("rules", None)
         if rules_payload is not None:
             if isinstance(rules_payload, str):
-                contest.set_rules({'text': rules_payload})
+                contest.set_rules({"text": rules_payload})
             elif isinstance(rules_payload, dict):
                 contest.set_rules(rules_payload)
             else:
-                contest.set_rules({'text': ''})
+                contest.set_rules({"text": ""})
 
         if "allowed_submission_type" in data:
             new_type = data.get("allowed_submission_type", "both")
@@ -400,69 +556,93 @@ def update_contest(contest_id):  # pylint: disable=too-many-return-statements
             contest.allowed_submission_type = new_type
 
         # --- Dates ---
-        if 'start_date' in data:
-            parsed = parse_date_or_none(data.get('start_date'))
-            if parsed is None and data.get('start_date') not in (None, ''):
-                return jsonify({'error': 'Invalid start_date format'}), 400
+        if "start_date" in data:
+            parsed = parse_date_or_none(data.get("start_date"))
+            if parsed is None and data.get("start_date") not in (None, ""):
+                return jsonify({"error": "Invalid start_date format"}), 400
             contest.start_date = parsed
 
-        if 'end_date' in data:
-            parsed = parse_date_or_none(data.get('end_date'))
-            if parsed is None and data.get('end_date') not in (None, ''):
-                return jsonify({'error': 'Invalid end_date format'}), 400
+        if "end_date" in data:
+            parsed = parse_date_or_none(data.get("end_date"))
+            if parsed is None and data.get("end_date") not in (None, ""):
+                return jsonify({"error": "Invalid end_date format"}), 400
             contest.end_date = parsed
 
         if contest.start_date and contest.end_date:
             if contest.start_date >= contest.end_date:
-                return jsonify({'error': 'start_date must be < end_date'}), 400
+                return jsonify({"error": "start_date must be < end_date"}), 400
 
-        if 'marks_setting_accepted' in data:
+        if "marks_setting_accepted" in data:
             try:
-                contest.marks_setting_accepted = int(data.get('marks_setting_accepted') or 0)
+                contest.marks_setting_accepted = int(
+                    data.get("marks_setting_accepted") or 0
+                )
             except (TypeError, ValueError):
-                return jsonify({'error': 'marks_setting_accepted must be integer'}), 400
+                return jsonify({"error": "marks_setting_accepted must be integer"}), 400
 
-        if 'marks_setting_rejected' in data:
+        if "marks_setting_rejected" in data:
             try:
-                contest.marks_setting_rejected = int(data.get('marks_setting_rejected') or 0)
+                contest.marks_setting_rejected = int(
+                    data.get("marks_setting_rejected") or 0
+                )
             except (TypeError, ValueError):
-                return jsonify({'error': 'marks_setting_rejected must be integer'}), 400
+                return jsonify({"error": "marks_setting_rejected must be integer"}), 400
 
         # --- Byte count requirement ---
-        if 'min_byte_count' in data:
-            min_byte_count_value = data.get('min_byte_count')
-            if min_byte_count_value is None or min_byte_count_value == '':
-                return jsonify({'error': 'Minimum byte count is required'}), 400
+        if "min_byte_count" in data:
+            min_byte_count_value = data.get("min_byte_count")
+            if min_byte_count_value is None or min_byte_count_value == "":
+                return jsonify({"error": "Minimum byte count is required"}), 400
             try:
                 min_byte_count = int(min_byte_count_value)
                 if min_byte_count < 0:
-                    return jsonify({'error': 'Minimum byte count must be non-negative'}), 400
+                    return (
+                        jsonify({"error": "Minimum byte count must be non-negative"}),
+                        400,
+                    )
                 contest.min_byte_count = min_byte_count
             except (TypeError, ValueError):
-                return jsonify({'error': 'min_byte_count must be a valid integer'}), 400
+                return jsonify({"error": "min_byte_count must be a valid integer"}), 400
 
         # --- Categories ---
-        if 'categories' in data:
-            categories_value = data.get('categories')
-            if not categories_value or not isinstance(categories_value, list) or len(categories_value) == 0:
-                return jsonify({'error': 'At least one category URL is required'}), 400
-            
+        if "categories" in data:
+            categories_value = data.get("categories")
+            if (
+                not categories_value
+                or not isinstance(categories_value, list)
+                or len(categories_value) == 0
+            ):
+                return jsonify({"error": "At least one category URL is required"}), 400
+
             # Validate category URLs
             for category_url in categories_value:
                 if not isinstance(category_url, str) or not category_url.strip():
-                    return jsonify({'error': 'All category URLs must be non-empty strings'}), 400
-                if not (category_url.startswith('http://') or category_url.startswith('https://')):
-                    return jsonify({'error': 'All category URLs must be valid HTTP/HTTPS URLs'}), 400
-            
+                    return (
+                        jsonify(
+                            {"error": "All category URLs must be non-empty strings"}
+                        ),
+                        400,
+                    )
+                if not (
+                    category_url.startswith("http://")
+                    or category_url.startswith("https://")
+                ):
+                    return (
+                        jsonify(
+                            {"error": "All category URLs must be valid HTTP/HTTPS URLs"}
+                        ),
+                        400,
+                    )
+
             contest.set_categories(categories_value)
 
         # --- Jury members: accept list or comma string ---
-        if 'jury_members' in data:
-            jury_members_value = data.get('jury_members')
+        if "jury_members" in data:
+            jury_members_value = data.get("jury_members")
             if isinstance(jury_members_value, list):
                 contest.set_jury_members(jury_members_value)
             elif isinstance(jury_members_value, str):
-                arr = [x.strip() for x in jury_members_value.split(',') if x.strip()]
+                arr = [x.strip() for x in jury_members_value.split(",") if x.strip()]
                 contest.set_jury_members(arr)
             else:
                 contest.set_jury_members([])
@@ -472,19 +652,21 @@ def update_contest(contest_id):  # pylint: disable=too-many-return-statements
         db.session.commit()
 
         current_app.logger.info("Contest %s updated by %s", contest_id, user.username)
-        return jsonify({'message': 'Contest updated', 'contest': contest.to_dict()}), 200
+        return (
+            jsonify({"message": "Contest updated", "contest": contest.to_dict()}),
+            200,
+        )
 
     except Exception as exc:  # pylint: disable=broad-exception-caught
         current_app.logger.error("Error updating contest %s: %s", contest_id, exc)
         current_app.logger.error(traceback.format_exc())
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
-
-@contest_bp.route('/<int:contest_id>/submit', methods=['POST'])
+@contest_bp.route("/<int:contest_id>/submit", methods=["POST"])
 @require_auth
 @handle_errors
-@validate_json_data(['article_link'])
+@validate_json_data(["article_link"])
 def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
     """
     Submit an entry to a contest
@@ -510,35 +692,38 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
     # Get contest
     contest = Contest.query.get(contest_id)
     if not contest:
-        return jsonify({'error': 'Contest not found'}), 404
+        return jsonify({"error": "Contest not found"}), 404
 
     # Validate submission data
-    article_link = data['article_link'].strip()
+    article_link = data["article_link"].strip()
 
     if not article_link:
-        return jsonify({'error': 'Article link is required'}), 400
+        return jsonify({"error": "Article link is required"}), 400
 
     # Basic URL validation
-    if not (article_link.startswith('http://') or article_link.startswith('https://')):
-        return jsonify({'error': 'Article link must be a valid URL'}), 400
+    if not (article_link.startswith("http://") or article_link.startswith("https://")):
+        return jsonify({"error": "Article link must be a valid URL"}), 400
 
     # Check if contest is active
     if not contest.is_active():
         if contest.is_upcoming():
-            return jsonify({'error': 'Contest has not started yet'}), 400
+            return jsonify({"error": "Contest has not started yet"}), 400
         if contest.is_past():
-            return jsonify({'error': 'Contest has ended'}), 400
-        return jsonify({'error': 'Contest is not active'}), 400
+            return jsonify({"error": "Contest has ended"}), 400
+        return jsonify({"error": "Contest is not active"}), 400
 
     # Check if user already submitted this specific article to this contest
     existing_submission = Submission.query.filter_by(
-        user_id=user.id,
-        contest_id=contest_id,
-        article_link=article_link
+        user_id=user.id, contest_id=contest_id, article_link=article_link
     ).first()
 
     if existing_submission:
-        return jsonify({'error': 'You have already submitted this article to this contest'}), 400
+        return (
+            jsonify(
+                {"error": "You have already submitted this article to this contest"}
+            ),
+            400,
+        )
 
     # Fetch article information from MediaWiki API
     article_title = None
@@ -566,26 +751,28 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             # Build API parameters using shared utility function
             api_params = build_mediawiki_revisions_api_params(page_title)
             # Add additional parameters specific to this endpoint
-            api_params['inprop'] = 'url|displaytitle'
+            api_params["inprop"] = "url|displaytitle"
 
             # Make request to MediaWiki API using shared headers
             headers = get_mediawiki_headers()
-            response = requests.get(api_url, params=api_params, headers=headers, timeout=10)
+            response = requests.get(
+                api_url, params=api_params, headers=headers, timeout=10
+            )
 
             if response.status_code == 200:
                 api_data = response.json()
 
                 # Check for API errors
-                if 'error' not in api_data:
+                if "error" not in api_data:
                     # Handle formatversion=2 (array) or formatversion=1 (object)
-                    pages = api_data.get('query', {}).get('pages', [])
+                    pages = api_data.get("query", {}).get("pages", [])
                     if pages:
                         # Handle both array (formatversion=2) and object (formatversion=1) formats
                         if isinstance(pages, list):
                             # formatversion=2: pages is an array
                             if len(pages) > 0:
                                 page_data = pages[0]
-                                page_id = str(page_data.get('pageid', ''))
+                                page_id = str(page_data.get("pageid", ""))
                             else:
                                 page_data = None
                         else:
@@ -596,31 +783,33 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                         # Check if page exists
                         # In formatversion=2, missing pages have 'missing': True
                         # In formatversion=1, missing pages have pageid: -1
-                        is_missing = page_data.get('missing', False) if page_data else True
-                        has_valid_pageid = page_id and page_id != '-1' and page_id != ''
+                        is_missing = (
+                            page_data.get("missing", False) if page_data else True
+                        )
+                        has_valid_pageid = page_id and page_id != "-1" and page_id != ""
 
                         if page_data and has_valid_pageid and not is_missing:
                             # Extract article information
-                            article_title = page_data.get('title', page_title)
+                            article_title = page_data.get("title", page_title)
 
                             # Get revision information
                             # With formatversion=2, revisions is an array
                             # With rvdir='older', revisions[0] is the newest (latest) revision
-                            revisions = page_data.get('revisions', [])
+                            revisions = page_data.get("revisions", [])
                             if revisions and len(revisions) > 0:
                                 # Get latest revision (newest) for word count
                                 # With rvdir='older', the first revision is the newest
                                 latest_revision = revisions[0]
 
                                 # Get word count from latest revision (most current size)
-                                article_word_count = latest_revision.get('size', 0)
+                                article_word_count = latest_revision.get("size", 0)
 
                                 # Get latest revision (newest) for author at submission time
                                 # Use shared utility function to extract author from latest revision
                                 # This gets the author who made the most recent edit at submission time
                                 article_author = get_latest_revision_author(revisions)
                                 if not article_author:
-                                    article_author = 'Unknown'
+                                    article_author = "Unknown"
 
                                 # Get oldest revision for creation date
                                 if len(revisions) > 1:
@@ -630,13 +819,15 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
 
                                 # Get creation date from oldest revision
                                 # Parse ISO 8601 timestamp string to datetime object
-                                timestamp_str = oldest_revision.get('timestamp', '')
+                                timestamp_str = oldest_revision.get("timestamp", "")
                                 if timestamp_str:
                                     # MediaWiki API returns timestamps in ISO 8601 format with 'Z' suffix
                                     # Replace 'Z' with '+00:00' for UTC timezone, then parse
-                                    timestamp_str = timestamp_str.replace('Z', '+00:00')
+                                    timestamp_str = timestamp_str.replace("Z", "+00:00")
                                     try:
-                                        article_created_at = datetime.fromisoformat(timestamp_str)
+                                        article_created_at = datetime.fromisoformat(
+                                            timestamp_str
+                                        )
                                     except (ValueError, AttributeError):
                                         # If parsing fails, set to None
                                         article_created_at = None
@@ -647,16 +838,18 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                 # Debug logging to help diagnose issues
                                 try:
                                     current_app.logger.info(
-                                        f'Fetched article info: title={article_title}, '
-                                        f'author={article_author}, word_count={article_word_count}, '
-                                        f'created={article_created_at}, '
-                                        f'revisions_count={len(revisions)}'
+                                        f"Fetched article info: title={article_title}, "
+                                        f"author={article_author}, word_count={article_word_count}, "
+                                        f"created={article_created_at}, "
+                                        f"revisions_count={len(revisions)}"
                                     )
                                     current_app.logger.debug(
                                         f'Latest revision size: {latest_revision.get("size")}, '
                                         f'Oldest revision timestamp: {oldest_revision.get("timestamp")}'
                                     )
-                                except Exception:  # pylint: disable=broad-exception-caught
+                                except (
+                                    Exception
+                                ):  # pylint: disable=broad-exception-caught
                                     # Logging failure shouldn't break the flow
                                     pass
                             else:
@@ -666,32 +859,41 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                     # Make a second API call specifically for revisions
                                     # Get 2 revisions: newest (for word count) and oldest (for author/creation)
                                     rev_api_params = {
-                                        'action': 'query',
-                                        'titles': page_title,
-                                        'format': 'json',
-                                        'formatversion': '2',
-                                        'prop': 'revisions',
-                                        'rvprop': 'timestamp|user|userid|size',
-                                        'rvlimit': '2',  # Get 2 revisions: newest and oldest
-                                        'rvdir': 'older',  # Start from newest, get newest first
-                                        'redirects': 'true'
+                                        "action": "query",
+                                        "titles": page_title,
+                                        "format": "json",
+                                        "formatversion": "2",
+                                        "prop": "revisions",
+                                        "rvprop": "timestamp|user|userid|size",
+                                        "rvlimit": "2",  # Get 2 revisions: newest and oldest
+                                        "rvdir": "older",  # Start from newest, get newest first
+                                        "redirects": "true",
                                     }
                                     rev_response = requests.get(
-                                        api_url, params=rev_api_params, headers=headers, timeout=10
+                                        api_url,
+                                        params=rev_api_params,
+                                        headers=headers,
+                                        timeout=10,
                                     )
                                     if rev_response.status_code == 200:
                                         rev_data = rev_response.json()
-                                        rev_pages = rev_data.get('query', {}).get('pages', [])
+                                        rev_pages = rev_data.get("query", {}).get(
+                                            "pages", []
+                                        )
                                         if rev_pages and len(rev_pages) > 0:
                                             rev_page = rev_pages[0]
-                                            rev_revisions = rev_page.get('revisions', [])
+                                            rev_revisions = rev_page.get(
+                                                "revisions", []
+                                            )
                                             if rev_revisions and len(rev_revisions) > 0:
                                                 # Get latest revision (newest) for word count
                                                 # With rvdir='older', the first revision is the newest
                                                 latest_rev = rev_revisions[0]
 
                                                 # Get word count from latest revision (most current size)
-                                                article_word_count = latest_rev.get('size', 0)
+                                                article_word_count = latest_rev.get(
+                                                    "size", 0
+                                                )
 
                                                 # Get latest revision (newest) for author at submission time
                                                 # With rvdir='older', the first revision is the newest (latest)
@@ -699,10 +901,13 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
 
                                                 # Extract author from latest revision (most recent edit)
                                                 # This gets the author who made the most recent edit at submission time
-                                                user_id_val = latest_rev.get('userid')
-                                                article_author = (
-                                                    latest_rev.get('user') or
-                                                    (f"User ID: {user_id_val}" if user_id_val else 'Unknown')
+                                                user_id_val = latest_rev.get("userid")
+                                                article_author = latest_rev.get(
+                                                    "user"
+                                                ) or (
+                                                    f"User ID: {user_id_val}"
+                                                    if user_id_val
+                                                    else "Unknown"
                                                 )
 
                                                 # Get creation date from oldest revision (for historical reference)
@@ -713,13 +918,23 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                                 else:
                                                     oldest_rev = rev_revisions[0]
                                                 # Parse ISO 8601 timestamp string to datetime object
-                                                timestamp_str = oldest_rev.get('timestamp', '')
+                                                timestamp_str = oldest_rev.get(
+                                                    "timestamp", ""
+                                                )
                                                 if timestamp_str:
                                                     # MediaWiki API returns timestamps in ISO 8601 format with 'Z' suffix
                                                     # Replace 'Z' with '+00:00' for UTC timezone, then parse
-                                                    timestamp_str = timestamp_str.replace('Z', '+00:00')
+                                                    timestamp_str = (
+                                                        timestamp_str.replace(
+                                                            "Z", "+00:00"
+                                                        )
+                                                    )
                                                     try:
-                                                        article_created_at = datetime.fromisoformat(timestamp_str)
+                                                        article_created_at = (
+                                                            datetime.fromisoformat(
+                                                                timestamp_str
+                                                            )
+                                                        )
                                                     except (ValueError, AttributeError):
                                                         # If parsing fails, set to None
                                                         article_created_at = None
@@ -729,40 +944,48 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
 
                                                 try:
                                                     current_app.logger.info(
-                                                        f'Got revision data from second API call: '
-                                                        f'author={article_author}'
+                                                        f"Got revision data from second API call: "
+                                                        f"author={article_author}"
                                                     )
-                                                except Exception:  # pylint: disable=broad-exception-caught
+                                                except (
+                                                    Exception
+                                                ):  # pylint: disable=broad-exception-caught
                                                     # Logging failure shouldn't break the flow
                                                     pass
-                                except Exception as rev_err:  # pylint: disable=broad-exception-caught
+                                except (
+                                    Exception
+                                ) as rev_err:  # pylint: disable=broad-exception-caught
                                     # If second API call fails, log it but continue
                                     try:
                                         current_app.logger.warning(
-                                            f'Failed to get revisions from second API call: '
-                                            f'{str(rev_err)}'
+                                            f"Failed to get revisions from second API call: "
+                                            f"{str(rev_err)}"
                                         )
-                                    except Exception:  # pylint: disable=broad-exception-caught
+                                    except (
+                                        Exception
+                                    ):  # pylint: disable=broad-exception-caught
                                         # Logging failure shouldn't break the flow
                                         pass
 
                                 # Log if still no revisions found
-                                if not article_author or article_author == 'Unknown':
+                                if not article_author or article_author == "Unknown":
                                     try:
                                         current_app.logger.warning(
-                                            f'No revisions found for page: {page_title}, '
-                                            f'page_data keys: {list(page_data.keys())}, '
-                                            f'missing={is_missing}'
+                                            f"No revisions found for page: {page_title}, "
+                                            f"page_data keys: {list(page_data.keys())}, "
+                                            f"missing={is_missing}"
                                         )
-                                    except Exception:  # pylint: disable=broad-exception-caught
+                                    except (
+                                        Exception
+                                    ):  # pylint: disable=broad-exception-caught
                                         # Logging failure shouldn't break the flow
                                         pass
                         else:
                             # Page is missing or doesn't exist
                             try:
                                 current_app.logger.warning(
-                                    f'Page not found or missing: {page_title}, '
-                                    f'page_id={page_id}, missing={is_missing}'
+                                    f"Page not found or missing: {page_title}, "
+                                    f"page_id={page_id}, missing={is_missing}"
                                 )
                             except Exception:  # pylint: disable=broad-exception-caught
                                 # Logging failure shouldn't break the flow
@@ -772,9 +995,9 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
         if not article_title:
             # Try to extract from URL as fallback
             if page_title:
-                article_title = page_title.replace('_', ' ')
+                article_title = page_title.replace("_", " ")
             else:
-                article_title = 'Article'  # Last resort fallback
+                article_title = "Article"  # Last resort fallback
 
     except Exception as error:  # pylint: disable=broad-exception-caught
         # If MediaWiki API fetch fails, we'll still create the submission
@@ -782,7 +1005,7 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
         # Log the error but don't fail the submission
         try:
             current_app.logger.warning(
-                f'Failed to fetch article info from MediaWiki API: {str(error)}'
+                f"Failed to fetch article info from MediaWiki API: {str(error)}"
             )
         except Exception:  # pylint: disable=broad-exception-caught
             # Logging failure shouldn't break the flow
@@ -790,7 +1013,7 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
 
         # Use fallback title
         if not article_title:
-            article_title = 'Article'
+            article_title = "Article"
 
     # Calculate expansion (bytes added between contest start and submission time)
     # Expansion = size at submission time - size at contest start
@@ -806,14 +1029,18 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             submission_datetime = datetime.utcnow()
 
             # Get article size at contest start
-            size_at_start = get_article_size_at_timestamp(article_link, contest_start_datetime)
+            size_at_start = get_article_size_at_timestamp(
+                article_link, contest_start_datetime
+            )
             article_size_at_start = size_at_start  # Store the size at contest start
 
             # Get article size at submission time
             # Use the current article_word_count if available, otherwise query API
             size_at_submission = article_word_count
             if size_at_submission is None:
-                size_at_submission = get_article_size_at_timestamp(article_link, submission_datetime)
+                size_at_submission = get_article_size_at_timestamp(
+                    article_link, submission_datetime
+                )
 
             # Calculate expansion bytes
             # At submission time, expansion bytes should be 0 since the article hasn't changed yet
@@ -823,9 +1050,9 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             # Log expansion calculation for debugging
             try:
                 current_app.logger.info(
-                    f'Expansion calculation: size_at_start={size_at_start}, '
-                    f'size_at_submission={size_at_submission}, '
-                    f'expansion={article_expansion_bytes}'
+                    f"Expansion calculation: size_at_start={size_at_start}, "
+                    f"size_at_submission={size_at_submission}, "
+                    f"expansion={article_expansion_bytes}"
                 )
             except Exception:  # pylint: disable=broad-exception-caught
                 pass
@@ -834,7 +1061,7 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             # If expansion calculation fails, log but don't fail submission
             try:
                 current_app.logger.warning(
-                    f'Failed to calculate expansion: {str(exp_error)}'
+                    f"Failed to calculate expansion: {str(exp_error)}"
                 )
             except Exception:  # pylint: disable=broad-exception-caught
                 pass
@@ -846,7 +1073,7 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
     # min_byte_count is always required, so always validate
     is_valid, error_message = contest.validate_byte_count(article_word_count)
     if not is_valid:
-        return jsonify({'error': error_message}), 400
+        return jsonify({"error": error_message}), 400
 
     # Create submission with fetched information
     try:
@@ -855,13 +1082,13 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             contest_id=contest_id,
             article_title=article_title,
             article_link=article_link,
-            status='pending',
+            status="pending",
             article_author=article_author,
             article_created_at=article_created_at,
             article_word_count=article_word_count,
             article_page_id=article_page_id,
             article_size_at_start=article_size_at_start,
-            article_expansion_bytes=article_expansion_bytes
+            article_expansion_bytes=article_expansion_bytes,
         )
 
         submission.save()
@@ -869,61 +1096,85 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
         # Debug: Log what was saved
         try:
             current_app.logger.info(
-                f'Submission saved: id={submission.id}, '
-                f'author={submission.article_author}, '
-                f'word_count={submission.article_word_count}'
+                f"Submission saved: id={submission.id}, "
+                f"author={submission.article_author}, "
+                f"word_count={submission.article_word_count}"
             )
         except Exception:  # pylint: disable=broad-exception-caught
             # Logging failure shouldn't break the flow
             pass
 
-        return jsonify({
-            'message': 'Submission created successfully',
-            'submissionId': submission.id,
-            'contest_id': contest_id,
-            'article_title': article_title,
-            'article_author': article_author,
-            'article_word_count': article_word_count,
-            'article_created_at': article_created_at,
-            'article_expansion_bytes': article_expansion_bytes
-        }), 201
+        return (
+            jsonify(
+                {
+                    "message": "Submission created successfully",
+                    "submissionId": submission.id,
+                    "contest_id": contest_id,
+                    "article_title": article_title,
+                    "article_author": article_author,
+                    "article_word_count": article_word_count,
+                    "article_created_at": article_created_at,
+                    "article_expansion_bytes": article_expansion_bytes,
+                }
+            ),
+            201,
+        )
 
     except IntegrityError as e:
         # Rollback the session on integrity error
         db.session.rollback()
         # Log the actual error for debugging
         error_str = str(e)
-        error_orig = str(e.orig) if hasattr(e, 'orig') else ''
-        full_error = f'{error_str} | Original: {error_orig}'
-        current_app.logger.error(f'Integrity error creating submission: {full_error}')
-        current_app.logger.error(f'Traceback: {traceback.format_exc()}')
+        error_orig = str(e.orig) if hasattr(e, "orig") else ""
+        full_error = f"{error_str} | Original: {error_orig}"
+        current_app.logger.error(f"Integrity error creating submission: {full_error}")
+        current_app.logger.error(f"Traceback: {traceback.format_exc()}")
         # Check if it's a duplicate submission error
-        if 'unique_user_contest_article_submission' in error_orig or 'unique_user_contest_article_submission' in error_str:
-            return jsonify({'error': 'You have already submitted this article to this contest'}), 400
+        if (
+            "unique_user_contest_article_submission" in error_orig
+            or "unique_user_contest_article_submission" in error_str
+        ):
+            return (
+                jsonify(
+                    {"error": "You have already submitted this article to this contest"}
+                ),
+                400,
+            )
         # Return detailed error for debugging
-        return jsonify({
-            'error': 'Failed to create submission: duplicate entry or constraint violation',
-            'details': full_error,
-            'traceback': traceback.format_exc() if current_app.debug else None
-        }), 400
+        return (
+            jsonify(
+                {
+                    "error": "Failed to create submission: duplicate entry or constraint violation",
+                    "details": full_error,
+                    "traceback": traceback.format_exc() if current_app.debug else None,
+                }
+            ),
+            400,
+        )
     except Exception as e:  # pylint: disable=broad-exception-caught
         # Rollback the session on any error
         db.session.rollback()
         # Log error for debugging
         error_str = str(e)
         error_type = type(e).__name__
-        full_error = f'{error_type}: {error_str}'
-        current_app.logger.error(f'Error creating submission: {full_error}')
-        current_app.logger.error(f'Traceback: {traceback.format_exc()}')
+        full_error = f"{error_type}: {error_str}"
+        current_app.logger.error(f"Error creating submission: {full_error}")
+        current_app.logger.error(f"Traceback: {traceback.format_exc()}")
         # Return detailed error for debugging
-        return jsonify({
-            'error': 'Failed to create submission',
-            'details': full_error,
-            'error_type': error_type,
-            'traceback': traceback.format_exc() if current_app.debug else None
-        }), 500
+        return (
+            jsonify(
+                {
+                    "error": "Failed to create submission",
+                    "details": full_error,
+                    "error_type": error_type,
+                    "traceback": traceback.format_exc() if current_app.debug else None,
+                }
+            ),
+            500,
+        )
 
-@contest_bp.route('/<int:contest_id>/submissions', methods=['GET'])
+
+@contest_bp.route("/<int:contest_id>/submissions", methods=["GET"])
 @require_auth
 @handle_errors
 def get_contest_submissions(contest_id):
@@ -940,27 +1191,27 @@ def get_contest_submissions(contest_id):
 
     # Validate contest access and permissions using shared utility function
     # This eliminates duplicate code across different route files
-    contest, error_response = validate_contest_submission_access(contest_id, user, Contest)
+    contest, error_response = validate_contest_submission_access(
+        contest_id, user, Contest
+    )
     if error_response:
         return error_response
 
     # Get submissions with user information
-    submissions = db.session.query(
-        Submission,
-        User.username,
-        User.email
-    ).join(User, Submission.user_id == User.id).filter(
-        Submission.contest_id == contest_id
-    ).order_by(Submission.submitted_at.desc()).all()
+    submissions = (
+        db.session.query(Submission, User.username, User.email)
+        .join(User, Submission.user_id == User.id)
+        .filter(Submission.contest_id == contest_id)
+        .order_by(Submission.submitted_at.desc())
+        .all()
+    )
 
     submissions_data = []
     for submission, username, email in submissions:
         submission_data = submission.to_dict(include_user_info=True)
-        submission_data.update({
-            'username': username,
-            'email': email,
-            'contest_name': contest.name
-        })
+        submission_data.update(
+            {"username": username, "email": email, "contest_name": contest.name}
+        )
         submissions_data.append(submission_data)
 
     return jsonify(submissions_data), 200
