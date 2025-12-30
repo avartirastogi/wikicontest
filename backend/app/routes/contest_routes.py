@@ -20,7 +20,11 @@ from app.utils import (
     extract_page_title_from_url,
     get_latest_revision_author,
     build_mediawiki_revisions_api_params,
-    get_mediawiki_headers
+    get_mediawiki_headers,
+    validate_template_link,
+    extract_template_name_from_url,
+    check_article_has_template,
+    prepend_template_to_article
 )
 
 # Create blueprint
@@ -184,6 +188,20 @@ def create_contest():
         if not (category_url.startswith('http://') or category_url.startswith('https://')):
             return jsonify({'error': 'All category URLs must be valid HTTP/HTTPS URLs'}), 400
 
+    # Parse template_link (optional)
+    # If provided, validate that it points to a valid Wiki template page
+    template_link = data.get('template_link')
+    if template_link:
+        template_link = template_link.strip()
+        if template_link:  # Non-empty after strip
+            validation_result = validate_template_link(template_link)
+            if not validation_result['valid']:
+                return jsonify({
+                    'error': f"Invalid template link: {validation_result['error']}"
+                }), 400
+        else:
+            template_link = None  # Empty string becomes None
+
     # Create contest
     try:
         contest = Contest(
@@ -199,7 +217,8 @@ def create_contest():
             jury_members=jury_members,
             allowed_submission_type=allowed_submission_type,
             min_byte_count=min_byte_count,
-            categories=categories
+            categories=categories,
+            template_link=template_link
         )
 
         contest.save()
@@ -455,6 +474,23 @@ def update_contest(contest_id):  # pylint: disable=too-many-return-statements
                     return jsonify({'error': 'All category URLs must be valid HTTP/HTTPS URLs'}), 400
             
             contest.set_categories(categories_value)
+
+        # --- Template link ---
+        if 'template_link' in data:
+            template_link_value = data.get('template_link')
+            if template_link_value:
+                template_link_value = template_link_value.strip()
+                if template_link_value:  # Non-empty after strip
+                    validation_result = validate_template_link(template_link_value)
+                    if not validation_result['valid']:
+                        return jsonify({
+                            'error': f"Invalid template link: {validation_result['error']}"
+                        }), 400
+                    contest.template_link = template_link_value
+                else:
+                    contest.template_link = None  # Empty string clears the field
+            else:
+                contest.template_link = None  # None clears the field
 
         # --- Jury members: accept list or comma string ---
         if 'jury_members' in data:
@@ -848,6 +884,87 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
     if not is_valid:
         return jsonify({'error': error_message}), 400
 
+    # Template enforcement logic
+    # If contest has a template_link, check if article has the template and add it if not
+    template_added = False
+    template_error = None
+
+    if contest.template_link:
+        try:
+            # Extract template name from the contest's template link
+            template_name = extract_template_name_from_url(contest.template_link)
+
+            if template_name:
+                # Check if article already has the template at the beginning
+                template_check = check_article_has_template(article_link, template_name)
+
+                if template_check.get('error'):
+                    # Log warning but don't fail submission
+                    try:
+                        current_app.logger.warning(
+                            f"Template check failed for {article_link}: {template_check['error']}"
+                        )
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        pass
+                elif not template_check.get('has_template'):
+                    # Template not present, attempt to add it
+                    # Check if user has OAuth tokens
+                    if user.oauth_token and user.oauth_token_secret:
+                        # Get OAuth consumer credentials from config
+                        consumer_key = current_app.config.get('MEDIAWIKI_CONSUMER_KEY')
+                        consumer_secret = current_app.config.get('MEDIAWIKI_CONSUMER_SECRET')
+
+                        if consumer_key and consumer_secret:
+                            # Attempt to prepend template to article
+                            edit_result = prepend_template_to_article(
+                                article_url=article_link,
+                                template_name=template_name,
+                                oauth_token=user.oauth_token,
+                                oauth_token_secret=user.oauth_token_secret,
+                                consumer_key=consumer_key,
+                                consumer_secret=consumer_secret,
+                                edit_summary=f"Adding {{{{{template_name}}}}} contest template (via WikiContest submission)"
+                            )
+
+                            if edit_result.get('success'):
+                                template_added = True
+                                try:
+                                    current_app.logger.info(
+                                        f"Successfully added template {{{{{template_name}}}}} to {article_link}"
+                                    )
+                                except Exception:  # pylint: disable=broad-exception-caught
+                                    pass
+                            else:
+                                template_error = edit_result.get('error', 'Unknown error')
+                                try:
+                                    current_app.logger.warning(
+                                        f"Failed to add template to {article_link}: {template_error}"
+                                    )
+                                except Exception:  # pylint: disable=broad-exception-caught
+                                    pass
+                        else:
+                            template_error = 'OAuth consumer credentials not configured'
+                    else:
+                        template_error = 'User does not have OAuth tokens for Wikipedia editing'
+                else:
+                    # Template already present
+                    try:
+                        current_app.logger.info(
+                            f"Template {{{{{template_name}}}}} already present in {article_link}"
+                        )
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        pass
+            else:
+                template_error = 'Could not extract template name from contest template link'
+        except Exception as template_err:  # pylint: disable=broad-exception-caught
+            template_error = str(template_err)
+            try:
+                current_app.logger.error(
+                    f"Template enforcement error: {template_error}"
+                )
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
     # Create submission with fetched information
     try:
         submission = Submission(
@@ -861,7 +978,8 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             article_word_count=article_word_count,
             article_page_id=article_page_id,
             article_size_at_start=article_size_at_start,
-            article_expansion_bytes=article_expansion_bytes
+            article_expansion_bytes=article_expansion_bytes,
+            template_added=template_added
         )
 
         submission.save()
@@ -885,7 +1003,9 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             'article_author': article_author,
             'article_word_count': article_word_count,
             'article_created_at': article_created_at,
-            'article_expansion_bytes': article_expansion_bytes
+            'article_expansion_bytes': article_expansion_bytes,
+            'template_added': template_added,
+            'template_error': template_error
         }), 201
 
     except IntegrityError as e:
