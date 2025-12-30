@@ -289,9 +289,18 @@ class="mt-2 pt-2"
                   <td>{{ formatDate(submission.submitted_at) }}</td>
                   <td>
                     <button @click="showArticlePreview(submission)"
-class="btn btn-sm btn-outline-primary"
+class="btn btn-sm btn-outline-primary me-2"
                       title="Preview Article">
                       <i class="fas fa-eye"></i>
+                    </button>
+                    <button
+                      v-if="canViewSubmissions"
+                      @click="handleDeleteSubmission(submission)"
+                      class="btn btn-sm btn-outline-danger"
+                      title="Delete Submission"
+                      :disabled="deletingSubmissionId === submission.id">
+                      <span v-if="deletingSubmissionId === submission.id" class="spinner-border spinner-border-sm"></span>
+                      <i v-else class="fas fa-trash"></i>
                     </button>
                   </td>
                 </tr>
@@ -335,7 +344,8 @@ class="btn btn-sm btn-outline-primary"
 :article-title="currentSubmission.article_title"
       :submission-id="currentSubmission.id"
 :submission="currentSubmission"
-@reviewed="handleSubmissionReviewed" />
+@reviewed="handleSubmissionReviewed"
+@deleted="handleSubmissionDeleted" />
   </div>
   <!-- Edit Contest Modal -->
   <div class="modal fade" id="editContestModal" tabindex="-1">
@@ -619,6 +629,7 @@ export default {
     const previewArticleTitle = ref('')
     const jurySearchQuery = ref('')
     const jurySearchResults = ref([])
+    const deletingSubmissionId = ref(null)
     let jurySearchTimeout = null
 
     // FIXED: Store submission ID instead of all preview data
@@ -1087,6 +1098,61 @@ export default {
       }
     }
 
+    // Handle submission deleted from modal
+    const handleSubmissionDeleted = (submissionId) => {
+      console.log('Submission deleted:', submissionId)
+
+      // Remove the submission from the array
+      const submissionIndex = submissions.value.findIndex(
+        s => s.id === submissionId
+      )
+
+      if (submissionIndex !== -1) {
+        submissions.value.splice(submissionIndex, 1)
+        showAlert('Submission deleted successfully', 'success')
+
+        // Update contest submission count if available
+        if (contest.value && contest.value.submission_count) {
+          contest.value.submission_count -= 1
+        }
+      }
+    }
+
+    // Handle delete submission from table
+    const handleDeleteSubmission = async (submission) => {
+      // Confirmation dialog
+      const confirmed = confirm(
+        `Are you sure you want to delete the submission "${submission.article_title}"?\n\n` +
+        'This action cannot be undone and will adjust the user\'s score.'
+      )
+
+      if (!confirmed) return
+
+      deletingSubmissionId.value = submission.id
+
+      try {
+        await api.deleteSubmission(submission.id)
+
+        // Remove from array
+        const index = submissions.value.findIndex(s => s.id === submission.id)
+        if (index !== -1) {
+          submissions.value.splice(index, 1)
+        }
+
+        showAlert('Submission deleted successfully', 'success')
+
+        // Update contest submission count
+        if (contest.value && contest.value.submission_count) {
+          contest.value.submission_count -= 1
+        }
+      } catch (error) {
+        console.error('Failed to delete submission:', error)
+        showAlert('Failed to delete submission: ' + error.message, 'danger')
+      } finally {
+        deletingSubmissionId.value = null
+      }
+    }
+
     watch(() => currentUser.value, (newUser) => {
       if (newUser && contest.value && !checkingAuth.value) {
         setTimeout(() => {
@@ -1381,6 +1447,7 @@ export default {
       isAuthenticated,
       canViewSubmissions,
       currentSubmission,
+      deletingSubmissionId,
       formatDate,
       formatDateShort,
       formatByteCount,
@@ -1407,6 +1474,8 @@ export default {
       goBack,
       showArticlePreview,
       handleSubmissionReviewed,
+      handleSubmissionDeleted,
+      handleDeleteSubmission,
       previewArticleUrl,
       previewArticleTitle,
       editForm,
