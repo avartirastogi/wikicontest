@@ -4,6 +4,7 @@ Defines the Submission table and related functionality
 """
 
 from datetime import datetime, timezone
+import json
 from app.database import db
 from app.models.base_model import BaseModel
 
@@ -76,6 +77,9 @@ class Submission(BaseModel):
         back_populates="reviewed_submissions",
         overlaps="submissions",
     )
+    parameter_scores = db.Column(
+        db.Text, nullable=True
+    )  # JSON string of parameter scores
 
     contest = db.relationship("Contest", back_populates="submissions")
 
@@ -83,7 +87,10 @@ class Submission(BaseModel):
     # Allow multiple submissions per user per contest, but prevent duplicate article submissions
     __table_args__ = (
         db.UniqueConstraint(
-            "user_id", "contest_id", "article_link", name="unique_user_contest_article_submission"
+            "user_id",
+            "contest_id",
+            "article_link",
+            name="unique_user_contest_article_submission",
         ),
     )
 
@@ -132,6 +139,7 @@ class Submission(BaseModel):
         self.reviewed_by = None
         self.reviewed_at = None
         self.review_comment = None
+        self.parameter_scores = None
 
     def is_pending(self):
         """
@@ -160,18 +168,35 @@ class Submission(BaseModel):
         """
         return self.status == "rejected"
 
+    def set_parameter_scores(self, scores):
+        """Set individual parameter scores"""
+        if scores is None:
+            self.parameter_scores = None
+        elif isinstance(scores, dict):
+            self.parameter_scores = json.dumps(scores)
+        else:
+            self.parameter_scores = None
+
+    def get_parameter_scores(self):
+        """Get individual parameter scores"""
+        if not self.parameter_scores:
+            return None
+        try:
+            return json.loads(self.parameter_scores)
+        except json.JSONDecodeError:
+            return None
+
     def update_status(
-        self, new_status, reviewer=None, score=None, comment=None, contest=None
+        self,
+        new_status,
+        reviewer=None,
+        score=None,
+        comment=None,
+        contest=None,
+        parameter_scores=None,
     ):
         """
-        Update submission status with review metadata
-
-        Args:
-            new_status: accepted | rejected | auto_rejected
-            reviewer: User instance who reviewed
-            score: Optional score override
-            comment: Optional review comment
-            contest: Contest instance
+        MODIFY existing update_status method - ADD parameter_scores argument
         """
         if self.status == new_status:
             return False
@@ -179,13 +204,26 @@ class Submission(BaseModel):
         if not contest:
             contest = self.contest
 
-        # Determine final score
-        if new_status == "accepted":
-            final_score = score if score is not None else contest.marks_setting_accepted
-        elif new_status == "rejected":
-            final_score = contest.marks_setting_rejected
-        else:  # auto_rejected
-            final_score = 0
+        # ADD THIS BLOCK - Determine scoring method
+        if (
+            contest.is_multi_parameter_scoring_enabled()
+            and new_status == "accepted"
+            and parameter_scores
+        ):
+            # NEW SYSTEM: Calculate from parameters
+            final_score = contest.calculate_weighted_score(parameter_scores)
+            self.set_parameter_scores(parameter_scores)
+        else:
+            # OLD SYSTEM: Use fixed scores
+            if new_status == "accepted":
+                final_score = (
+                    score if score is not None else contest.marks_setting_accepted
+                )
+            elif new_status == "rejected":
+                final_score = contest.marks_setting_rejected
+            else:
+                final_score = 0
+            self.parameter_scores = None
 
         score_difference = final_score - self.score
 
@@ -201,6 +239,7 @@ class Submission(BaseModel):
             # Ensure submitter is loaded - if not, load it explicitly
             if self.submitter is None:
                 from app.models.user import User
+
                 self.submitter = User.query.get(self.user_id)
                 if self.submitter is None:
                     raise ValueError(f"Submitter user with id {self.user_id} not found")
@@ -283,7 +322,9 @@ class Submission(BaseModel):
             # Article metadata for judges and organizers
             "article_author": self.article_author,
             "article_created_at": (
-                (self.article_created_at.isoformat() + "Z") if self.article_created_at else None
+                (self.article_created_at.isoformat() + "Z")
+                if self.article_created_at
+                else None
             ),
             "article_word_count": self.article_word_count,
             "article_page_id": self.article_page_id,
@@ -295,6 +336,7 @@ class Submission(BaseModel):
             ),
             "review_comment": self.review_comment,
             "already_reviewed": self.reviewed_at is not None,
+            "parameter_scores": self.get_parameter_scores(),
         }
 
         if include_user_info:

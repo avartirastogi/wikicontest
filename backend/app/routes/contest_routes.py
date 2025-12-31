@@ -203,6 +203,53 @@ def create_contest():
                 400,
             )
 
+    scoring_parameters = data.get("scoring_parameters")
+    if scoring_parameters:
+        if not isinstance(scoring_parameters, dict):
+            return jsonify({"error": "Scoring parameters must be an object"}), 400
+
+        if scoring_parameters.get("enabled"):
+            if "parameters" not in scoring_parameters:
+                return (
+                    jsonify(
+                        {"error": 'Scoring parameters must include "parameters" array'}
+                    ),
+                    400,
+                )
+
+            parameters = scoring_parameters["parameters"]
+            if not isinstance(parameters, list) or len(parameters) == 0:
+                return (
+                    jsonify({"error": "At least one scoring parameter is required"}),
+                    400,
+                )
+
+            # Validate weights
+            total_weight = 0
+            for param in parameters:
+                if not isinstance(param, dict):
+                    return jsonify({"error": "Each parameter must be an object"}), 400
+                if "name" not in param or "weight" not in param:
+                    return (
+                        jsonify(
+                            {"error": 'Each parameter must have "name" and "weight"'}
+                        ),
+                        400,
+                    )
+                try:
+                    weight = int(param["weight"])
+                    if weight < 0 or weight > 100:
+                        return jsonify({"error": f"Weight must be 0-100"}), 400
+                    total_weight += weight
+                except (ValueError, TypeError):
+                    return jsonify({"error": "Weight must be a valid integer"}), 400
+
+            if total_weight != 100:
+                return (
+                    jsonify({"error": f"Weights must sum to 100, got {total_weight}"}),
+                    400,
+                )
+
     # Create contest
     try:
         contest = Contest(
@@ -219,6 +266,7 @@ def create_contest():
             allowed_submission_type=allowed_submission_type,
             min_byte_count=min_byte_count,
             categories=categories,
+            scoring_parameters=scoring_parameters,
         )
 
         contest.save()

@@ -147,7 +147,7 @@ export default {
     watch(() => store.state?.currentUser?.role, (newRole) => {
       console.log('📄 Store state role changed to:', newRole)
       if (newRole === 'superadmin') {
-        console.log('✅ Superadmin role detected in store state!')
+        console.log('Superadmin role detected in store state!')
       }
     }, { immediate: true })
 

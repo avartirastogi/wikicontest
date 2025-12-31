@@ -56,14 +56,19 @@ class Contest(BaseModel):
 
     # Byte count requirement for article submissions
     # Articles must have byte count at least min_byte_count
-    min_byte_count = db.Column(db.Integer, nullable=False)  # Minimum byte count (required)
+    min_byte_count = db.Column(
+        db.Integer, nullable=False
+    )  # Minimum byte count (required)
 
     # MediaWiki category URLs (JSON array)
     # Required categories that articles must belong to
-    categories = db.Column(db.Text, nullable=False, default='[]')  # JSON array of category URLs
+    categories = db.Column(
+        db.Text, nullable=False, default="[]"
+    )  # JSON array of category URLs
 
     # Jury members (comma-separated usernames)
     jury_members = db.Column(db.Text, nullable=True)
+    scoring_parameters = db.Column(db.Text, nullable=True)
 
     # Timestamp
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -94,10 +99,11 @@ class Contest(BaseModel):
         self.marks_setting_accepted = kwargs.get("marks_setting_accepted", 0)
         self.marks_setting_rejected = kwargs.get("marks_setting_rejected", 0)
         self.allowed_submission_type = kwargs.get("allowed_submission_type", "both")
+        self.set_scoring_parameters(kwargs.get("scoring_parameters"))
 
         # Byte count requirement (required)
         # Articles must have byte count at least this value
-        self.min_byte_count = kwargs.get('min_byte_count', 0)
+        self.min_byte_count = kwargs.get("min_byte_count", 0)
 
         # Handle categories (list of category URLs)
         self.set_categories(kwargs.get("categories", []))
@@ -199,11 +205,17 @@ class Contest(BaseModel):
         # If byte count is None, we can't validate it
         # This might happen if MediaWiki API fails to fetch the size
         if byte_count is None:
-            return False, 'Article byte count could not be determined. Please ensure the article exists and try again.'
+            return (
+                False,
+                "Article byte count could not be determined. Please ensure the article exists and try again.",
+            )
 
         # Check minimum byte count (always required)
         if byte_count < self.min_byte_count:
-            return False, f'Article byte count ({byte_count}) is below the minimum required ({self.min_byte_count} bytes)'
+            return (
+                False,
+                f"Article byte count ({byte_count}) is below the minimum required ({self.min_byte_count} bytes)",
+            )
 
         # Byte count meets the requirement
         return True, None
@@ -305,6 +317,74 @@ class Contest(BaseModel):
             for row in leaderboard_query
         ]
 
+    def set_scoring_parameters(self, params):
+        """
+        Set scoring parameters configuration
+
+        Args:
+            params: Dict or None
+                {
+                    "enabled": true,
+                    "max_score": 100,
+                    "min_score": 0,
+                    "parameters": [
+                        {"name": "Quality", "weight": 40, "description": "..."},
+                        {"name": "Sources", "weight": 30, "description": "..."},
+                        {"name": "Neutrality", "weight": 20, "description": "..."},
+                        {"name": "Formatting", "weight": 10, "description": "..."}
+                    ]
+                }
+        """
+        if params is None:
+            self.scoring_parameters = None
+        elif isinstance(params, dict):
+            # Validate weights sum to 100
+            if params.get("enabled") and "parameters" in params:
+                total_weight = sum(p.get("weight", 0) for p in params["parameters"])
+                if total_weight != 100:
+                    raise ValueError(
+                        f"Parameter weights must sum to 100, got {total_weight}"
+                    )
+            self.scoring_parameters = json.dumps(params)
+        else:
+            self.scoring_parameters = None
+
+    def get_scoring_parameters(self):
+        """Get scoring parameters configuration"""
+        if not self.scoring_parameters:
+            return None
+        try:
+            return json.loads(self.scoring_parameters)
+        except json.JSONDecodeError:
+            return None
+
+    def is_multi_parameter_scoring_enabled(self):
+        params = self.get_scoring_parameters()
+        if not isinstance(params, dict):
+            return False
+        return params.get("enabled", False)
+
+    def calculate_weighted_score(self, parameter_scores):
+        if not self.is_multi_parameter_scoring_enabled():
+            return self.marks_setting_accepted
+
+        scoring_config = self.get_scoring_parameters()
+        max_score = scoring_config.get("max_score", 100)
+        min_score = scoring_config.get("min_score", 0)
+        parameters = scoring_config.get("parameters", [])
+
+        weighted_sum = 0.0
+        for param in parameters:
+            param_name = param["name"]
+            weight = param["weight"] / 100.0
+            score = parameter_scores.get(param_name, 0)
+            weighted_sum += score * weight
+
+        final_score = int(weighted_sum * (max_score / 10))
+
+        # Clamp score between min and max
+        return max(min(final_score, max_score), min_score)
+
     def to_dict(self):
         """
         Convert contest instance to dictionary for JSON serialization
@@ -313,20 +393,25 @@ class Contest(BaseModel):
             dict: Contest data
         """
         return {
-            'id': self.id,
-            'name': self.name,
-            'project_name': self.project_name,
-            'created_by': self.created_by,
-            'description': self.description,
-            'start_date': self.start_date.isoformat() if self.start_date else None,
-            'end_date': self.end_date.isoformat() if self.end_date else None,
-            'rules': self.get_rules(),
-            'marks_setting_accepted': self.marks_setting_accepted,
-            'marks_setting_rejected': self.marks_setting_rejected,
-            'allowed_submission_type': self.allowed_submission_type,
-            'min_byte_count': self.min_byte_count,
-            'categories': self.get_categories(),
-            'jury_members': self.get_jury_members(),
+            "id": self.id,
+            "name": self.name,
+            "project_name": self.project_name,
+            "created_by": self.created_by,
+            "description": self.description,
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "rules": self.get_rules(),
+            "scoring_parameters": (
+                self.get_scoring_parameters()
+                if self.get_scoring_parameters()
+                else {"enabled": False}
+            ),
+            "marks_setting_accepted": self.marks_setting_accepted,
+            "marks_setting_rejected": self.marks_setting_rejected,
+            "allowed_submission_type": self.allowed_submission_type,
+            "min_byte_count": self.min_byte_count,
+            "categories": self.get_categories(),
+            "jury_members": self.get_jury_members(),
             # Format datetime as ISO string with 'Z' suffix to indicate UTC
             # This ensures JavaScript interprets it as UTC, not local time
             "created_at": (

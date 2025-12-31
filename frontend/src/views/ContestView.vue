@@ -50,7 +50,7 @@
 
       <!-- Main Content -->
       <div class="row">
-        <div :class="canViewSubmissions ? 'col-md-6' : 'col-md-12'">
+        <div :class="canViewSubmissions ? 'col-md-12' : 'col-md-12'">
           <div class="card mb-4">
             <div class="card-header">
               <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Contest Details</h5>
@@ -64,20 +64,65 @@
             </div>
           </div>
         </div>
-        <!-- Scoring Column (for jury and contest creators) -->
-        <div v-if="canViewSubmissions" class="col-md-6">
-          <div class="card mb-4">
-            <div class="card-header">
-              <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Scoring</h5>
+      </div>
+      <!-- Scoring Column (for jury and contest creators) -->
+      <div v-if="canViewSubmissions" class="col-md-12">
+        <div class="scoring-card">
+          <div class="card-header">
+
+            <h5 class="mb-0"><i class="fas fa-chart-line"></i>Scoring System</h5>
+          </div>
+
+          <div class="scoring-content">
+            <!-- Multi-Parameter Scoring Display -->
+            <div v-if="contest.scoring_parameters?.enabled === true">
+              <div class="scoring-meta">
+                <span class="tag tag-multi">Multi-Parameter</span>
+                <span class="max-points">Accepted points: {{ contest.scoring_parameters.max_score }}</span>
+                <span class="max-points">Rejected points: {{ contest.scoring_parameters.min_score }}</span>
+              </div>
+
+              <div class="params-list">
+                <div v-for="param in contest.scoring_parameters.parameters" :key="param.name" class="param-item">
+                  <div class="param-row">
+                    <span class="param-label">{{ param.name }}</span>
+                    <span class="param-value">{{ param.weight }}%</span>
+                  </div>
+                  <p v-if="param.description" class="param-note">{{ param.description }}</p>
+                </div>
+              </div>
+
+              <div class="info-note">
+                <i class="fas fa-info-circle"></i>
+                <span>Each parameter scored 0-10, weighted average calculated</span>
+              </div>
             </div>
-            <div class="card-body">
-              <p><strong>Accepted:</strong> {{ contest.marks_setting_accepted }} points</p>
-              <p><strong>Rejected:</strong> {{ contest.marks_setting_rejected }} points</p>
-              <p><strong>Submissions:</strong> {{ contest.submission_count }}</p>
+
+            <!-- Simple Scoring Display -->
+            <div v-else>
+              <div class="tag tag-simple">Simple Scoring</div>
+
+              <div class="points-row">
+                <div class="point-item">
+                  <span class="point-label">Accepted</span>
+                  <span class="point-value">{{ contest.marks_setting_accepted }}</span>
+                </div>
+
+                <div class="point-item">
+                  <span class="point-label">Rejected</span>
+                  <span class="point-value">{{ contest.marks_setting_rejected }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="submissions-info">
+              <span>Submissions</span>
+              <strong>1</strong>
             </div>
           </div>
         </div>
       </div>
+
 
       <!-- Description Section -->
       <div v-if="contest.description" class="card mb-4 description-section">
@@ -158,6 +203,7 @@
           <p>{{ contest.jury_members.join(', ') }}</p>
         </div>
       </div>
+
 
       <!-- Submissions Section (for jury and contest creators) -->
       <div v-if="canViewSubmissions" class="card mb-4">
@@ -309,16 +355,16 @@
         </button>
       </div>
     </div>
-
-    <!-- Submit Article Modal -->
-    <SubmitArticleModal v-if="submittingToContestId" :contest-id="submittingToContestId"
-      @submitted="handleArticleSubmitted" />
-
-    <!-- Article Preview Modal - Pass computed currentSubmission -->
-    <ArticlePreviewModal v-if="!!currentSubmission" :can-review="canUserReview"
-      :article-url="currentSubmission.article_link" :article-title="currentSubmission.article_title"
-      :submission-id="currentSubmission.id" :submission="currentSubmission" @reviewed="handleSubmissionReviewed" />
   </div>
+  <!-- Submit Article Modal -->
+  <SubmitArticleModal v-if="submittingToContestId" :contest-id="submittingToContestId"
+    @submitted="handleArticleSubmitted" />
+
+  <!-- Article Preview Modal - Pass computed currentSubmission -->
+  <ArticlePreviewModal v-if="!!currentSubmission" :can-review="canUserReview"
+    :article-url="currentSubmission.article_link" :article-title="currentSubmission.article_title"
+    :submission-id="currentSubmission.id" :submission="currentSubmission"
+    :contest-scoring-config="contest?.scoring_parameters" @reviewed="handleSubmissionReviewed" />
   <!-- Edit Contest Modal -->
   <div class="modal fade" id="editContestModal" tabindex="-1">
     <div class="modal-dialog modal-fullscreen">
@@ -424,22 +470,64 @@
               </small>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label">Accepted Points</label>
-              <input type="number" v-model.number="editForm.marks_setting_accepted" class="form-control" min="0" />
-              <small class="form-text text-muted">
-                Maximum points that can be awarded. Jury can assign points from 0 up to
-                this value for accepted submissions.
-              </small>
+            <div v-if="editForm.scoring_mode === 'simple'">
+              <div class="mb-3">
+                <label class="form-label">Accepted Points</label>
+                <input type="number" v-model.number="editForm.marks_setting_accepted" class="form-control" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Rejected Points</label>
+                <input type="number" v-model.number="editForm.marks_setting_rejected" class="form-control" />
+              </div>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label">Rejected Points</label>
-              <input type="number" v-model.number="editForm.marks_setting_rejected" class="form-control" min="0" />
-              <small class="form-text text-muted">
-                Fixed points awarded automatically for rejected submissions (usually 0 or negative).
-              </small>
+            <div v-if="editForm.scoring_mode === 'multi'">
+              <div class="mb-3">
+                <label class="form-label">Maximum Score</label>
+                <input type="number" v-model.number="editForm.scoring_parameters.max_score" class="form-control" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Minimum Score</label>
+                <input type="number" v-model.number="editForm.scoring_parameters.min_score" class="form-control" />
+              </div>
+
+              <hr />
+
+              <h6>Scoring Parameters</h6>
+
+              <div v-for="(param, index) in editForm.scoring_parameters.parameters" :key="index"
+                class="border rounded p-3 mb-2">
+                <div class="row">
+                  <div class="col-md-4">
+                    <input v-model="param.name" placeholder="Parameter name" class="form-control" />
+                  </div>
+
+                  <div class="col-md-3">
+                    <input type="number" v-model.number="param.weight" placeholder="Weight %" class="form-control" />
+                  </div>
+
+                  <div class="col-md-4">
+                    <input v-model="param.description" placeholder="Description (optional)" class="form-control" />
+                  </div>
+
+                  <div class="col-md-1 text-end">
+                    <button class="btn btn-outline-danger btn-sm"
+                      @click="editForm.scoring_parameters.parameters.splice(index, 1)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <button class="btn btn-outline-primary btn-sm"
+                @click="editForm.scoring_parameters.parameters.push({ name: '', weight: 0, description: '' })">
+                <i class="fas fa-plus me-1"></i>Add Parameter
+              </button>
             </div>
+
+
 
             <div class="mb-3">
               <label class="form-label">Minimum Byte Count *</label>
@@ -530,6 +618,7 @@ export default {
     const jurySearchQuery = ref('')
     const jurySearchResults = ref([])
     let jurySearchTimeout = null
+    const scoringMode = ref('simple')
 
     // FIXED: Store submission ID instead of all preview data
     const currentSubmissionId = ref(null)
@@ -789,7 +878,13 @@ export default {
           data = await api.get(`/contest/name/${contestName}`)
         }
 
-        contest.value = data
+        contest.value = {
+          ...data,
+          scoring_parameters: data.scoring_parameters
+            ? { ...data.scoring_parameters }
+            : { enabled: false }
+        }
+
 
         // Check auth and permissions after loading contest
         await checkAuthAndPermissions()
@@ -1019,7 +1114,13 @@ export default {
       allowed_submission_type: '',
       selectedJuryMembers: [],
       min_byte_count: 0,
-      categories: ['']
+      categories: [''],
+      scoring_mode: '',
+      scoring_parameters: {
+        max_score: 10,
+        min_score: 0,
+        parameters: []
+      }
     })
 
     onMounted(() => {
@@ -1106,51 +1207,81 @@ export default {
       }
     }
 
-
     let editModal = null
     const openEditModal = () => {
       if (!contest.value) return
 
+      // Basic fields
       editForm.name = contest.value.name
       editForm.project_name = contest.value.project_name || ''
       editForm.description = contest.value.description || ''
-
-
       editForm.rules = contest.value.rules?.text || ''
       editForm.allowed_submission_type = contest.value.allowed_submission_type || 'both'
-
       editForm.start_date = contest.value.start_date || ''
       editForm.end_date = contest.value.end_date || ''
-
-      editForm.marks_setting_accepted = Number(contest.value.marks_setting_accepted ?? 0)
-      editForm.marks_setting_rejected = Number(contest.value.marks_setting_rejected ?? 0)
       editForm.min_byte_count = Number(contest.value.min_byte_count ?? 0)
 
-      // Load categories
-      if (Array.isArray(contest.value.categories) && contest.value.categories.length > 0) {
-        editForm.categories = [...contest.value.categories]
-      } else {
-        editForm.categories = ['']
-      }
-
+      // Jury members
       if (Array.isArray(contest.value.jury_members)) {
         editForm.selectedJuryMembers = [...contest.value.jury_members]
       } else {
         editForm.selectedJuryMembers = []
       }
 
-      console.log('📝 Edit modal opened with jury members:', editForm.selectedJuryMembers)
+      // Categories
+      if (Array.isArray(contest.value.categories) && contest.value.categories.length > 0) {
+        editForm.categories = [...contest.value.categories]
+      } else {
+        editForm.categories = ['']
+      }
 
-      // Reset search state
+      // Scoring Mode and Parameters
+      if (contest.value.scoring_parameters?.enabled) {
+        editForm.scoring_mode = 'multi'
+
+        // Replace the whole object to ensure reactivity
+        editForm.scoring_parameters = {
+          max_score: contest.value.scoring_parameters.max_score ?? 10,
+          min_score: contest.value.scoring_parameters.min_score ?? 0,
+          parameters: contest.value.scoring_parameters.parameters
+            ? [...contest.value.scoring_parameters.parameters]
+            : []
+        }
+      } else {
+        editForm.scoring_mode = 'simple'
+        editForm.marks_setting_accepted = Number(contest.value.marks_setting_accepted ?? 0)
+        editForm.marks_setting_rejected = Number(contest.value.marks_setting_rejected ?? 0)
+
+        // Reset multi parameters to empty
+        editForm.scoring_parameters = {
+          max_score: 10,
+          min_score: 0,
+          parameters: []
+        }
+      }
+
+      // Reset jury search
       jurySearchQuery.value = ''
       jurySearchResults.value = []
 
-      editModal.show()
+      console.log('📝 Edit modal opened with jury members:', editForm.selectedJuryMembers)
+
+      // Show modal
+      if (editModal) editModal.show()
     }
-
-
     const saveContestEdits = async () => {
       try {
+        // MULTI PARAMETER VALIDATION FIRST
+        if (editForm.scoring_mode === 'multi') {
+          const totalWeight = editForm.scoring_parameters.parameters
+            .reduce((sum, p) => sum + Number(p.weight || 0), 0)
+
+          if (totalWeight !== 100) {
+            showAlert('Total parameter weight must be 100%', 'warning')
+            return
+          }
+        }
+
         // Validate categories
         const validCategories = editForm.categories.filter(cat => cat && cat.trim())
         if (validCategories.length === 0) {
@@ -1158,47 +1289,48 @@ export default {
           return
         }
 
-        // Validate category URLs
-        for (const category of validCategories) {
-          if (!category.startsWith('http://') && !category.startsWith('https://')) {
-            showAlert('All category URLs must be valid HTTP/HTTPS URLs', 'warning')
-            return
-          }
-        }
-
+        // Base payload
         const payload = {
-          name: editForm.name || '',
-          project_name: editForm.project_name || '',
-          description: editForm.description || '',
+          name: editForm.name,
+          project_name: editForm.project_name,
+          description: editForm.description,
           rules: editForm.rules?.trim() || '',
           start_date: editForm.start_date || null,
           end_date: editForm.end_date || null,
-          marks_setting_accepted: Number(editForm.marks_setting_accepted) || 0,
-          marks_setting_rejected: Number(editForm.marks_setting_rejected) || 0,
           jury_members: editForm.selectedJuryMembers,
           allowed_submission_type: editForm.allowed_submission_type,
-          min_byte_count: Number(editForm.min_byte_count) || 0,
-          categories: validCategories.map(cat => cat.trim())
+          min_byte_count: Number(editForm.min_byte_count),
+          categories: validCategories
         }
 
-        // console.log("FINAL PAYLOAD SENT →", payload);
+        if (editForm.scoring_mode === 'multi') {
+          payload.scoring_parameters = {
+            enabled: true,
+            max_score: Number(editForm.scoring_parameters.max_score),
+            min_score: Number(editForm.scoring_parameters.min_score),
+            parameters: editForm.scoring_parameters.parameters
+          }
+        } else {
+          payload.marks_setting_accepted = Number(editForm.marks_setting_accepted)
+          payload.marks_setting_rejected = Number(editForm.marks_setting_rejected)
+          payload.scoring_parameters = { enabled: false }
+        }
+
         await api.put(`/contest/${contest.value.id}`, payload)
 
         showAlert('Contest updated successfully', 'success')
         editModal.hide()
 
+        // 🔥 IMPORTANT: reload contest AFTER save
         await loadContest(contest.value.id)
-        const newSlug = slugify(payload.name, { lower: true, strict: true })
-        router.replace({ name: 'ContestView', params: { name: newSlug } })
       } catch (error) {
-        console.error('SAVE ERROR:', error)
-
         showAlert(
           'Failed to save: ' + (error.response?.data?.detail || error.message),
           'danger'
         )
       }
     }
+
     // Add computed property
     const canUserReview = computed(() => {
       if (!isAuthenticated.value || !contest.value || !currentUser.value) {
@@ -1230,8 +1362,6 @@ export default {
         params: { name: route.params.name }
       })
     }
-
-
     return {
       contest,
       loading,
@@ -1278,7 +1408,8 @@ export default {
       openEditModal,
       saveContestEdits,
       canUserReview,
-      goToLeaderboard
+      goToLeaderboard,
+      scoringMode
     }
   }
 }
@@ -1703,5 +1834,206 @@ export default {
 .modal-fullscreen .modal-body form {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.scoring-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+[data-theme="dark"] .scoring-card {
+  background: #2a2a2a;
+  border-color: #404040;
+}
+
+.scoring-content {
+  padding: 1.25rem;
+}
+
+/* Tags */
+.tag {
+  display: inline-block;
+  padding: 0.375rem 0.875rem;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.tag-multi {
+  background: #28a745;
+  color: white;
+}
+
+.tag-simple {
+  background: #17a2b8;
+  color: white;
+  margin-bottom: 1.25rem;
+}
+
+.scoring-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.max-points {
+  color: var(--wiki-primary);
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+/* Parameters */
+.params-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.param-item {
+  padding: 0.875rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid var(--wiki-primary);
+}
+
+[data-theme="dark"] .param-item {
+  background: #1f1f1f;
+}
+
+.param-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.375rem;
+}
+
+.param-label {
+  font-weight: 600;
+
+  font-size: 0.9375rem;
+}
+
+
+.param-value {
+  background: var(--wiki-primary);
+  color: white;
+  padding: 0.25rem 0.625rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.param-note {
+  color: #6b7280;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+[data-theme="dark"] .param-note {
+  color: #9ca3af;
+}
+
+/* Info Note */
+.info-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #eff6ff;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  color: #1e40af;
+}
+
+[data-theme="dark"] .info-note {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+}
+
+.info-note i {
+  font-size: 0.9375em;
+}
+
+/* Simple Points */
+.points-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+
+}
+
+.point-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 2px solid var(--wiki-border);
+}
+
+[data-theme="dark"] .point-item {
+  background: #1f1f1f;
+}
+
+.point-label {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.point-value {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--wiki-primary)
+}
+
+/* Submissions Info */
+.submissions-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  margin-top: 1.25rem;
+  font-size: 0.9375rem;
+  border: 2px solid var(--wiki-border);
+
+}
+
+[data-theme="dark"] .submissions-info {
+  background: #1f1f1f;
+}
+
+.submissions-info span {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.submissions-info strong {
+  color: var(--wiki-primary);
+  font-size: 1.25rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .scoring-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .points-row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
