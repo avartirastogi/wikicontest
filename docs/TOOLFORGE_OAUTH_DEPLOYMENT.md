@@ -1,47 +1,54 @@
 # OAuth Configuration for Toolforge Deployment
 
-## 📋 Quick Summary
-
-When deploying to Toolforge, you need to change **3 things** for OAuth:
-
-1. **OAuth Consumer Credentials** - Use Toolforge consumer (not local)
-2. **Callback Path** - Set `OAUTH_CALLBACK_PATH = "/oauth/callback"`
-3. **Callback URL** - Toolforge consumer uses: `https://wikicontest.toolforge.org/oauth/callback`
+This guide explains how to configure OAuth authentication when deploying your application to Toolforge.
 
 ---
 
-## 🔄 What Changes Between Local and Production
+## Quick Summary
+
+When deploying to Toolforge, you need to update **three configuration settings**:
+
+1. **OAuth Consumer Credentials** – Use the Toolforge consumer (not local development consumer)
+2. **Callback Path** – Set `OAUTH_CALLBACK_PATH = "/oauth/callback"`
+3. **Callback URL** – Ensure your Toolforge consumer uses: `https://wikicontest.toolforge.org/oauth/callback`
+
+---
+
+## Environment Differences: Local vs. Production
 
 ### Local Development (Current Setup)
-- **Consumer Key:** `ff02bad2706bef15385eec1471ee03ea` (local consumer)
-- **Consumer Secret:** `a4489c9b18609fe8574d62b01794e4b6f1a3e0d9` (local consumer)
-- **Callback URL:** `http://localhost:5000/api/user/oauth/callback`
-- **OAUTH_CALLBACK_PATH:** (empty/not set - uses default)
 
-### Toolforge Production (What You Need)
-- **Consumer Key:** `3f383c834a07a181723f1a1de566f7cf` (Toolforge consumer)
-- **Consumer Secret:** `62c40e0fde2377613d1f82b9b7aabc9fe2a73b30` (Toolforge consumer)
+- **Consumer Key:** `ff02bad2706bef15385eec1471ee03ea`
+- **Consumer Secret:** `a4489c9b18609fe8574d62b01794e4b6f1a3e0d9`
+- **Callback URL:** `http://localhost:5000/api/user/oauth/callback`
+- **OAUTH_CALLBACK_PATH:** Not set (uses default)
+
+### Toolforge Production (Required Setup)
+
+- **Consumer Key:** `3f383c834a07a181723f1a1de566f7cf`
+- **Consumer Secret:** `62c40e0fde2377613d1f82b9b7aabc9fe2a73b30`
 - **Callback URL:** `https://wikicontest.toolforge.org/oauth/callback`
-- **OAUTH_CALLBACK_PATH:** `/oauth/callback`
+- **OAUTH_CALLBACK_PATH:** `/oauth/callback` (must be set)
 
 ---
 
-## 📝 Step-by-Step: Configure OAuth for Toolforge
+## Step-by-Step Configuration
 
 ### Step 1: Verify Your Toolforge OAuth Consumer
 
-Your Toolforge OAuth consumer is already registered:
+Your Toolforge OAuth consumer should already be registered with the following details:
+
 - **Consumer Key:** `3f383c834a07a181723f1a1de566f7cf`
 - **Callback URL:** `https://wikicontest.toolforge.org/oauth/callback`
-- **Status:** Approved ✅
-- **Owner-only:** No ✅
+- **Status:** Approved  
+- **Owner-only:** No  
 
-**Verify at:** https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/update/3f383c834a07a181723f1a1de566f7cf
+**Verify your consumer at:**  
+https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/update/3f383c834a07a181723f1a1de566f7cf
 
 ### Step 2: Update Configuration File
 
-On Toolforge, you'll use `config.toml` (not `.env`). Update it with:
-
+On Toolforge, use `config.toml` (not `.env`) for configuration. Add the following OAuth settings:
 ```toml
 # OAuth Configuration for Toolforge
 OAUTH_MWURI = "https://meta.wikimedia.org/w/index.php"
@@ -49,18 +56,18 @@ CONSUMER_KEY = "3f383c834a07a181723f1a1de566f7cf"
 CONSUMER_SECRET = "62c40e0fde2377613d1f82b9b7aabc9fe2a73b30"
 
 # OAuth Callback Path - CRITICAL for Toolforge!
-# This tells the code to use /oauth/callback instead of /api/user/oauth/callback
+# This tells the application to use /oauth/callback instead of /api/user/oauth/callback
 OAUTH_CALLBACK_PATH = "/oauth/callback"
 
 # OAuth Callback Type
 OAUTH_USE_OOB = false
 ```
 
-### Step 3: How the Code Works
+### Step 3: Understand How the Code Works
 
-The code automatically detects the callback path:
+The application automatically detects the callback path based on your configuration.
 
-**In `backend/routes/user_routes.py` (lines 376-382):**
+**Code reference: `backend/routes/user_routes.py` (lines 376-382)**
 ```python
 custom_callback_path = current_app.config.get('OAUTH_CALLBACK_PATH', None)
 if custom_callback_path:
@@ -72,17 +79,16 @@ else:
 ```
 
 **When `OAUTH_CALLBACK_PATH = "/oauth/callback"` is set:**
-- Code builds: `https://wikicontest.toolforge.org/oauth/callback` ✅
-- This matches your Toolforge OAuth consumer registration ✅
+- Builds: `https://wikicontest.toolforge.org/oauth/callback`  
+- Matches your Toolforge OAuth consumer registration  
 
-**When `OAUTH_CALLBACK_PATH` is empty (localhost):**
-- Code builds: `http://localhost:5000/api/user/oauth/callback` ✅
-- This matches your local OAuth consumer registration ✅
+**When `OAUTH_CALLBACK_PATH` is not set (local development):**
+- Builds: `http://localhost:5000/api/user/oauth/callback`  
+- Matches your local OAuth consumer registration  
 
 ### Step 4: Route Handling
 
-The route `/oauth/callback` is already set up in `backend/app.py` (line 284):
-
+The route `/oauth/callback` is already configured in `backend/app.py` (line 284):
 ```python
 @app.route('/oauth/callback', methods=['GET'])
 def oauth_callback():
@@ -90,14 +96,13 @@ def oauth_callback():
     # This handles the Toolforge callback URL
 ```
 
-This route redirects to the blueprint handler, so the actual processing happens at `/api/user/oauth/callback`.
+This route redirects to the blueprint handler, so the actual OAuth processing happens at `/api/user/oauth/callback`. No code changes are required.
 
 ---
 
-## 🎯 Complete Toolforge Configuration
+## Complete Toolforge Configuration
 
-### File: `config.toml` (on Toolforge)
-
+### File: `config.toml` (Location: `$HOME/www/python/src/config.toml` on Toolforge)
 ```toml
 # Security (generate new keys for production!)
 SECRET_KEY = "your-generated-secret-key-here"
@@ -127,88 +132,104 @@ OAUTH_USE_OOB = false
 
 ---
 
-## 📍 Where Changes Are Made
+## Configuration File Locations
 
-### 1. Configuration File
+### Local Development
 
-**Local:** `backend/.env`
+**File:** `backend/.env`
 ```env
 CONSUMER_KEY=ff02bad2706bef15385eec1471ee03ea
 CONSUMER_SECRET=a4489c9b18609fe8574d62b01794e4b6f1a3e0d9
-# OAUTH_CALLBACK_PATH=  (empty - uses default)
+# OAUTH_CALLBACK_PATH is not set (uses default)
 ```
 
-**Toolforge:** `$HOME/www/python/src/config.toml`
+### Toolforge Production
+
+**File:** `$HOME/www/python/src/config.toml`
 ```toml
 CONSUMER_KEY = "3f383c834a07a181723f1a1de566f7cf"
 CONSUMER_SECRET = "62c40e0fde2377613d1f82b9b7aabc9fe2a73b30"
 OAUTH_CALLBACK_PATH = "/oauth/callback"  # MUST SET THIS!
 ```
 
-### 2. Code (No Changes Needed!)
+### Code Changes
 
-The code already handles both scenarios:
-- ✅ Detects `OAUTH_CALLBACK_PATH` from config
-- ✅ Uses it if set, otherwise uses default `/api/user/oauth/callback`
-- ✅ Route `/oauth/callback` already exists in `app.py`
+**No code changes are needed!** The application already handles both environments:
 
-**You don't need to change any code!** Just update the configuration.
+-   Detects `OAUTH_CALLBACK_PATH` from configuration
+-   Uses custom path if set, otherwise uses default `/api/user/oauth/callback`
+-   Route `/oauth/callback` already exists in `app.py`
+
+Simply update the configuration file for your target environment.
 
 ---
 
-## ✅ Checklist for Toolforge Deployment
+## Pre-Deployment Checklist
 
-- [ ] OAuth consumer registered with: `https://wikicontest.toolforge.org/oauth/callback`
-- [ ] `config.toml` has Toolforge consumer credentials
+Before deploying to Toolforge, verify the following:
+
+- [ ] OAuth consumer registered with callback: `https://wikicontest.toolforge.org/oauth/callback`
+- [ ] `config.toml` contains Toolforge consumer credentials
 - [ ] `config.toml` has `OAUTH_CALLBACK_PATH = "/oauth/callback"`
-- [ ] `OAUTH_USE_OOB = false` in config
-- [ ] Route `/oauth/callback` exists (already in `app.py`)
-- [ ] Test OAuth login after deployment
+- [ ] `OAUTH_USE_OOB = false` in configuration
+- [ ] Route `/oauth/callback` exists in `app.py` (already present)
+- [ ] Test OAuth login flow after deployment
 
 ---
 
-## 🔍 How to Verify It's Working
+## Verification and Testing
 
-1. **Check callback URL in logs:**
-   - When you click "Login with Wikimedia" on Toolforge
-   - Check Flask logs for: `Using OAuth callback URL: https://wikicontest.toolforge.org/oauth/callback`
-   - Should match your OAuth consumer registration
+### Check Callback URL in Logs
 
-2. **Test OAuth flow:**
-   - Go to: https://wikicontest.toolforge.org
-   - Click "Login with Wikimedia"
-   - Should redirect to Wikimedia, then back to Toolforge
-   - Should log you in successfully
+When a user clicks "Login with Wikimedia" on Toolforge:
+
+1. Check Flask logs for: `Using OAuth callback URL: https://wikicontest.toolforge.org/oauth/callback`
+2. Verify this matches your OAuth consumer registration
+
+### Test the OAuth Flow
+
+1. Navigate to: https://wikicontest.toolforge.org
+2. Click **"Login with Wikimedia"**
+3. Verify redirect to Wikimedia for authentication
+4. Verify redirect back to Toolforge after authentication
+5. Confirm successful login
 
 ---
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### Error: "oauth_callback must be set to oob"
-- **Cause:** `OAUTH_CALLBACK_PATH` not set in config
-- **Fix:** Add `OAUTH_CALLBACK_PATH = "/oauth/callback"` to `config.toml`
+
+**Cause:** `OAUTH_CALLBACK_PATH` is not set in the configuration file.
+
+**Solution:** Add `OAUTH_CALLBACK_PATH = "/oauth/callback"` to `config.toml`.
 
 ### Error: "Invalid redirect URI"
-- **Cause:** Callback URL doesn't match consumer registration
-- **Fix:** Verify consumer callback is: `https://wikicontest.toolforge.org/oauth/callback`
+
+**Cause:** The callback URL doesn't match the registered OAuth consumer callback.
+
+**Solution:** Verify your consumer registration uses: `https://wikicontest.toolforge.org/oauth/callback`
 
 ### Error: "OAuth session expired"
-- **Cause:** Session cookies not persisting (same as localhost issue)
-- **Fix:** The cache fallback should handle this, but check session config
+
+**Cause:** Session cookies are not persisting correctly.
+
+**Solution:** The cache fallback mechanism should handle this. If the issue persists, verify your session configuration settings.
 
 ---
 
-## 📚 Summary
+## Summary
 
-**For Local Development:**
-- Use local consumer: `ff02bad2706bef15385eec1471ee03ea`
-- Don't set `OAUTH_CALLBACK_PATH` (uses default)
-- Callback: `http://localhost:5000/api/user/oauth/callback`
+### Local Development
 
-**For Toolforge Production:**
-- Use Toolforge consumer: `3f383c834a07a181723f1a1de566f7cf`
-- Set `OAUTH_CALLBACK_PATH = "/oauth/callback"`
-- Callback: `https://wikicontest.toolforge.org/oauth/callback`
+- **Consumer:** `ff02bad2706bef15385eec1471ee03ea`
+- **OAUTH_CALLBACK_PATH:** Not set (uses default)
+- **Callback URL:** `http://localhost:5000/api/user/oauth/callback`
 
-**No code changes needed!** Just update the configuration file. 🎉
+### Toolforge Production
 
+- **Consumer:** `3f383c834a07a181723f1a1de566f7cf`
+- **OAUTH_CALLBACK_PATH:** `/oauth/callback` (must be set)
+- **Callback URL:** `https://wikicontest.toolforge.org/oauth/callback`
+
+**Important:** No code changes are required. Only update the configuration file for your deployment environment.
