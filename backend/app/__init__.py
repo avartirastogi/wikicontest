@@ -216,10 +216,10 @@ def check_cookie():
         # CRITICAL: This shows which user the JWT token is for
         try:
             current_app.logger.info(
-                f'🔐 Cookie check - JWT user_id: {user_id} (type: {type(user_id)})'
+                f' Cookie check - JWT user_id: {user_id} (type: {type(user_id)})'
             )
             # Also print to console for immediate visibility
-            print(f'🔐 [COOKIE CHECK] JWT user_id: {user_id}')
+            print(f' [COOKIE CHECK] JWT user_id: {user_id}')
         except Exception:
             pass
 
@@ -234,7 +234,7 @@ def check_cookie():
             try:
                 error_msg = f'Cookie check - User not found in database for ID: {user_id}'
                 current_app.logger.error(error_msg)
-                print(f'❌ [COOKIE CHECK] {error_msg}')
+                print(f' [COOKIE CHECK] {error_msg}')
             except Exception:
                 pass
             return jsonify({'error': 'User not found'}), 401
@@ -248,24 +248,24 @@ def check_cookie():
         # Log what we got from the database - CRITICAL DEBUG INFO
         try:
             log_msg = (
-                f'🔐 Cookie check - Direct DB Query Result - '
+                f' Cookie check - Direct DB Query Result - '
                 f'ID: {db_user_id}, Username: {db_username}, '
                 f'Role: {db_role}, Role type: {type(db_role)}'
             )
             current_app.logger.info(log_msg)
             # Also print to console for immediate visibility
-            print(f'🔐 [COOKIE CHECK] {log_msg}')
+            print(f' [COOKIE CHECK] {log_msg}')
             
             # Special check: If username is Adityakumar0545, verify role is superadmin
             if db_username == 'Adityakumar0545':
                 print(f'⚠️ [SPECIAL CHECK] User Adityakumar0545 - Role from DB: {db_role}')
                 if db_role != 'superadmin':
-                    print(f'❌ [ERROR] Expected superadmin but got: {db_role}')
+                    print(f' [ERROR] Expected superadmin but got: {db_role}')
                 else:
-                    print(f'✅ [SUCCESS] Role is correct: superadmin')
+                    print(f' [SUCCESS] Role is correct: superadmin')
         except Exception as e:
             current_app.logger.error(f'Logging error: {str(e)}')
-            print(f'❌ [ERROR] Logging failed: {str(e)}')
+            print(f' [ERROR] Logging failed: {str(e)}')
 
         # Also verify by username as a double-check (in case there's any ID mismatch)
         username_verify = db.session.execute(
@@ -305,25 +305,25 @@ def check_cookie():
         # Log the final response being sent - CRITICAL DEBUG INFO
         try:
             log_msg = (
-                f'🔐 Cookie check FINAL RESPONSE - '
+                f' Cookie check FINAL RESPONSE - '
                 f'Username: {response_data.get("username")}, '
                 f'User ID: {response_data.get("userId")}, '
                 f'Role being sent to frontend: {response_data.get("role")}'
             )
             current_app.logger.info(log_msg)
             # Also print to console for immediate visibility
-            print(f'🔐 [FINAL RESPONSE] {log_msg}')
+            print(f' [FINAL RESPONSE] {log_msg}')
             
             # Special check for Adityakumar0545
             if response_data.get("username") == 'Adityakumar0545':
                 print(f'⚠️ [SPECIAL CHECK] Adityakumar0545 - Role in response: {response_data.get("role")}')
                 if response_data.get("role") != 'superadmin':
-                    print(f'❌ [ERROR] Role should be superadmin but is: {response_data.get("role")}')
+                    print(f' [ERROR] Role should be superadmin but is: {response_data.get("role")}')
                 else:
-                    print(f'✅ [SUCCESS] Role is correctly set to superadmin in response')
+                    print(f' [SUCCESS] Role is correctly set to superadmin in response')
         except Exception as e:
             current_app.logger.error(f'Logging error: {str(e)}')
-            print(f'❌ [ERROR] Final logging failed: {str(e)}')
+            print(f' [ERROR] Final logging failed: {str(e)}')
 
         return jsonify(response_data), 200
 
@@ -363,7 +363,7 @@ def debug_user_role(username):
         ).fetchone()
 
         if not result:
-            print(f'❌ [DEBUG] User not found: {username}')
+            print(f' [DEBUG] User not found: {username}')
             return jsonify({
                 'error': 'User not found',
                 'username': username
@@ -398,16 +398,16 @@ def debug_user_role(username):
         # Special check for Adityakumar0545
         if username == 'Adityakumar0545':
             if user_data['role'] != 'superadmin':
-                print(f'❌ [ERROR] Adityakumar0545 should have superadmin but has: {user_data["role"]}')
+                print(f' [ERROR] Adityakumar0545 should have superadmin but has: {user_data["role"]}')
             else:
-                print(f'✅ [SUCCESS] Adityakumar0545 has correct superadmin role')
+                print(f' [SUCCESS] Adityakumar0545 has correct superadmin role')
 
         return jsonify(user_data), 200
 
     except Exception as error:
         error_msg = f'Debug user role error: {str(error)}'
         current_app.logger.error(error_msg)
-        print(f'❌ [ERROR] {error_msg}')
+        print(f' [ERROR] {error_msg}')
         return jsonify({
             'error': 'Failed to query user',
             'details': str(error)

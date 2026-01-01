@@ -82,12 +82,12 @@
 
 | Feature | Old Frontend | New Frontend | Status |
 |---------|-------------|--------------|--------|
-| Login/Register buttons | ✅ | ✅ | Working |
-| Login with Wikimedia | ✅ | ✅ | Working |
-| Contest listing | ✅ | ✅ | Working |
-| Dashboard | ✅ | ✅ | Working |
-| Data fetching | ✅ | ✅ | Working |
-| OAuth callback | ✅ | ✅ | Working |
+| Login/Register buttons |  |  | Working |
+| Login with Wikimedia |  |  | Working |
+| Contest listing |  |  | Working |
+| Dashboard |  |  | Working |
+| Data fetching |  |  | Working |
+| OAuth callback |  |  | Working |
 
 ## Troubleshooting
 
@@ -111,12 +111,12 @@
 ## Migration Notes
 
 All features from the old frontend have been migrated to Vue.js:
-- ✅ User authentication
-- ✅ Contest management
-- ✅ Dashboard
-- ✅ OAuth login
-- ✅ Data fetching
-- ✅ All UI components
+-  User authentication
+-  Contest management
+-  Dashboard
+-  OAuth login
+-  Data fetching
+-  All UI components
 
 The Vue.js version provides:
 - Better code organization

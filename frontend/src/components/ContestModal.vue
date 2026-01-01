@@ -350,19 +350,19 @@ export default {
 
       // Check basic requirements
       if (!isAuthenticated.value) {
-        console.log('❌ Delete check: Not authenticated')
+        console.log(' Delete check: Not authenticated')
         canDeleteContest.value = false
         return
       }
 
       if (!props.contest) {
-        console.log('❌ Delete check: No contest')
+        console.log(' Delete check: No contest')
         canDeleteContest.value = false
         return
       }
 
       if (!userToCheck) {
-        console.log('❌ Delete check: No current user object')
+        console.log(' Delete check: No current user object')
         console.log('Store state:', store.state)
         canDeleteContest.value = false
         return
@@ -374,7 +374,7 @@ export default {
 
       // If either is empty, can't match
       if (!username) {
-        console.log('❌ Delete check: Username is empty', {
+        console.log(' Delete check: Username is empty', {
           userToCheck,
           currentUser: userFromComputed,
           storeUser: userFromStore,
@@ -385,7 +385,7 @@ export default {
       }
 
       if (!contestCreator) {
-        console.log('❌ Delete check: Contest creator is empty', { contest: props.contest })
+        console.log(' Delete check: Contest creator is empty', { contest: props.contest })
         canDeleteContest.value = false
         return
       }
@@ -397,7 +397,7 @@ export default {
       const canDelete = usernameLower === creatorLower
 
       // Debug logging to help troubleshoot
-      console.log('✅ Delete permission check result:', {
+      console.log(' Delete permission check result:', {
         username,
         contestCreator,
         usernameLower,
@@ -730,7 +730,7 @@ export default {
                 if (authResult && userNow) {
                   userLoaded = true
                   loadedUser = userNow
-                  console.log('✅ User loaded after auth check:', loadedUser)
+                  console.log(' User loaded after auth check:', loadedUser)
                   break
                 } else {
                   console.log(`Auth check returned ${authResult} but user not loaded, retrying...`)
@@ -746,7 +746,7 @@ export default {
               retries++
             }
           } else {
-            console.log('✅ User already in store, using existing user:', loadedUser)
+            console.log(' User already in store, using existing user:', loadedUser)
           }
 
           // Wait a bit for reactive state to fully propagate
@@ -767,7 +767,7 @@ export default {
 
           // Check if user is loaded - if not, we can't check permissions
           if (!loadedUser) {
-            console.error('❌ CRITICAL: User not loaded!')
+            console.error(' CRITICAL: User not loaded!')
             console.error('Store currentUser:', store.currentUser)
             console.error('Store state currentUser:', store.state && store.state.currentUser)
             console.error('Computed currentUser:', currentUser.value)
@@ -776,7 +776,7 @@ export default {
             checkingAuth.value = false
             return
           } else {
-            console.log('✅ User loaded successfully:', loadedUser)
+            console.log(' User loaded successfully:', loadedUser)
           }
 
           // Now check delete permission with the loaded user
@@ -798,7 +798,7 @@ export default {
 
                 // If we got a result, break
                 if (canDeleteContest.value) {
-                  console.log('✅ Delete permission granted!')
+                  console.log(' Delete permission granted!')
                   break
                 }
               }
@@ -808,7 +808,7 @@ export default {
           // Final check and logging
           if (!canDeleteContest.value) {
             const finalUser = store.currentUser || (store.state && store.state.currentUser) || currentUser.value
-            console.error('❌ Delete permission still false after all attempts')
+            console.error(' Delete permission still false after all attempts')
             console.error('Final user check:', finalUser)
             console.error('Contest creator:', newContest.created_by)
             if (finalUser) {
@@ -818,10 +818,10 @@ export default {
               console.error('Match:', (finalUser.username || '').toLowerCase() === (newContest.created_by || '').toLowerCase())
             }
           } else {
-            console.log('✅ Delete permission check successful!')
+            console.log(' Delete permission check successful!')
           }
         } catch (error) {
-          console.error('❌ Failed to check auth:', error)
+          console.error(' Failed to check auth:', error)
           canDeleteContest.value = false
         } finally {
           checkingAuth.value = false

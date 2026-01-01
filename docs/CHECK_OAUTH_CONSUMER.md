@@ -13,8 +13,8 @@ Your OAuth consumer might have been registered with **"oob"** (out-of-band) inst
 2. Find your consumer with key: `ff02bad2706bef15385eec1471ee03ea`
 3. Click "Update" or "Manage"
 4. Check the **"OAuth 'callback' URL"** field:
-   - ❌ If it says **"oob"** → That's the problem!
-   - ✅ If it says **"http://localhost:5000/api/user/oauth/callback"** → That's correct
+   -  If it says **"oob"** → That's the problem!
+   -  If it says **"http://localhost:5000/api/user/oauth/callback"** → That's correct
 
 **If it's set to "oob":**
 - You have two options:

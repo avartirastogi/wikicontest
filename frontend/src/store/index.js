@@ -41,11 +41,11 @@ export function useStore() {
   // Check if user is authenticated
   const checkAuth = async () => {
     try {
-      console.log('🔐 Checking authentication...')
+      console.log(' Checking authentication...')
       const response = await api.get('/cookie')
-      console.log('🔐 Auth API response:', response)
-      console.log('🔐 Response role value:', response?.role)
-      console.log('🔐 Response role type:', typeof response?.role)
+      console.log(' Auth API response:', response)
+      console.log(' Response role value:', response?.role)
+      console.log(' Response role type:', typeof response?.role)
 
       // Double-check response is valid and has required fields
       // Must have userId and it must be a valid number > 0
@@ -53,7 +53,7 @@ export function useStore() {
         // Ensure username and email are set (handle cases where they might be missing)
         // IMPORTANT: Use the role from response, but ensure it's a string and lowercase
         const roleFromResponse = response.role
-        console.log('🔐 Role from response (raw):', roleFromResponse)
+        console.log(' Role from response (raw):', roleFromResponse)
 
         // Normalize role: convert to string, lowercase, and default to 'user' if missing/null/undefined
         let normalizedRole = 'user'
@@ -61,11 +61,11 @@ export function useStore() {
           normalizedRole = String(roleFromResponse).toLowerCase().trim()
           // CRITICAL: Don't override if role is explicitly 'superadmin'
           if (normalizedRole === 'superadmin') {
-            console.log('✅ [ROLE] Detected superadmin role - preserving it')
+            console.log(' [ROLE] Detected superadmin role - preserving it')
           }
         }
-        console.log('🔐 Normalized role:', normalizedRole)
-        console.log('🔐 Role comparison - normalizedRole === "superadmin":', normalizedRole === 'superadmin')
+        console.log(' Normalized role:', normalizedRole)
+        console.log(' Role comparison - normalizedRole === "superadmin":', normalizedRole === 'superadmin')
 
         // Special check for Adityakumar0545
         if (response.username === 'Adityakumar0545') {
@@ -73,9 +73,9 @@ export function useStore() {
           console.log('  - Raw role from response:', roleFromResponse)
           console.log('  - Normalized role:', normalizedRole)
           if (normalizedRole !== 'superadmin') {
-            console.error('❌ [ERROR] Adityakumar0545 should have superadmin role but got:', normalizedRole)
+            console.error(' [ERROR] Adityakumar0545 should have superadmin role but got:', normalizedRole)
           } else {
-            console.log('✅ [SUCCESS] Adityakumar0545 has correct superadmin role')
+            console.log(' [SUCCESS] Adityakumar0545 has correct superadmin role')
           }
         }
 
@@ -88,15 +88,15 @@ export function useStore() {
           role: normalizedRole
         }
 
-        console.log('✅ Setting current user:', newUser)
-        console.log('✅ User role being stored:', newUser.role)
+        console.log(' Setting current user:', newUser)
+        console.log(' User role being stored:', newUser.role)
         state.currentUser = newUser
-        console.log('✅ Current user set. State:', state.currentUser)
-        console.log('✅ State currentUser.role:', state.currentUser?.role)
+        console.log(' Current user set. State:', state.currentUser)
+        console.log(' State currentUser.role:', state.currentUser?.role)
         return true
       } else {
         // No valid user data - clear state
-        console.log('❌ Invalid response, clearing user')
+        console.log(' Invalid response, clearing user')
         state.currentUser = null
         return false
       }
@@ -104,7 +104,7 @@ export function useStore() {
       // User is not authenticated - this is normal after logout or if cookie isn't set yet
       // Always clear state on auth failure (unless we already have a user set from login)
       // Don't clear if we just logged in and cookie is still being set
-      console.log('❌ Auth check failed:', {
+      console.log(' Auth check failed:', {
         status: error.status,
         message: error.message,
         error

@@ -17,7 +17,7 @@ from app.models.contest import Contest
 from app.models.submission import Submission
 ```
 
-**Current Status:** ✅ All models are imported
+**Current Status:**  All models are imported
 
 ### 2. Models Must Inherit from `db.Model`
 
@@ -32,7 +32,7 @@ class User(BaseModel):  # BaseModel inherits from db.Model
     # ...
 ```
 
-**Current Status:** ✅ All models inherit from `BaseModel` which inherits from `db.Model`
+**Current Status:**  All models inherit from `BaseModel` which inherits from `db.Model`
 
 ### 3. Models Must Have `__tablename__` Defined
 
@@ -43,13 +43,13 @@ class User(BaseModel):
     __tablename__ = 'users'  # Required
 ```
 
-**Current Status:** ✅ All models have `__tablename__` defined
+**Current Status:**  All models have `__tablename__` defined
 
 ### 4. Use Proper SQLAlchemy Column Types
 
 Use standard SQLAlchemy types that Alembic can detect:
 
-✅ **Good (Detectable):**
+ **Good (Detectable):**
 ```python
 db.Column(db.String(50), nullable=False)
 db.Column(db.Integer, default=0)
@@ -58,7 +58,7 @@ db.Column(db.Text, nullable=True)
 db.Column(db.Boolean, default=False)
 ```
 
-❌ **Avoid (May Not Be Detected):**
+ **Avoid (May Not Be Detected):**
 ```python
 # Custom types without proper registration
 db.Column(MyCustomType())
@@ -66,62 +66,62 @@ db.Column(MyCustomType())
 db.Column(str)  # Should be db.String()
 ```
 
-**Current Status:** ✅ All models use standard SQLAlchemy types
+**Current Status:**  All models use standard SQLAlchemy types
 
 ### 5. Foreign Keys Must Use String References
 
 Foreign keys should reference table names as strings:
 
 ```python
-# ✅ Good
+#  Good
 user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
-# ❌ Avoid (may cause issues)
+#  Avoid (may cause issues)
 user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
 ```
 
-**Current Status:** ✅ All foreign keys use string references
+**Current Status:**  All foreign keys use string references
 
 ### 6. Default Values
 
 For callable defaults (like `datetime.utcnow`), pass the function without calling it:
 
 ```python
-# ✅ Good - function reference
+#  Good - function reference
 created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-# ❌ Bad - calling the function
+#  Bad - calling the function
 created_at = db.Column(db.DateTime, default=datetime.utcnow(), nullable=False)
 ```
 
-**Current Status:** ✅ All datetime defaults are correct
+**Current Status:**  All datetime defaults are correct
 
 ### 7. Constraints and Indexes
 
 Constraints and indexes should be properly defined:
 
 ```python
-# ✅ Good - Unique constraint
+#  Good - Unique constraint
 __table_args__ = (
     db.UniqueConstraint('user_id', 'contest_id', name='unique_user_contest_submission'),
 )
 
-# ✅ Good - Index on column
+#  Good - Index on column
 username = db.Column(db.String(50), unique=True, nullable=False, index=True)
 ```
 
-**Current Status:** ✅ Constraints are properly defined
+**Current Status:**  Constraints are properly defined
 
 ## Current Model Status
 
-### ✅ User Model (`app/models/user.py`)
+###  User Model (`app/models/user.py`)
 - Inherits from `BaseModel` ✓
 - Has `__tablename__ = 'users'` ✓
 - Uses standard SQLAlchemy types ✓
 - Foreign keys use string references ✓
 - Properly imported in `alembic/env.py` ✓
 
-### ✅ Contest Model (`app/models/contest.py`)
+###  Contest Model (`app/models/contest.py`)
 - Inherits from `BaseModel` ✓
 - Has `__tablename__ = 'contests'` ✓
 - Uses standard SQLAlchemy types ✓
@@ -129,7 +129,7 @@ username = db.Column(db.String(50), unique=True, nullable=False, index=True)
 - Properly imported in `alembic/env.py` ✓
 - **Fixed:** Import statements in `get_leaderboard()` method now use `app.models.*`
 
-### ✅ Submission Model (`app/models/submission.py`)
+###  Submission Model (`app/models/submission.py`)
 - Inherits from `BaseModel` ✓
 - Has `__tablename__ = 'submissions'` ✓
 - Uses standard SQLAlchemy types ✓
@@ -252,7 +252,7 @@ Before using autogenerate, verify:
 
 ## Current Configuration Status
 
-✅ **All requirements met!** Your models are fully compatible with Alembic autogenerate.
+ **All requirements met!** Your models are fully compatible with Alembic autogenerate.
 
 The project is configured with:
 - Proper model inheritance structure

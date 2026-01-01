@@ -2,7 +2,7 @@
 
 This document verifies that the Alembic setup is correct and models are compatible with autogenerate.
 
-## ✅ Verification Checklist
+##  Verification Checklist
 
 ### 1. Alembic Configuration
 
@@ -85,15 +85,15 @@ To verify autogenerate is working:
 ### Alembic Environment (`alembic/env.py`)
 
 ```python
-# ✅ Models imported
+#  Models imported
 from app.models.user import User
 from app.models.contest import Contest
 from app.models.submission import Submission
 
-# ✅ Metadata configured
+#  Metadata configured
 target_metadata = db.metadata
 
-# ✅ Enhanced autogenerate detection
+#  Enhanced autogenerate detection
 context.configure(
     compare_type=True,              # Detect type changes
     compare_server_default=True,    # Detect default changes
@@ -104,14 +104,14 @@ context.configure(
 ### Model Compatibility
 
 All models follow best practices:
-- ✅ Proper inheritance structure
-- ✅ Explicit table names
-- ✅ Standard SQLAlchemy types
-- ✅ String-based foreign key references
-- ✅ Callable default values
-- ✅ Proper constraints and indexes
+-  Proper inheritance structure
+-  Explicit table names
+-  Standard SQLAlchemy types
+-  String-based foreign key references
+-  Callable default values
+-  Proper constraints and indexes
 
-## Status: ✅ READY FOR AUTOGENERATE
+## Status:  READY FOR AUTOGENERATE
 
 Your models are fully compatible with Alembic autogenerate. You can now:
 

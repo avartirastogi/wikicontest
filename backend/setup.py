@@ -21,10 +21,10 @@ def run_command(command, description):
     print(f"🔄 {description}...")
     try:
         result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
-        print(f"✅ {description} completed successfully")
+        print(f" {description} completed successfully")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ {description} failed: {e.stderr}")
+        print(f" {description} failed: {e.stderr}")
         return False
 
 def check_python_version():
@@ -37,10 +37,10 @@ def check_python_version():
     print("🐍 Checking Python version...")
     version = sys.version_info
     if version.major < 3 or (version.major == 3 and version.minor < 8):
-        print(f"❌ Python 3.8+ required, found {version.major}.{version.minor}")
+        print(f" Python 3.8+ required, found {version.major}.{version.minor}")
         return False
     
-    print(f"✅ Python {version.major}.{version.minor}.{version.micro} is compatible")
+    print(f" Python {version.major}.{version.minor}.{version.micro} is compatible")
     return True
 
 def create_virtual_environment():
@@ -53,7 +53,7 @@ def create_virtual_environment():
     venv_path = Path("venv")
     
     if venv_path.exists():
-        print("✅ Virtual environment already exists")
+        print(" Virtual environment already exists")
         return True
     
     return run_command("python -m venv venv", "Creating virtual environment")
@@ -78,7 +78,7 @@ def install_dependencies():
     requirements_file = Path("requirements.txt")
     
     if not requirements_file.exists():
-        print("❌ requirements.txt not found")
+        print(" requirements.txt not found")
         return False
     
     return run_command("pip install -r requirements.txt", "Installing dependencies")
@@ -94,20 +94,20 @@ def setup_environment_file():
     env_file = Path(".env")
     
     if env_file.exists():
-        print("✅ .env file already exists")
+        print(" .env file already exists")
         return True
     
     if not env_example.exists():
-        print("❌ .env.example not found")
+        print(" .env.example not found")
         return False
     
     try:
         shutil.copy(env_example, env_file)
-        print("✅ Created .env file from .env.example")
+        print(" Created .env file from .env.example")
         print("📝 Please update .env file with your database credentials")
         return True
     except Exception as e:
-        print(f"❌ Failed to create .env file: {e}")
+        print(f" Failed to create .env file: {e}")
         return False
 
 def initialize_database():
@@ -122,12 +122,12 @@ def initialize_database():
     # Check if init_db.py exists
     init_script = Path("init_db.py")
     if not init_script.exists():
-        print("❌ init_db.py not found")
+        print(" init_db.py not found")
         return False
     
     # Run database initialization
     if run_command("python init_db.py seed", "Initializing database with sample data"):
-        print("✅ Database initialized successfully")
+        print(" Database initialized successfully")
         return True
     else:
         print("⚠️ Database initialization failed, but you can run it manually later")
@@ -147,12 +147,12 @@ def create_directories():
         if not dir_path.exists():
             try:
                 dir_path.mkdir(parents=True, exist_ok=True)
-                print(f"✅ Created directory: {directory}")
+                print(f" Created directory: {directory}")
             except Exception as e:
-                print(f"❌ Failed to create directory {directory}: {e}")
+                print(f" Failed to create directory {directory}: {e}")
                 return False
         else:
-            print(f"✅ Directory already exists: {directory}")
+            print(f" Directory already exists: {directory}")
     
     return True
 
@@ -206,7 +206,7 @@ def main():
             failed_steps.append(description)
     
     if failed_steps:
-        print(f"\n❌ Setup completed with {len(failed_steps)} failed steps:")
+        print(f"\n Setup completed with {len(failed_steps)} failed steps:")
         for step in failed_steps:
             print(f"   - {step}")
         print("\nPlease check the errors above and run the setup again.")

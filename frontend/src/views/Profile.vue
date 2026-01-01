@@ -139,7 +139,7 @@ export default {
     watch(() => currentUser.value?.role, (newRole, oldRole) => {
       console.log('📄 Role changed:', { oldRole, newRole })
       if (currentUser.value?.username === 'Adityakumar0545' && newRole !== 'superadmin') {
-        console.error('❌ [ERROR] Adityakumar0545 role is not superadmin! Current:', newRole)
+        console.error(' [ERROR] Adityakumar0545 role is not superadmin! Current:', newRole)
       }
     })
 

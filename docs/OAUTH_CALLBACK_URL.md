@@ -1,66 +1,142 @@
 # OAuth Callback URL for Local Development
 
-## ✅ Exact Callback URL to Use
+Quick reference guide for the exact OAuth callback URL to use when registering an OAuth consumer for local development.
 
-When registering your OAuth consumer for local development, use this **EXACT** callback URL:
+---
 
+## Exact Callback URL
+
+Use this **exact** callback URL when registering your OAuth consumer:
 ```
 http://localhost:5000/api/user/oauth/callback
 ```
 
-## Breakdown
 
-- **Protocol:** `http://` (NOT `https://`)
-- **Host:** `localhost` (NOT `127.0.0.1` or any domain)
-- **Port:** `5000` (must match your Flask server port)
-- **Path:** `/api/user/oauth/callback` (exact path, no trailing slash)
+## URL Components
 
-## If Your Flask Server Uses a Different Port
+| Component    | Value                      | Notes |
+|--------------|----------------------------|-------|
+| **Protocol** | `http://`                  | NOT `https://` |
+| **Host**     | `localhost`                | NOT `127.0.0.1` or any domain name |
+| **Port**     | `5000`                     | Must match your Flask server port |
+| **Path**     | `/api/user/oauth/callback` | Exact path, no trailing slash |
 
-If your Flask server runs on a different port (e.g., 8000), change the port in the callback URL:
 
+## Custom Port Configuration
+
+If your Flask server runs on a different port, adjust the callback URL accordingly:
+
+**Example for port 8000:**
 ```
 http://localhost:8000/api/user/oauth/callback
 ```
 
-## Registration Form Fields
+**Example for port 3000:**
+```
+http://localhost:3000/api/user/oauth/callback
+```
 
-When filling out the OAuth consumer registration form:
+## OAuth Consumer Registration
 
-**OAuth "callback" URL:**
+When completing the OAuth consumer registration form on Wikimedia Meta:
+
+**Field: OAuth "callback" URL**
 ```
 http://localhost:5000/api/user/oauth/callback
 ```
 
-**Allow consumer to specify a callback in requests:**
+**Field: Allow consumer to specify a callback in requests**
 - Leave this **unchecked** (No)
 
 ## Why This URL?
 
-This matches the route defined in your Flask application:
-- Blueprint: `/api/user` (from `user_bp`)
-- Route: `/oauth/callback` (from `@user_bp.route('/oauth/callback')`)
-- Full path: `/api/user/oauth/callback`
+This callback URL matches the route structure in your Flask application:
+```python
+# Blueprint registration: /api/user
+app.register_blueprint(user_bp, url_prefix='/api/user')
 
-## Common Mistakes to Avoid
+# Route definition: /oauth/callback
+@user_bp.route('/oauth/callback', methods=['GET'])
+def oauth_callback():
+    # OAuth callback handler
+```
 
-❌ **Wrong:** `https://localhost:5000/api/user/oauth/callback` (using https)
-❌ **Wrong:** `http://127.0.0.1:5000/api/user/oauth/callback` (using IP instead of localhost)
-❌ **Wrong:** `http://localhost:5000/oauth/callback` (missing `/api/user` prefix)
-❌ **Wrong:** `http://localhost/api/user/oauth/callback` (missing port number)
-❌ **Wrong:** `https://wikicontest.toolforge.org/oauth/callback` (Toolforge URL, won't work locally)
+**Combined path:** `/api/user` + `/oauth/callback` = `/api/user/oauth/callback`
 
-✅ **Correct:** `http://localhost:5000/api/user/oauth/callback`
 
-## After Registration
+## Common Mistakes
 
-1. Copy the **Consumer Key** and **Consumer Secret**
-2. Update your `.env` file:
-   ```env
+###  Incorrect URLs
+
+| Wrong URL | Issue |
+|-----------|-------|
+| `https://localhost:5000/api/user/oauth/callback` | Using `https://` instead of `http://` |
+| `http://127.0.0.1:5000/api/user/oauth/callback` | Using IP address instead of `localhost` |
+| `http://localhost:5000/oauth/callback` | Missing `/api/user` prefix |
+| `http://localhost/api/user/oauth/callback` | Missing port number (`:5000`) |
+| `http://localhost:5000/api/user/oauth/callback/` | Extra trailing slash |
+| `https://wikicontest.toolforge.org/oauth/callback` | Using production URL for local development |
+
+###  Correct URL
+```
+http://localhost:5000/api/user/oauth/callback
+```
+
+---
+
+## Post-Registration Steps
+
+After successfully registering your OAuth consumer:
+
+1. **Copy the credentials:**
+   - Consumer Key
+   - Consumer Secret
+
+2. **Update your configuration file:**
+
+   **File: `backend/.env`**
+```env
    CONSUMER_KEY=your-consumer-key-here
    CONSUMER_SECRET=your-consumer-secret-here
    OAUTH_USE_OOB=False
-   ```
-3. Restart Flask server
-4. Test OAuth login
+```
 
+3. **Restart the Flask server:**
+```bash
+   cd backend
+   python app.py
+```
+
+4. **Test OAuth authentication:**
+   - Navigate to `http://localhost:5000`
+   - Click "Login with Wikimedia"
+   - Authorize the application
+   - Verify successful redirect and login
+
+---
+
+## Troubleshooting
+
+### Callback URL Mismatch Error
+
+If you receive a "callback URL mismatch" error:
+
+1. Verify the registered callback URL in your OAuth consumer settings
+2. Ensure it exactly matches: `http://localhost:5000/api/user/oauth/callback`
+3. Check that your Flask server is running on port `5000`
+4. Confirm `OAUTH_USE_OOB=False` in your `.env` file
+
+### 404 Error on Callback
+
+If the callback returns a 404 error:
+
+1. Verify the Flask server is running
+2. Check that the user blueprint is registered with the correct prefix
+3. Confirm the route exists in `routes/user_routes.py`
+
+---
+
+## Related Documentation
+
+- For production deployment, see: **OAuth Configuration for Toolforge Deployment**
+- For general OAuth setup, see: **OAuth 1.0a Local Development Setup Guide**

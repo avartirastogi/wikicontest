@@ -9,7 +9,7 @@ echo "=========================================="
 
 # Check if we're in the right directory
 if [ ! -f "toolforge_app.py" ]; then
-    echo "❌ Error: toolforge_app.py not found. Please run this script from the backend directory."
+    echo " Error: toolforge_app.py not found. Please run this script from the backend directory."
     exit 1
 fi
 
@@ -24,7 +24,7 @@ mkdir -p $HOME/www/python/src/models
 mkdir -p $HOME/www/python/src/routes
 mkdir -p $HOME/www/python/src/middleware
 
-echo "✅ Directory structure created"
+echo " Directory structure created"
 
 echo ""
 echo "📋 Step 2: Copy application files"
@@ -32,36 +32,36 @@ echo "Copying files to Toolforge structure..."
 
 # Copy main application file
 cp toolforge_app.py $HOME/www/python/src/app.py
-echo "✅ Copied app.py"
+echo " Copied app.py"
 
 # Copy requirements file
 cp toolforge_requirements.txt $HOME/www/python/src/requirements.txt
-echo "✅ Copied requirements.txt"
+echo " Copied requirements.txt"
 
 # Copy configuration template
 cp toolforge_config.toml $HOME/www/python/src/config.toml
-echo "✅ Copied config.toml"
+echo " Copied config.toml"
 
 # Copy templates
 cp toolforge_index.html $HOME/www/python/src/templates/index.html
 cp toolforge_login.html $HOME/www/python/src/templates/login.html
-echo "✅ Copied templates"
+echo " Copied templates"
 
 # Copy models
 cp models/*.py $HOME/www/python/src/models/
-echo "✅ Copied models"
+echo " Copied models"
 
 # Copy routes
 cp routes/*.py $HOME/www/python/src/routes/
-echo "✅ Copied routes"
+echo " Copied routes"
 
 # Copy middleware
 cp middleware/*.py $HOME/www/python/src/middleware/
-echo "✅ Copied middleware"
+echo " Copied middleware"
 
 # Copy frontend JavaScript
 cp ../frontend/app.js $HOME/www/python/src/static/app.js
-echo "✅ Copied frontend JavaScript"
+echo " Copied frontend JavaScript"
 
 echo ""
 echo "📋 Step 3: Set up virtual environment"
@@ -92,7 +92,7 @@ echo "Setting secure file permissions..."
 
 # Set secure permissions for config file
 chmod u=rw,go= $HOME/www/python/src/config.toml
-echo "✅ Set secure permissions for config.toml"
+echo " Set secure permissions for config.toml"
 
 echo ""
 echo "📋 Step 6: Start the webservice"
