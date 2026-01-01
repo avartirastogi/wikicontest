@@ -122,7 +122,7 @@
             <div class="card mb-4 scoring-section">
               <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">
-                  <i class="fas fa-chart-line me-2"></i>Scoring System
+                  <i class="fas fa-chart-line me-2"></i> Scoring System
                 </h6>
                 <div class="form-check form-switch">
                   <input class="form-check-input" type="checkbox" id="enableMultiParam"
@@ -157,13 +157,13 @@
                   <!-- Maximum Score -->
                   <div class="mb-3">
                     <label class="form-label">Point of Acceptance</label>
-                    <input type="number" class="form-control" v-model.number="maxScore" min="1" max="1000"
+                    <input type="number" class="form-control" v-model.number="maxScore" min="1" max="100"
                       placeholder="10">
                     <small class="text-muted">Final calculated score will be scaled to this value</small>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Point of Rejection </label>
-                    <input type="number" class="form-control" v-model.number="minScore" min="1" max="1000"
+                    <input type="number" class="form-control" v-model.number="minScore" min="1" max="100"
                       placeholder="0">
 
                   </div>
@@ -296,7 +296,7 @@ export default {
     const jurySearchResults = ref([])
     let searchTimeout = null
     const enableMultiParameterScoring = ref(false)
-    const maxScore = ref(100)
+    const maxScore = ref(10)
     const minScore = ref(0)
     const scoringParameters = ref([
       { name: 'Quality', weight: 40, description: 'Article structure & content quality' },
