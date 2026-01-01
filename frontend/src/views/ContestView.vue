@@ -70,7 +70,7 @@
         <div class="scoring-card">
           <div class="card-header">
 
-            <h5 class="mb-0"><i class="fas fa-chart-line"></i>Scoring System</h5>
+            <h5 class="mb-0"><i class="fas fa-chart-line"></i> Scoring System</h5>
           </div>
 
           <div class="scoring-content">

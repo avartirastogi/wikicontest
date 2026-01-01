@@ -1,124 +1,229 @@
 # WikiContest Platform
 
-A web platform for hosting and participating in collaborative online competitions. Built with Flask (Python) backend and Vue.js 3 frontend.
+A comprehensive web platform for hosting and managing collaborative Wikipedia article competitions. Built with Flask (Python) backend and Vue.js 3 frontend.
 
-##  What This App Does
+## Table of Contents
 
-- **User Authentication**: Register, login, and manage user accounts
-- **Contest Management**: Create contests, set dates, assign jury members
-- **Dashboard**: View user statistics and contest overview
-- **Responsive Design**: Works on desktop and mobile devices
-- **Real-time Updates**: Dynamic content loading and notifications
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Running the Application](#running-the-application)
+- [OAuth Setup](#oauth-setup)
+- [Testing](#testing)
+- [Production Deployment](#production-deployment)
+- [Project Structure](#project-structure)
+- [Frontend Technology](#frontend-technology)
+- [Contributing](#contributing)
 
-## 🚀 Quick Start
+---
 
-### Prerequisites
-- Python 3.8+
-- MySQL 8.0+ (or use SQLite for quick testing)
+## Overview
 
-### Installation
+### What This App Does
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd wikicontest/backend
-   ```
+- **User Authentication** - Register, login, and manage user accounts with support for email/password and OAuth
+- **Contest Management** - Create contests, set dates, define rules, and assign jury members
+- **Article Submissions** - Submit Wikipedia articles to contests and track their progress
+- **Dashboard & Analytics** - View user statistics, contest overview, and leaderboards
+- **Responsive Design** - Optimized for desktop and mobile devices
+- **Real-time Updates** - Dynamic content loading and notifications
 
-2. **Create virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: source venv/Scripts/activate
-   ```
+---
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Prerequisites
 
-4. **Setup MySQL database**
-   ```bash
-   # Create database in MySQL
-   mysql -u root -p
-   CREATE DATABASE wikicontest;
-   ```
+Before you begin, ensure you have the following installed:
 
-5. **Setup environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env and update your MySQL credentials
-   ```
+- **Python** 3.8 or higher
+- **MySQL** 8.0 or higher (or use SQLite for quick testing)
+- **Node.js** 16+ (for frontend development)
 
-6. **Setup OAuth (Optional - for Wikimedia login)**
-   
-   To enable OAuth 1.0a login with Wikimedia:
-   
-   a. Register an OAuth consumer at: https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration
-   
-   b. Set the callback URL to: `http://localhost:5000/api/user/oauth/callback` (or your production URL)
-   
-   c. Add your OAuth credentials to `.env`:
-   ```env
-   OAUTH_MWURI=https://meta.wikimedia.org/w/index.php
-   CONSUMER_KEY=your-consumer-key-here
-   CONSUMER_SECRET=your-consumer-secret-here
-   ```
-   
-   d. Users can then click "Login with Wikimedia" on the login page
+---
 
-7. **Initialize database with Alembic migrations**
-   ```bash
-   # Apply all database migrations
-   alembic upgrade head
-   
-   # Or use the helper script
-   python scripts/migrate.py upgrade head
-   ```
-   
-   **Note**: The app does not automatically run migrations on startup. You must run Alembic migrations manually before starting the application.
+## Quick Start
 
-8. **Run the application**
+Follow these steps to get the WikiContest platform running locally:
 
-   **Option A: Development Mode (Recommended)**
-   
-   Run both servers in separate terminals:
-   
-   Terminal 1 - Flask Backend:
-   ```bash
-   python main.py
-   ```
-   
-   Terminal 2 - Vue.js Frontend:
-   ```bash
-   cd ../frontend
-   npm install  # Only needed first time
-   npm run dev
-   ```
-   
-   Access at: `http://localhost:5173` (Vue.js dev server proxies API to Flask)
-   
-   **Option B: Production Build (Single Server)**
-   
-   Build Vue.js first, then run Flask:
-   ```bash
-   cd ../frontend
-   npm install  # Only needed first time
-   npm run build
-   cd ../backend
-   python main.py
-   ```
-   
-   Access at: `http://localhost:5000` (Flask serves built Vue.js files)
+### 1. Clone the Repository
 
-9. **Open in browser**
-   - Development: `http://localhost:5173` (with Vue.js dev server)
-   - Production: `http://localhost:5000` (Flask serves built files)
+```bash
+git clone <repository-url>
+cd wikicontest/backend
+```
 
-**Quick Testing Option**: If you want to skip MySQL setup, edit `.env` and change `DATABASE_URL` to `sqlite:///wikicontest.db`
+### 2. Create Virtual Environment
 
-**Database Migrations**: The application uses Alembic for database migrations. Always run `alembic upgrade head` before starting the app to ensure your database schema is up to date. The app does not automatically run migrations on startup.
+```bash
+python -m venv venv
 
-**Frontend Development**: For the best development experience, run the Vue.js dev server (`npm run dev` in `frontend/` directory) alongside Flask. The dev server proxies API requests to Flask automatically.
+# On macOS/Linux
+source venv/bin/activate
 
+# On Windows
+venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Setup MySQL Database
+
+**Option A: MySQL (Recommended for Production)**
+
+```bash
+# Connect to MySQL
+mysql -u root -p
+
+# Create database
+CREATE DATABASE wikicontest;
+```
+
+**Option B: SQLite (Quick Testing)**
+
+Skip MySQL setup and use SQLite by editing `.env` (step 5) to use:
+```env
+DATABASE_URL=sqlite:///wikicontest.db
+```
+
+### 5. Configure Environment
+
+```bash
+# Copy example environment file
+cp .env.example .env
+
+# Edit .env and update your configuration
+# At minimum, update DATABASE_URL with your MySQL credentials
+```
+
+**Example `.env` configuration:**
+```env
+DATABASE_URL=mysql+pymysql://root:password@localhost/wikicontest
+SECRET_KEY=your-secret-key-here
+JWT_SECRET_KEY=your-jwt-secret-here
+```
+
+### 6. Initialize Database
+
+The application uses **Alembic** for database migrations. Run migrations to create the database schema:
+
+```bash
+# Apply all migrations
+alembic upgrade head
+
+# Alternative: Use helper script
+python scripts/migrate.py upgrade head
+```
+
+**Important:** The app does not automatically run migrations on startup. You must run Alembic migrations manually before starting the application.
+
+### 7. Run the Application
+
+You have two options for running the application:
+
+#### Option A: Development Mode (Recommended)
+
+Run both Flask and Vue.js dev servers in separate terminals for the best development experience:
+
+**Terminal 1 - Flask Backend:**
+```bash
+python main.py
+```
+
+**Terminal 2 - Vue.js Frontend:**
+```bash
+cd ../frontend
+npm install  # Only needed first time
+npm run dev
+```
+
+**Access at:** `http://localhost:5173` (Vue.js dev server proxies API requests to Flask)
+
+#### Option B: Production Build (Single Server)
+
+Build the Vue.js frontend first, then run Flask to serve both API and built frontend:
+
+```bash
+# Build frontend
+cd ../frontend
+npm install  # Only needed first time
+npm run build
+
+# Run Flask
+cd ../backend
+python main.py
+```
+
+**Access at:** `http://localhost:5000` (Flask serves built Vue.js files)
+
+### 8. Open in Browser
+
+- **Development Mode:** `http://localhost:5173`
+- **Production Build:** `http://localhost:5000`
+
+You should see the WikiContest login page. Register a new account to get started!
+
+---
+
+## Configuration
+
+### Environment Variables
+
+The `.env.example` file contains all available configuration options. Copy it to `.env` and customize:
+
+```env
+# Database Configuration
+DATABASE_URL=mysql+pymysql://username:password@localhost/wikicontest
+
+# Security Keys (CHANGE IN PRODUCTION!)
+SECRET_KEY=your-secret-key-here
+JWT_SECRET_KEY=your-jwt-secret-key-here
+
+# CORS Configuration (for frontend development)
+CORS_ORIGINS=http://localhost:5173,http://localhost:5000
+
+# OAuth 1.0a (Optional - for Wikimedia login)
+OAUTH_MWURI=https://meta.wikimedia.org/w/index.php
+CONSUMER_KEY=your-consumer-key-here
+CONSUMER_SECRET=your-consumer-secret-here
+```
+
+### Configuration Tips
+
+- **Database**: Use MySQL for production, SQLite for quick local testing
+- **Security Keys**: Generate strong random keys for production environments
+- **CORS**: Add your frontend URLs to allow cross-origin requests during development
+- **OAuth**: Optional feature for Wikimedia login (see [OAuth Setup](#oauth-setup))
+
+---
+
+## Running the Application
+
+### Development Workflow
+
+For the best development experience:
+
+1. **Run Flask backend** in one terminal: `python main.py`
+2. **Run Vue.js dev server** in another terminal: `cd ../frontend && npm run dev`
+3. **Access** the app at `http://localhost:5173`
+
+The Vue.js dev server provides:
+- Hot module replacement (instant updates)
+- Automatic API proxying to Flask
+- Better debugging experience
+
+### Production Workflow
+
+For production or testing the production build:
+
+1. **Build frontend**: `cd frontend && npm run build`
+2. **Run Flask**: `cd backend && python main.py`
+3. **Access** the app at `http://localhost:5000`
+
+Flask serves the optimized, built Vue.js files.
 ## 🔧 Configuration
 
 The `.env.example` file contains all configuration options. Copy it to `.env` and update:
@@ -128,104 +233,285 @@ The `.env.example` file contains all configuration options. Copy it to `.env` an
 - **CORS**: Frontend development URLs
 - **OAuth 1.0a**: Wikimedia OAuth credentials (optional, for OAuth login)
 
-### OAuth 1.0a Setup (for Wikimedia Login)
 
-1. **Register OAuth Consumer**:
-   - Go to: https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration
-   - Fill in your application details
-   - Set callback URL: `http://localhost:5000/api/user/oauth/callback` (development)
-   - For production, use your production URL: `https://yourdomain.com/api/user/oauth/callback`
+### Important Notes
 
-2. **Add Credentials to `.env`**:
-   ```env
-   OAUTH_MWURI=https://meta.wikimedia.org/w/index.php
-   CONSUMER_KEY=your-consumer-key-from-registration
-   CONSUMER_SECRET=your-consumer-secret-from-registration
-   ```
+- **Migrations**: Always run `alembic upgrade head` before starting the app
+- **Frontend Development**: Use the Vue.js dev server (`npm run dev`) for the best experience
+- **API Access**: Backend API is available at `http://localhost:5000/api/`
 
-3. **Test OAuth Login**:
-   - Start the application
-   - Click "Login with Wikimedia" on the login page
-   - Authorize the application on Wikimedia
-   - You'll be redirected back and logged in
+---
 
-**Note**: OAuth login works alongside regular email/password login. Users can choose either method.
+## OAuth Setup
 
-## 🧪 Testing
+### OAuth 1.0a for Wikimedia Login (Optional)
 
-```bash
-# Make sure migrations are applied first
-alembic upgrade head
+Enable users to log in using their Wikimedia accounts:
 
-# Test the application
-python main.py
-# Open http://localhost:5000 and test:
-# - User registration/login
-# - Contest creation
-# - Dashboard functionality
+### 1. Register OAuth Consumer
+
+1. Go to [Wikimedia OAuth Registration](https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration)
+2. Fill in your application details
+3. Set the callback URL:
+   - **Development:** `http://localhost:5000/api/user/oauth/callback`
+   - **Production:** `https://yourdomain.com/api/user/oauth/callback`
+4. Save and note your **Consumer Key** and **Consumer Secret**
+
+### 2. Add Credentials to `.env`
+
+```env
+OAUTH_MWURI=https://meta.wikimedia.org/w/index.php
+CONSUMER_KEY=your-consumer-key-from-registration
+CONSUMER_SECRET=your-consumer-secret-from-registration
 ```
 
-## 🚀 Production Deployment
+### 3. Test OAuth Login
 
-1. **Setup production environment**
-   ```bash
-   export FLASK_ENV=production
-   export DATABASE_URL=your-production-mysql-url
-   ```
+1. Start the application
+2. Navigate to the login page
+3. Click **"Login with Wikimedia"**
+4. Authorize the application on Wikimedia
+5. You'll be redirected back and logged in automatically
 
-2. **Apply database migrations**
-   ```bash
-   alembic upgrade head
-   ```
+**Note:** OAuth login works alongside regular email/password authentication. Users can choose either method.
 
-3. **Run with production server**
-   ```bash
-   pip install gunicorn
-   gunicorn -w 4 -b 0.0.0.0:5000 "app:app"
-   ```
+---
+
+## Testing
+
+### Manual Testing
+
+```bash
+# Ensure migrations are applied
+alembic upgrade head
+
+# Start the application
+python main.py
+
+# Open http://localhost:5000 (or http://localhost:5173 in dev mode)
+```
+
+### Test the Following Features:
+
+- User registration and login
+- Contest creation
+- Article submission
+- Dashboard functionality
+- Leaderboard display
+- OAuth login (if configured)
+
+### Automated Tests
+
+```bash
+# Install test dependencies
+pip install pytest pytest-flask
+
+# Run tests
+pytest
+
+# Run with coverage
+pytest --cov=app tests/
+```
+
+---
+
+## Production Deployment
+
+### 1. Setup Production Environment
+
+Configure production environment variables:
+
+```bash
+export FLASK_ENV=production
+export FLASK_DEBUG=False
+export DATABASE_URL=mysql+pymysql://user:pass@prod-host/wikicontest
+export SECRET_KEY=strong-random-production-key
+export JWT_SECRET_KEY=strong-random-jwt-key
+```
+
+### 2. Build Frontend
+
+```bash
+cd frontend
+npm install
+npm run build
+```
+
+### 3. Apply Database Migrations
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+### 4. Run with Production Server
+
+```bash
+# Install Gunicorn
+pip install gunicorn
+
+# Run with 4 worker processes
+gunicorn -w 4 -b 0.0.0.0:5000 "app:app"
+```
+
+### 5. Use Reverse Proxy (Recommended)
+
+Set up Nginx or Apache as a reverse proxy:
+
+**Example Nginx configuration:**
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+    
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+---
 
 ## Project Structure
 
 ```
 wikicontest/
-├── backend/           # Flask application
-│   ├── main.py       # Application entry point
-│   ├── app/          # Application package
-│   │   ├── __init__.py  # Flask app factory
-│   │   ├── models/   # Database models
-│   │   ├── routes/   # API endpoints
-│   │   └── middleware/ # Authentication
-│   ├── alembic/      # Database migrations (Alembic)
-│   └── scripts/      # Utility scripts
-└── frontend/         # Vue.js frontend
-    ├── src/          # Source files
-    │   ├── views/    # Page components
-    │   ├── components/ # Reusable components
-    │   ├── router/   # Vue Router
-    │   ├── store/    # State management
-    │   └── services/ # API service
-    ├── package.json  # Dependencies
-    └── vite.config.js # Build configuration
+├── backend/                    # Flask backend application
+│   ├── main.py                # Application entry point
+│   ├── app/                   # Main application package
+│   │   ├── __init__.py       # Flask app factory
+│   │   ├── config.py         # Configuration management
+│   │   ├── database.py       # SQLAlchemy database
+│   │   ├── models/           # Database models (User, Contest, Submission)
+│   │   ├── routes/           # API endpoints (blueprints)
+│   │   ├── middleware/       # Authentication & authorization
+│   │   └── utils/            # Utility functions
+│   ├── alembic/              # Database migrations (Alembic)
+│   │   ├── versions/         # Migration version files
+│   │   └── env.py            # Alembic environment
+│   ├── scripts/              # Utility scripts
+│   ├── tests/                # Test files (pytest)
+│   ├── requirements.txt      # Python dependencies
+│   └── .env                  # Environment configuration
+│
+└── frontend/                  # Vue.js 3 frontend application
+    ├── src/                  # Source files
+    │   ├── views/           # Page components (Home, Login, Dashboard, etc.)
+    │   ├── components/      # Reusable UI components
+    │   ├── router/          # Vue Router configuration
+    │   ├── store/           # State management (if using Vuex/Pinia)
+    │   ├── services/        # API service layer
+    │   └── App.vue          # Root component
+    ├── public/              # Static assets
+    ├── package.json         # Frontend dependencies
+    ├── vite.config.js       # Vite build configuration
+    └── index.html           # HTML entry point
 ```
 
-## Frontend Technology
+### Key Directories
 
-The frontend uses **Vue.js 3** with:
-- Vue Router for client-side routing
-- Vite for fast development and optimized builds
-- Bootstrap 5 for styling
-- Axios for API communication
-
-See `docs/VUE_FRONTEND_SETUP.md` for frontend setup instructions.
-
-##  Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+- **`backend/app/models/`** - Database models (User, Contest, Submission)
+- **`backend/app/routes/`** - API endpoints organized by domain
+- **`backend/alembic/versions/`** - Database migration history
+- **`frontend/src/views/`** - Vue page components
+- **`frontend/src/components/`** - Reusable Vue components
 
 ---
 
-**WikiContest Platform** - Ready for collaborative online competitions! 
+## Frontend Technology
+
+The frontend is built with modern Vue.js 3 and related technologies:
+
+### Tech Stack
+
+- **Vue.js 3** - Progressive JavaScript framework with Composition API
+- **Vue Router** - Official router for client-side navigation
+- **Vite** - Next-generation frontend tooling for fast development
+- **Bootstrap 5** - CSS framework for responsive design
+- **Axios** - Promise-based HTTP client for API communication
+
+### Frontend Features
+
+- Component-based architecture
+- Reactive data binding
+- Client-side routing
+- State management
+- Hot module replacement in development
+- Optimized production builds
+
+### Frontend Setup
+
+For detailed frontend setup instructions, see [`docs/VUE_FRONTEND_SETUP.md`](docs/VUE_FRONTEND_SETUP.md).
+
+**Quick frontend commands:**
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Development server with HMR
+npm run dev
+
+# Production build
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+---
+
+## Contributing
+
+We welcome contributions to the WikiContest platform!
+
+### How to Contribute
+
+1. **Fork the repository**
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+3. **Make your changes**
+   - Follow existing code style
+   - Add tests for new features
+   - Update documentation as needed
+4. **Test thoroughly**
+   - Test both backend and frontend
+   - Ensure all tests pass
+5. **Submit a pull request**
+   - Describe your changes clearly
+   - Reference any related issues
+
+### Development Guidelines
+
+- Follow Python PEP 8 for backend code
+- Follow Vue.js style guide for frontend code
+- Write meaningful commit messages
+- Add docstrings to Python functions
+- Comment complex logic
+- Keep functions focused and under 50 lines when possible
+
+---
+
+## Additional Resources
+
+- **Backend Documentation:** [`backend/README.md`](backend/README.md)
+- **Frontend Setup Guide:** [`docs/VUE_FRONTEND_SETUP.md`](docs/VUE_FRONTEND_SETUP.md)
+- **Database Migrations:** [`docs/ALEMBIC_USAGE_GUIDE.md`](docs/ALEMBIC_USAGE_GUIDE.md)
+- **API Documentation:** See backend README for complete endpoint list
+
+---
+
+## License
+
+This project is part of the WikiContest platform.
+
+---
+
+**WikiContest Platform** - Empowering collaborative Wikipedia article competitions! 
