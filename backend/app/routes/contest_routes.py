@@ -695,6 +695,54 @@ def update_contest(contest_id):  # pylint: disable=too-many-return-statements
             else:
                 contest.set_jury_members([])
 
+        # --- Scoring parameters (support multi-parameter edits) ---
+        if "scoring_parameters" in data:
+            sp = data.get("scoring_parameters")
+            # Accept explicit null to disable
+            if sp is None:
+                contest.set_scoring_parameters(None)
+            elif not isinstance(sp, dict):
+                return jsonify({"error": "scoring_parameters must be an object"}), 400
+            else:
+                # If multi-parameter enabled, validate structure and weights
+                if sp.get("enabled"):
+                    params = sp.get("parameters")
+                    if "parameters" not in sp or not isinstance(params, list) or len(params) == 0:
+                        return (
+                            jsonify({"error": "At least one scoring parameter is required"}),
+                            400,
+                        )
+
+                    total_weight = 0
+                    for param in params:
+                        if not isinstance(param, dict):
+                            return jsonify({"error": "Each parameter must be an object"}), 400
+                        if "name" not in param or "weight" not in param:
+                            return (
+                                jsonify(
+                                    {"error": 'Each parameter must have "name" and "weight"'}
+                                ),
+                                400,
+                            )
+                        try:
+                            weight = int(param["weight"])
+                            if weight < 0 or weight > 100:
+                                return jsonify({"error": f"Weight must be 0-100"}), 400
+                            total_weight += weight
+                        except (ValueError, TypeError):
+                            return jsonify({"error": "Weight must be a valid integer"}), 400
+
+                    if total_weight != 100:
+                        return (
+                            jsonify({"error": f"Weights must sum to 100, got {total_weight}"}),
+                            400,
+                        )
+                # Persist validated scoring params (model will JSON-encode)
+                try:
+                    contest.set_scoring_parameters(sp)
+                except ValueError as ve:
+                    return jsonify({"error": str(ve)}), 400
+
         # Persist
         db.session.add(contest)
         db.session.commit()
@@ -709,7 +757,6 @@ def update_contest(contest_id):  # pylint: disable=too-many-return-statements
         current_app.logger.error("Error updating contest %s: %s", contest_id, exc)
         current_app.logger.error(traceback.format_exc())
         return jsonify({"error": "Internal server error"}), 500
-
 
 @contest_bp.route("/<int:contest_id>/submit", methods=["POST"])
 @require_auth
