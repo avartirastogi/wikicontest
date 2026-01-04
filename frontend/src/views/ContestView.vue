@@ -66,7 +66,7 @@
         </div>
       </div>
       <!-- Scoring Column (for jury and contest creators) -->
-      <div v-if="canViewSubmissions" class="col-md-12">
+      <div class="col-md-12">
         <div class="scoring-card">
           <div class="card-header">
 

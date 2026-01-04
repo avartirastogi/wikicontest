@@ -38,10 +38,6 @@
 
           <!-- NEW: Multi-Parameter Scoring (if enabled) -->
           <div v-if="isMultiParameterEnabled && status === 'accepted'" class="parameter-scoring-section">
-            <label class="form-label fw-semibold mb-3">
-              <i class="fas fa-sliders-h me-2"></i>Score Parameters
-            </label>
-
             <!-- Loop through each parameter -->
             <div v-for="param in scoringParams" :key="param.name" class="parameter-slider mb-4">
               <div class="d-flex justify-content-between align-items-center mb-2">
@@ -338,13 +334,23 @@ export default {
 </script>
 
 <style scoped>
+.review-dialog {
+  max-width: 700px;
+}
+
 .review-modal {
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--wiki-border);
+}
+
+[data-theme="dark"] .review-modal {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
 .modal-header {
-  background: linear-gradient(135deg, var(--wiki-primary), var(--wiki-primary-hover));
+  background: var(--wiki-primary);
   color: white;
   border-bottom: none;
   padding: 1.5rem;
@@ -352,98 +358,208 @@ export default {
 
 .modal-title {
   font-weight: 600;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+}
+
+.modal-title i {
+  opacity: 0.9;
+}
+
+.btn-close {
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.btn-close:hover {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .modal-body {
   padding: 2rem;
-  background-color: var(--wiki-modal-bg);
+  background-color: var(--wiki-card-bg);
+}
+
+[data-theme="dark"] .modal-body {
+  background-color: #1a1a1a;
 }
 
 .decision-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  margin-top: 0.5rem;
 }
 
 .decision-card {
   position: relative;
   padding: 1.5rem;
   border: 2px solid var(--wiki-border);
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
   background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 [data-theme="dark"] .decision-card {
   background-color: #2a2a2a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .decision-card input[type="radio"] {
   position: absolute;
   opacity: 0;
+  pointer-events: none;
 }
 
 .decision-card span {
   font-weight: 600;
-  font-size: 1.1rem;
-  display: block;
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wiki-text);
+  transition: color 0.25s ease;
 }
 
+.decision-card i {
+  font-size: 1.35rem;
+  transition: transform 0.25s ease;
+}
+
+/* Hover States */
 .decision-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
 }
 
-.decision-card.accept:hover,
+[data-theme="dark"] .decision-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.decision-card.accept:hover {
+  border-color: rgba(40, 167, 69, 0.5);
+  background-color: rgba(40, 167, 69, 0.03);
+}
+
+.decision-card.reject:hover {
+  border-color: rgba(220, 53, 69, 0.5);
+  background-color: rgba(220, 53, 69, 0.03);
+}
+
+/* Selected States */
+.decision-card.selected {
+  border-width: 2.5px;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .decision-card.selected {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
 .decision-card.accept.selected {
   border-color: #28a745;
-  background-color: rgba(40, 167, 69, 0.1);
-}
-
-.decision-card.reject:hover,
-.decision-card.reject.selected {
-  border-color: #dc3545;
-  background-color: rgba(220, 53, 69, 0.1);
-}
-
-.decision-card.selected {
-  border-width: 3px;
-  box-shadow: 0 0 0 3px rgba(0, 102, 153, 0.15);
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.08), rgba(40, 167, 69, 0.03));
 }
 
 .decision-card.accept.selected span {
   color: #28a745;
 }
 
+.decision-card.accept.selected i {
+  transform: scale(1.1);
+}
+
+.decision-card.reject.selected {
+  border-color: #dc3545;
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.08), rgba(220, 53, 69, 0.03));
+}
+
 .decision-card.reject.selected span {
   color: #dc3545;
+}
+
+.decision-card.reject.selected i {
+  transform: scale(1.1);
+}
+
+/* Focus States for Accessibility */
+.decision-card:focus-within {
+  outline: 3px solid var(--wiki-primary);
+  outline-offset: 3px;
 }
 
 .parameter-scoring-section {
   background: var(--wiki-hover-bg);
   padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+}
+
+[data-theme="dark"] .parameter-scoring-section {
+  background: #222;
+}
+
+.parameter-scoring-section .form-label {
+  font-size: 1.125rem;
+  color: var(--wiki-dark);
+  margin-bottom: 1.25rem;
+}
+
+[data-theme="dark"] .parameter-scoring-section .form-label {
+  color: #fff;
 }
 
 .parameter-slider {
-  background: linear-gradient(135deg, #ffffff, #f8f9fa);
-  padding: 1.25rem;
-  border-radius: 8px;
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
   border: 1px solid var(--wiki-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 [data-theme="dark"] .parameter-slider {
-  background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+  background: #2a2a2a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+.parameter-slider:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .parameter-slider:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.parameter-slider strong {
+  font-size: 1.05rem;
+  color: var(--wiki-dark);
+}
+
+[data-theme="dark"] .parameter-slider strong {
+  color: #fff;
+}
+
+.parameter-slider .badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+}
+
+/* Score Display */
 .score-display {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--wiki-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .score-value {
@@ -452,134 +568,391 @@ export default {
 
 .score-max {
   color: var(--wiki-text-muted);
-  font-size: 1rem;
+  font-size: 1.15rem;
+  font-weight: 500;
 }
 
 .parameter-range {
   width: 100%;
-  border-radius: 4px;
+  height: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  height: 6px;
-  background: linear-gradient(to right, var(--wiki-primary), #e9ecef);
+  background: #e9ecef;
+  outline: none;
+  transition: background 0.2s ease;
 }
 
+[data-theme="dark"] .parameter-range {
+  background: #3a3a3a;
+}
+
+.parameter-range:hover {
+  background: #dee2e6;
+}
+
+[data-theme="dark"] .parameter-range:hover {
+  background: #444;
+}
+
+.parameter-range:focus {
+  box-shadow: 0 0 0 3px rgba(0, 102, 153, 0.2);
+}
+
+/* Webkit (Chrome, Safari, Edge) */
 .parameter-range::-webkit-slider-thumb {
-  width: 24px;
-  height: 24px;
+  appearance: none;
+  width: 26px;
+  height: 26px;
   background: var(--wiki-primary);
   border-radius: 50%;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 102, 153, 0.3);
+  border: 3px solid white;
+  margin-top: -9px;
 }
 
 .parameter-range::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(0, 102, 153, 0.4);
 }
 
+.parameter-range::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+/* Firefox */
 .parameter-range::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   background: var(--wiki-primary);
   border-radius: 50%;
-  cursor: pointer;
-  border: none;
-  transition: transform 0.2s ease;
+  cursor: grab;
+  border: 3px solid white;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 102, 153, 0.3);
 }
 
 .parameter-range::-moz-range-thumb:hover {
-  transform: scale(1.2);
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(0, 102, 153, 0.4);
+}
+
+.parameter-range::-moz-range-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
 }
 
 .final-score-preview {
-  background: linear-gradient(135deg, rgba(0, 102, 153, 0.1), rgba(0, 102, 153, 0.05));
+  background: linear-gradient(135deg,
+      rgba(0, 102, 153, 0.08),
+      rgba(0, 102, 153, 0.03));
   border: 2px solid var(--wiki-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 102, 153, 0.08);
 }
 
 [data-theme="dark"] .final-score-preview {
-  background: linear-gradient(135deg, rgba(93, 184, 230, 0.2), rgba(93, 184, 230, 0.1));
+  background: linear-gradient(135deg,
+      rgba(93, 184, 230, 0.15),
+      rgba(93, 184, 230, 0.08));
+  box-shadow: 0 4px 12px rgba(93, 184, 230, 0.15);
 }
 
 .final-score {
-  font-size: 2rem;
+  font-size: 2.25rem;
   font-weight: 700;
   color: var(--wiki-primary);
-  letter-spacing: 1px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.final-score .text-muted {
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .score-breakdown {
-  border-top: 1px solid var(--wiki-border);
-  padding-top: 0.5rem;
+  border-top: 1px solid rgba(0, 102, 153, 0.15);
+  padding-top: 1rem;
+  margin-top: 1rem;
 }
 
-.form-control {
-  border-color: var(--wiki-input-border);
-  background-color: var(--wiki-input-bg);
+.score-breakdown small {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--wiki-dark);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+[data-theme="dark"] .form-label {
+  color: #fff;
+}
+
+.form-control,
+textarea.form-control {
+  border: 2px solid var(--wiki-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background-color: white;
   color: var(--wiki-text);
   transition: all 0.2s ease;
 }
 
+[data-theme="dark"] .form-control,
+[data-theme="dark"] textarea.form-control {
+  background-color: #2a2a2a;
+  color: #fff;
+}
+
+.form-control:hover {
+  border-color: rgba(0, 102, 153, 0.4);
+}
+
 .form-control:focus {
   border-color: var(--wiki-primary);
-  box-shadow: 0 0 0 0.2rem rgba(0, 102, 153, 0.25);
-  background-color: var(--wiki-input-bg);
+  box-shadow: 0 0 0 3px rgba(0, 102, 153, 0.12);
+  background-color: white;
+  outline: none;
 }
 
-.btn-success {
-  background-color: #28a745;
-  border-color: #28a745;
+[data-theme="dark"] .form-control:focus {
+  background-color: #2a2a2a;
 }
 
-.btn-success:hover:not(:disabled) {
-  background-color: #218838;
-  border-color: #1e7e34;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+textarea.form-control {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.6;
 }
 
-.btn-success:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background-color: var(--wiki-text-muted);
-  border-color: var(--wiki-text-muted);
-}
-
-.btn-secondary:hover {
-  background-color: #5a6268;
-  border-color: #545b62;
+.form-text {
+  font-size: 0.875rem;
+  color: var(--wiki-text-muted);
+  margin-top: 0.5rem;
+  display: block;
 }
 
 .alert-warning {
-  background-color: rgba(255, 193, 7, 0.1);
-  border-color: #ffc107;
+  background-color: rgba(255, 193, 7, 0.08);
+  border: 2px solid #ffc107;
+  border-radius: 10px;
   color: #856404;
+  padding: 1.25rem;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
 }
 
 [data-theme="dark"] .alert-warning {
-  background-color: rgba(255, 193, 7, 0.2);
+  background-color: rgba(255, 193, 7, 0.15);
   color: #ffecb3;
+}
+
+.alert-warning i {
+  font-size: 1.25rem;
 }
 
 .badge.bg-primary {
   background-color: var(--wiki-primary) !important;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .modal-footer {
   border-top: 1px solid var(--wiki-border);
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 2rem;
   background-color: var(--wiki-modal-bg);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+[data-theme="dark"] .modal-footer {
+  background-color: #1a1a1a;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.btn i {
+  transition: transform 0.2s ease;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-success:hover:not(:disabled) i {
+  transform: scale(1.1);
+}
+
+.btn-success:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-success:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #28a745;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.2);
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
 }
 
 @media (max-width: 768px) {
-  .decision-options {
-    grid-template-columns: 1fr;
+  .review-dialog {
+    margin: 1rem;
+  }
+
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .modal-title {
+    font-size: 1.2rem;
   }
 
   .modal-body {
     padding: 1.5rem;
   }
+
+  .decision-options {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .decision-card {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .decision-card span {
+    font-size: 1.05rem;
+  }
+
+  .parameter-scoring-section {
+    padding: 1.25rem;
+  }
+
+  .parameter-slider {
+    padding: 1rem;
+  }
+
+  .score-display {
+    font-size: 1.5rem;
+  }
+
+  .final-score {
+    font-size: 1.85rem;
+  }
+
+  .modal-footer {
+    padding: 1rem 1.5rem;
+    flex-direction: column-reverse;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-body {
+    padding: 1.25rem;
+  }
+
+  .decision-card i {
+    font-size: 1.2rem;
+  }
+
+  .parameter-slider strong {
+    font-size: 0.95rem;
+  }
+
+  .score-display {
+    font-size: 1.35rem;
+  }
+
+  .final-score {
+    font-size: 1.65rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus visible for keyboard navigation */
+*:focus-visible {
+  outline: 3px solid var(--wiki-primary);
+  outline-offset: 2px;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 </style>
