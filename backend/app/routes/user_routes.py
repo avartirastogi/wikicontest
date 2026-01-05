@@ -719,3 +719,29 @@ def search_users():
     return jsonify({
         'users': [{'username': user.username, 'id': user.id} for user in users]
     }), 200
+
+    
+@user_bp.route('/<int:user_id>/username', methods=['GET'])
+@handle_errors
+def get_user_username(user_id):
+    """
+    Get username for a specific user ID
+    
+    This is a minimal endpoint that only returns the username,
+    not any sensitive information like email or password.
+    
+    Args:
+        user_id: User ID
+        
+    Returns:
+        JSON response with username
+    """
+    user = User.query.get(user_id)
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    return jsonify({
+        'id': user.id,
+        'username': user.username
+    }), 200

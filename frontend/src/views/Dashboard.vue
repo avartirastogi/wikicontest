@@ -56,14 +56,29 @@
                   <div
                     v-for="submission in contest.submissions"
                     :key="submission.id"
-                    class="d-flex justify-content-between align-items-center mb-2 flex-wrap"
+                    class="submission-item d-flex justify-content-between align-items-center mb-2 flex-wrap"
+                    :class="{ 'submission-clickable': submission.reviewed_at }"
+                    @click="handleSubmissionClick(submission)"
                   >
-                    <span class="me-2 mb-1">{{ submission.article_title }}</span>
-                    <span
-                      :class="`badge bg-${getStatusColor(submission.status)}`"
-                    >
-                      {{ submission.status }}
+                    <span class="me-2 mb-1 submission-title">
+                      {{ submission.article_title }}
                     </span>
+                    <div class="d-flex align-items-center gap-2">
+                      <span
+                        :class="`badge bg-${getStatusColor(submission.status)}`"
+                      >
+                        {{ submission.status }}
+                      </span>
+                      <!-- View Feedback Button/Icon - Only for reviewed submissions -->
+                      <button
+                        v-if="submission.reviewed_at"
+                        class="btn btn-sm btn-info feedback-btn"
+                        @click.stop="openFeedbackModal(submission)"
+                        title="View Feedback"
+                      >
+                        <i class="fas fa-comment-dots"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -169,6 +184,13 @@
       :contest-id="submittingToContestId"
       @submitted="handleArticleSubmitted"
     />
+
+    <!-- Jury Feedback Modal -->
+    <JuryFeedbackModal 
+      :submission="selectedSubmission"
+      :reviewer-name="reviewerName"
+      :loading-reviewer="loadingReviewer"
+    />
   </div>
 </template>
 
@@ -180,11 +202,13 @@ import api from '../services/api'
 import { showAlert } from '../utils/alerts'
 import { slugify } from '../utils/slugify'
 import SubmitArticleModal from '../components/SubmitArticleModal.vue'
+import JuryFeedbackModal from '../components/JuryFeedbackModal.vue'
 
 export default {
   name: 'Dashboard',
   components: {
-    SubmitArticleModal
+    SubmitArticleModal,
+    JuryFeedbackModal
   },
   setup() {
     const router = useRouter()
@@ -193,6 +217,11 @@ export default {
     const loading = ref(true)
     const error = ref(null)
     const submittingToContestId = ref(null)
+    
+    // Feedback modal state
+    const selectedSubmission = ref(null)
+    const reviewerName = ref('')
+    const loadingReviewer = ref(false)
 
     // Load dashboard data
     const loadDashboard = async () => {
@@ -244,6 +273,67 @@ export default {
       } catch (e) {
         return dateString
       }
+    }
+
+    // Handle submission click (only if reviewed)
+    const handleSubmissionClick = (submission) => {
+      if (submission.reviewed_at) {
+        openFeedbackModal(submission)
+      }
+    }
+
+    // Fetch reviewer username
+    const fetchReviewerName = async (reviewerId) => {
+      if (!reviewerId) {
+        reviewerName.value = 'Jury Member'
+        return
+      }
+      
+      loadingReviewer.value = true
+      try {
+        // Use the new username endpoint to fetch reviewer name
+        const userData = await api.get(`/user/${reviewerId}/username`)
+        
+        if (userData && userData.username) {
+          reviewerName.value = userData.username
+        } else {
+          reviewerName.value = 'Jury Member'
+        }
+      } catch (err) {
+        console.warn('Could not fetch reviewer name:', err)
+        // Fallback to generic name if endpoint doesn't exist yet
+        reviewerName.value = 'Jury Member'
+      } finally {
+        loadingReviewer.value = false
+      }
+    }
+
+    // Open feedback modal
+    const openFeedbackModal = async (submission) => {
+      if (!submission || !submission.reviewed_at) {
+        showAlert('This submission has not been reviewed yet', 'info')
+        return
+      }
+
+      // Set selected submission
+      selectedSubmission.value = submission
+
+      // Fetch reviewer name if available
+      if (submission.reviewed_by) {
+        await fetchReviewerName(submission.reviewed_by)
+      } else {
+        reviewerName.value = 'Jury Member'
+      }
+
+      // Open modal
+      const modalEl = document.getElementById('juryFeedbackModal')
+      if (!modalEl) {
+        console.error('JuryFeedbackModal DOM not found')
+        return
+      }
+
+      const modal = new window.bootstrap.Modal(modalEl)
+      modal.show()
     }
 
     // View contest details - navigate to full page view
@@ -328,12 +418,17 @@ export default {
       loading,
       error,
       submittingToContestId,
+      selectedSubmission,
+      reviewerName,
+      loadingReviewer,
       getStatusColor,
       getStatusBadgeColor,
       formatDate,
       viewContest,
       handleSubmitArticle,
-      handleArticleSubmitted
+      handleArticleSubmitted,
+      handleSubmissionClick,
+      openFeedbackModal
     }
   }
 }
@@ -443,10 +538,10 @@ h2.text-warning {
 }
 
 /* ==========================================================
-   Submissions / Score Items - Clean Design
+   Submissions Items with Feedback Feature
    ========================================================== */
 
-.d-flex.justify-content-between {
+.submission-item {
   background-color: var(--wiki-light-bg);
   border: 1px solid var(--wiki-border);
   border-radius: 4px;
@@ -455,16 +550,66 @@ h2.text-warning {
   transition: all 0.2s ease;
 }
 
-[data-theme="dark"] .d-flex.justify-content-between {
+[data-theme="dark"] .submission-item {
   background-color: rgba(93, 184, 230, 0.05);
 }
 
-/* Ensure text in submission/score items is visible in dark mode */
-[data-theme="dark"] .d-flex.justify-content-between span {
-  color: #ffffff !important; /* White text for submission/score items */
+/* Clickable submissions (reviewed) */
+.submission-clickable {
+  cursor: pointer;
 }
 
-.d-flex.justify-content-between:hover {
+.submission-clickable:hover {
+  background-color: var(--wiki-hover-bg);
+  border-color: var(--wiki-primary);
+  transform: translateX(2px);
+}
+
+.submission-clickable:hover .submission-title {
+  color: var(--wiki-primary);
+}
+
+/* Ensure text in submission items is visible in dark mode */
+[data-theme="dark"] .submission-item span {
+  color: #ffffff !important; /* White text for submission items */
+}
+
+/* Feedback button in submission items */
+.feedback-btn {
+  color: white;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.feedback-btn:hover {
+  transform: scale(1.05);
+}
+
+.feedback-btn i {
+  font-size: 0.875rem;
+}
+
+/* Score items (no changes) */
+.d-flex.justify-content-between:not(.submission-item) {
+  background-color: var(--wiki-light-bg);
+  border: 1px solid var(--wiki-border);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .d-flex.justify-content-between:not(.submission-item) {
+  background-color: rgba(93, 184, 230, 0.05);
+}
+
+/* Ensure text in score items is visible in dark mode */
+[data-theme="dark"] .d-flex.justify-content-between:not(.submission-item) span {
+  color: #ffffff !important; /* White text for score items */
+}
+
+.d-flex.justify-content-between:not(.submission-item):hover {
   background-color: var(--wiki-hover-bg);
   border-color: var(--wiki-primary);
 }
@@ -669,7 +814,17 @@ h6 {
   h2.text-warning {
     font-size: 2rem !important;
   }
+
+  .submission-item {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .submission-item > div {
+    margin-top: 0.5rem;
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 </style>
-
