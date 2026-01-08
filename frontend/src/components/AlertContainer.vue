@@ -4,29 +4,33 @@
     class="position-fixed end-0 p-3"
     style="z-index: 1050; top: 80px;"
   >
+    <!-- Transition group provides smooth enter/leave animations for alerts -->
     <transition-group name="alert" tag="div">
-  <div
-    v-for="alert in alerts"
-    :key="alert.id"
-    :class="['alert-card', `alert-${alert.type}`]"
-    role="alert"
-  >
-    <div class="alert-content">
-      <span class="alert-message">{{ alert.message }}</span>
-      <button type="button" class="close-btn" @click="removeAlert(alert.id)">✕</button>
-    </div>
-  </div>
-</transition-group>
-
+      <!-- Individual alert cards with dynamic type-based styling -->
+      <div
+        v-for="alert in alerts"
+        :key="alert.id"
+        :class="['alert-card', `alert-${alert.type}`]"
+        role="alert"
+      >
+        <div class="alert-content">
+          <!-- Alert message text -->
+          <span class="alert-message">{{ alert.message }}</span>
+          <!-- Close button for manual dismissal -->
+          <button type="button" class="close-btn" @click="removeAlert(alert.id)">✕</button>
+        </div>
+      </div>
+    </transition-group>
   </div>
 </template>
 
 <script>
 import { getAlertState, removeAlert } from '../utils/alerts'
-
 export default {
   name: 'AlertContainer',
   setup() {
+    // Get reactive alert state from centralized alert utility
+    // Ensures all components share the same alert queue
     const alertState = getAlertState()
     return {
       alerts: alertState.alerts,
@@ -36,155 +40,10 @@ export default {
 }
 </script>
 
-<!-- <style scoped>
-/* --- Smooth Enter/Leave Animations --- */
-.alert-enter-active,
-.alert-leave-active {
-  transition: all 0.35s ease;
-}
-
-.alert-enter-from {
-  opacity: 0;
-  transform: translateX(60px) scale(0.95);
-}
-
-.alert-leave-to {
-  opacity: 0;
-  transform: translateX(60px) scale(0.95);
-}
-
-/* --- Container --- */
-#alertContainer {
-  max-width: 420px;
-  right: 1rem;
-}
-
-/* --- Solid Alert Card --- */
-.alert-card {
-  width: 100%;
-  padding: 1rem 1.2rem;
-  margin-bottom: 1rem;
-  border-radius: 5px;
-
-  background-color: #fff; /* gets replaced below by type color */
-  border-left-width: 8px;
-  border-style: solid;
-
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.95rem;
-
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-  transition: transform 0.25s ease;
-}
-
-.alert-card:hover {
-  transform: translateY(-2px);
-}
-
-/* --- Content Styling --- */
-.alert-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.close-btn {
-  background: transparent;
-  border: none;
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: rgba(255,255,255,0.8);
-  cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.close-btn:hover {
-  opacity: 1;
-  transform: scale(1.25);
-}
-
-/* ---------------------------------- */
-/* WIKIDATA COLORS (SOLID BLOCK STYLE) */
-/* ---------------------------------- */
-
-/* Crimson (#990000) */
-.alert-danger {
-  background-color: #990000 !important;
-  border-color: #660000 !important;
-  color: #fff !important;
-}
-
-/* Emerald (#339966) */
-.alert-success {
-  background-color: #339966 !important;
-  border-color: #267353 !important;
-  color: #fff !important;
-}
-
-/* Sea Blue (#006699) */
-.alert-info {
-  background-color: #006699 !important;
-  border-color: #004766 !important;
-  color: #fff !important;
-}
-
-/* Amber-ish Warning */
-.alert-warning {
-  background-color: #cc6600 !important;
-  border-color: #994d00 !important;
-  color: #fff !important;
-}
-
-/* ------------------------ */
-/* DARK MODE SOLID COLORS   */
-/* ------------------------ */
-[data-theme="dark"] .alert-card {
-  box-shadow: 0 6px 14px rgba(0,0,0,0.5);
-}
-
-/* Keep solid but slightly brighter in dark mode */
-[data-theme="dark"] .alert-danger {
-  background-color: #cc0000 !important;
-  border-color: #990000 !important;
-}
-
-[data-theme="dark"] .alert-success {
-  background-color: #44cc88 !important;
-  border-color: #2a875b !important;
-}
-
-[data-theme="dark"] .alert-info {
-  background-color: #0099cc !important;
-  border-color: #006699 !important;
-}
-
-[data-theme="dark"] .alert-warning {
-  background-color: #ff8c1a !important;
-  border-color: #cc6600 !important;
-}
-
-[data-theme="dark"] .close-btn {
-  color: #fff;
-}
-
-/* --- Mobile --- */
-@media (max-width: 768px) {
-  #alertContainer {
-    max-width: 90%;
-  }
-
-  .alert-card {
-    padding: 0.9rem 1rem;
-  }
-}
-</style> -->
-
 <style scoped>
-/* ========================================================= */
-/*                Modern Premium Toast Alerts                */
-/* ========================================================= */
 
+
+/* Container positioning and sizing */
 #alertContainer {
   max-width: 420px;
   right: 1rem;
@@ -202,10 +61,6 @@ export default {
   transform: translateX(40px) scale(0.97);
 }
 
-/* ========================================================= */
-/*                        CARD BASE                          */
-/* ========================================================= */
-
 .alert-card {
   width: 100%;
   padding: 1rem 1.3rem;
@@ -214,6 +69,7 @@ export default {
   border-radius: 5px;
 
   /* Glass effect */
+  /* Glassmorphism provides modern, premium aesthetic */
   background: rgba(255, 255, 255, 0.35);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -232,14 +88,11 @@ export default {
 }
 
 /* Hover Lift */
+/* Subtle elevation provides interactive feedback */
 .alert-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
 }
-
-/* ========================================================= */
-/*                       INNER LAYOUT                        */
-/* ========================================================= */
 
 .alert-content {
   display: flex;
@@ -253,6 +106,7 @@ export default {
 }
 
 /* Close Button */
+/* Circular button with semi-transparent background */
 .close-btn {
   background: rgba(255, 255, 255, 0.6);
   border: none;
@@ -268,19 +122,17 @@ export default {
   transition: 0.25s ease;
 }
 
+/* Playful rotation on hover for better UX */
 .close-btn:hover {
   transform: scale(1.18) rotate(10deg);
   background: rgba(255, 255, 255, 0.85);
 }
 
-/* ========================================================= */
-/*                    COLOR ACCENTS (left bar)               */
-/* ========================================================= */
-
 .alert-card {
   position: relative;
 }
 
+/* Colored left border indicates alert type at a glance */
 .alert-card::before {
   content: "";
   position: absolute;
@@ -311,10 +163,7 @@ export default {
   background: #f39c12;
 }
 
-/* ========================================================= */
-/*                      DARK MODE TWEAKS                     */
-/* ========================================================= */
-
+/* Dark mode adjusts glassmorphism for better contrast */
 [data-theme="dark"] .alert-card {
   background: rgba(40, 40, 40, 0.55);
   border-color: rgba(255, 255, 255, 0.12);
@@ -331,10 +180,7 @@ export default {
   background: rgba(255, 255, 255, 0.35);
 }
 
-/* ========================================================= */
-/*                         RESPONSIVE                         */
-/* ========================================================= */
-
+/* Mobile optimizations for smaller screens */
 @media (max-width: 768px) {
   #alertContainer {
     max-width: 92%;
