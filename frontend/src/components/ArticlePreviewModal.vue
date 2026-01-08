@@ -1,7 +1,9 @@
 <template>
+  <!-- Fullscreen modal for article preview with dynamic content loading -->
   <div class="modal fade" id="articlePreviewModal" tabindex="-1">
     <div class="modal-dialog modal-fullscreen">
       <div class="modal-content">
+        <!-- Modal header with article title and close button -->
         <div class="modal-header">
           <h5 class="modal-title">
             <i class="fas fa-eye me-2"></i>Article Preview: {{ actualArticleTitle }}
@@ -9,7 +11,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <!-- Loading state -->
+          <!-- Loading state with spinner -->
           <div v-if="loading" class="text-center py-5">
             <div class="spinner-border text-primary" role="status">
               <span class="visually-hidden">Loading article...</span>
@@ -17,7 +19,7 @@
             <p class="mt-3 text-muted">Loading article preview...</p>
           </div>
 
-          <!-- Error state -->
+          <!-- Error state with fallback link to open article externally -->
           <div v-else-if="error" class="alert alert-danger">
             <i class="fas fa-exclamation-circle me-2"></i>
             {{ error }}
@@ -28,8 +30,9 @@
             </div>
           </div>
 
-          <!-- MediaWiki content preview -->
+          <!-- MediaWiki content preview with article metadata -->
           <div v-else-if="mediaWikiContent" class="article-preview-container mediawiki-content">
+            <!-- Article metadata card showing author and creation date -->
             <div v-if="articleMetadata && (articleMetadata.author || articleMetadata.article_created_at)"
               class="article-metadata-card">
               <h6 class="article-metadata-title">Article Author</h6>
@@ -44,18 +47,19 @@
                 </div>
               </div>
             </div>
+            <!-- Render MediaWiki HTML content - sanitized by backend -->
             <!-- eslint-disable-next-line vue/no-v-html -->
             <div class="mediawiki-preview" v-html="mediaWikiContent"></div>
           </div>
 
-          <!-- Article preview iframe (for non-MediaWiki pages) -->
+          <!-- Iframe fallback for non-MediaWiki pages -->
           <div v-else class="article-preview-container">
             <iframe :src="articleUrl" class="article-preview-iframe" frameborder="0" allowfullscreen
               @load="handleIframeLoad" @error="handleIframeError"></iframe>
           </div>
         </div>
         <div class="modal-footer">
-          <!--Show warning if already reviewed -->
+          <!-- Warning alert if submission already reviewed -->
           <div v-if="canReviewSubmission && isAlreadyReviewed" class="alert alert-warning m-3 flex-grow-1">
             <i class="fas fa-check-circle me-2"></i>
             <strong>This submission has already been reviewed.</strong>
@@ -64,13 +68,14 @@
             </div>
           </div>
 
-          <!-- Review Button - disabled if already reviewed -->
+          <!-- Review button - disabled if already reviewed -->
           <button class="btn btn-primary" v-if="canReviewSubmission" :disabled="isAlreadyReviewed"
             @click="openReviewModal">
             <i class="fas fa-gavel me-2"></i>
             {{ isAlreadyReviewed ? 'Already Reviewed' : 'Review Submission' }}
           </button>
 
+          <!-- External link button to open article in new tab -->
           <a :href="articleUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">
             <i class="fas fa-external-link-alt me-2"></i>Open in New Tab
           </a>
@@ -80,6 +85,7 @@
         </div>
       </div>
     </div>
+    <!-- Review submission modal component -->
     <ReviewSubmissionModal :submission-id="submissionId" :contest-scoring-config="contestScoringConfig"
       @reviewed="onReviewed" />
   </div>
@@ -126,26 +132,29 @@ export default {
   emits: ['reviewed'],
 
   setup(props, { emit }) {
+    // Component state
     const loading = ref(true)
     const error = ref('')
     const mediaWikiContent = ref('')
     const actualArticleTitle = ref(props.articleTitle || 'Article')
     const articleMetadata = ref(null)
+    // Timeout for iframe loading fallback
     let loadTimeout = null
     const iframeCheckInterval = null
     const canReviewSubmission = computed(() => props.canReview === true)
 
-
-    // Computed property that's always up-to-date
+    // Computed property to check if submission already reviewed
     const isAlreadyReviewed = computed(() => {
       return props.submission?.already_reviewed === true ||
         props.submission?.reviewed_at !== null
     })
 
+    // Check if URL is a MediaWiki site
     const isMediaWikiUrl = (url) => {
       if (!url) return false
       try {
         const urlObj = new URL(url)
+        // Check for common MediaWiki URL patterns
         return (
           urlObj.hostname.includes('wiki') ||
           urlObj.pathname.includes('/wiki/') ||
@@ -157,13 +166,15 @@ export default {
       }
     }
 
+    // Open review modal for judges to score submission
     const openReviewModal = () => {
+      // Verify user has review permission
       if (!canReviewSubmission.value) {
         showAlert('No permission', 'warning')
         return
       }
 
-      //  Check if already reviewed
+      // Prevent reviewing if already reviewed
       if (isAlreadyReviewed.value) {
         showAlert('This submission has already been reviewed.')
         return
@@ -184,13 +195,14 @@ export default {
       new window.bootstrap.Modal(modalEl).show()
     }
 
+    // Handle review completion event from child modal
     const onReviewed = (reviewData) => {
       console.log('ArticlePreviewModal received reviewed event:', reviewData)
 
-      // Emit to parent (ContestView)
+      // Propagate event to parent component (ContestView)
       emit('reviewed', reviewData)
 
-      // Close the article preview modal
+      // Close the article preview modal after review
       const modalEl = document.getElementById('articlePreviewModal')
       if (modalEl) {
         const modal = window.bootstrap.Modal.getInstance(modalEl)
@@ -200,6 +212,7 @@ export default {
       }
     }
 
+    // Fetch article metadata (author and creation date) from backend
     const fetchArticleMetadata = async (articleUrl) => {
       try {
         // Validate that we have a valid URL
@@ -208,7 +221,6 @@ export default {
         if (!isMediaWikiUrl(articleUrl)) return null
         // Use backend endpoint to fetch article metadata
         // This includes author and creation date information
-
         const response = await fetch(`/api/mediawiki/article-info?url=${encodeURIComponent(articleUrl)}`, {
           method: 'GET',
           headers: {
@@ -217,7 +229,6 @@ export default {
         })
         // If request fails, don't throw error - just return null
         // Metadata is optional, so we don't want to break the preview if metadata fetch fails
-
         if (!response.ok) return null
 
         const data = await response.json()
@@ -241,6 +252,7 @@ export default {
           throw new Error('Article URL is required')
         }
 
+        // Call backend proxy endpoint to fetch article HTML
         const response = await fetch(`/api/mediawiki/preview?url=${encodeURIComponent(articleUrl)}`, {
           method: 'GET',
           headers: {
@@ -279,9 +291,11 @@ export default {
       }
     }
 
+    // Load article preview based on URL type
     const loadPreview = async () => {
       if (!props.articleUrl) return
 
+      // Reset state for new preview
       loading.value = true
       error.value = ''
       mediaWikiContent.value = ''
@@ -292,8 +306,10 @@ export default {
         clearTimeout(loadTimeout)
       }
 
+      // Handle MediaWiki URLs with backend API
       if (isMediaWikiUrl(props.articleUrl)) {
         try {
+          // Fetch content and metadata in parallel for better performance
           const [contentResult, metadata] = await Promise.all([
             fetchMediaWikiContent(props.articleUrl),
             fetchArticleMetadata(props.articleUrl)
@@ -314,6 +330,7 @@ export default {
           console.error('MediaWiki API fetch failed:', err)
           loading.value = false
           const errorMessage = err.message || err.toString()
+          // Provide user-friendly error messages
           if (errorMessage && !errorMessage.includes('Failed to fetch') && !errorMessage.includes('NetworkError')) {
             error.value = `Unable to load article preview: ${errorMessage}. Please use "Open in New Tab" to view the article.`
           } else {
@@ -321,6 +338,7 @@ export default {
           }
         }
       } else {
+        // For non-MediaWiki URLs, use iframe with timeout fallback
         loadTimeout = setTimeout(() => {
           if (loading.value) {
             loading.value = false
@@ -330,6 +348,7 @@ export default {
       }
     }
 
+    // Handle successful iframe load
     const handleIframeLoad = () => {
       if (loadTimeout) {
         clearTimeout(loadTimeout)
@@ -339,6 +358,7 @@ export default {
       error.value = ''
     }
 
+    // Handle iframe loading error
     const handleIframeError = () => {
       if (loadTimeout) {
         clearTimeout(loadTimeout)
@@ -348,6 +368,7 @@ export default {
       error.value = 'Failed to load article preview.'
     }
 
+    // Format date to IST timezone with readable format
     const formatDateShort = (dateString) => {
       if (!dateString) return ''
       try {
@@ -356,10 +377,9 @@ export default {
         // This fixes the issue where naive UTC datetimes were being interpreted as local time
         let utcDateString = dateString
         if (!dateString.endsWith('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
-          // If no timezone indicator, assume it's UTC and append 'Z
+          // If no timezone indicator, assume it's UTC and append 'Z'
           utcDateString = dateString + 'Z'
         }
-
 
         // Convert to IST (Indian Standard Time) timezone
         // IST is UTC+5:30, timezone identifier is 'Asia/Kolkata'
@@ -378,7 +398,7 @@ export default {
       }
     }
 
-    // Watch for URL changes
+    // Watch for URL changes and reload preview
     watch(() => props.articleUrl, (newUrl) => {
       if (newUrl) {
         loadPreview()
@@ -386,18 +406,18 @@ export default {
     }, { immediate: true })
 
     // Watch for title changes
-
     watch(() => props.articleTitle, (newTitle) => {
       if (newTitle) {
         actualArticleTitle.value = newTitle
       }
     }, { immediate: true })
 
-    // Watch for changes in submission.already_reviewed
+    // Watch for changes in submission review status
     watch(() => props.submission?.already_reviewed, (newValue) => {
       console.log('Watched already_reviewed changed to:', newValue)
     })
 
+    // Cleanup on component unmount
     onUnmounted(() => {
       if (loadTimeout) {
         clearTimeout(loadTimeout)
@@ -426,6 +446,7 @@ export default {
 </script>
 
 <style scoped>
+/* Modal header with brand color background */
 .modal-header {
   background-color: var(--wiki-primary);
   color: white;
@@ -440,6 +461,7 @@ export default {
   color: white;
 }
 
+/* Close button styling for dark header */
 .modal-header .btn-close {
   filter: invert(1) brightness(1.2);
   opacity: 0.9;
@@ -450,14 +472,13 @@ export default {
   opacity: 1;
 }
 
-/* Modal body - matches theme - fullscreen */
+/* Modal body - fullscreen with theme support */
 .modal-body {
   padding: 0;
   background-color: var(--wiki-modal-bg);
   color: var(--wiki-text);
   transition: background-color 0.3s ease, color 0.3s ease;
   min-height: calc(100vh - 140px);
-  /* Full height minus header and footer */
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -469,27 +490,22 @@ export default {
   width: 100%;
   height: 100%;
   min-height: calc(100vh - 140px);
-  /* Full height minus header and footer */
   position: relative;
   overflow: hidden;
-  /* Keep hidden for iframe */
   flex: 1;
 }
 
-/* MediaWiki content preview - fullscreen with scrolling */
-/* When container has both classes, allow vertical scrolling for long content */
+/* MediaWiki content preview with scrolling enabled */
 .article-preview-container.mediawiki-content {
   overflow-y: auto;
-  /* Allow scrolling for MediaWiki content */
   overflow-x: hidden;
-  /* Prevent horizontal scrolling */
   padding: 1.5rem;
   background-color: white;
   height: 100%;
   flex: 1;
 }
 
-/* Article metadata card - displays author and creation date */
+/* Article metadata card displays author and creation date */
 .article-metadata-card {
   background-color: #f8f9fa;
   border: 1px solid var(--wiki-border);
@@ -499,6 +515,7 @@ export default {
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
+/* Dark mode metadata card styling */
 [data-theme="dark"] .article-metadata-card {
   background-color: #2d2d2d;
   border-color: #555;
@@ -532,20 +549,21 @@ export default {
   text-align: center;
 }
 
+/* Dark mode background for MediaWiki content */
 [data-theme="dark"] .mediawiki-content {
   background-color: #1a1a1a;
 }
 
+/* MediaWiki preview container with proper sizing */
 .mediawiki-preview {
   max-width: 100%;
   color: var(--wiki-text);
   line-height: 1.6;
-  /* Ensure all content is visible and can expand */
   min-height: fit-content;
   width: 100%;
 }
 
-/* Style MediaWiki content to match Wikipedia appearance */
+/* Style MediaWiki content headings to match Wikipedia appearance */
 .mediawiki-preview :deep(h1),
 .mediawiki-preview :deep(h2),
 .mediawiki-preview :deep(h3),
@@ -560,6 +578,7 @@ export default {
   padding-bottom: 0.5rem;
 }
 
+/* Dark mode heading styles */
 [data-theme="dark"] .mediawiki-preview :deep(h1),
 [data-theme="dark"] .mediawiki-preview :deep(h2),
 [data-theme="dark"] .mediawiki-preview :deep(h3),
@@ -575,6 +594,7 @@ export default {
   color: var(--wiki-text);
 }
 
+/* Link styling within MediaWiki content */
 .mediawiki-preview :deep(a) {
   color: var(--wiki-primary);
   text-decoration: none;
@@ -584,12 +604,14 @@ export default {
   text-decoration: underline;
 }
 
+/* Responsive image sizing */
 .mediawiki-preview :deep(img) {
   max-width: 100%;
   height: auto;
   margin: 1rem 0;
 }
 
+/* Table styling for MediaWiki content */
 .mediawiki-preview :deep(table) {
   width: 100%;
   border-collapse: collapse;
@@ -607,6 +629,7 @@ export default {
   font-weight: 600;
 }
 
+/* List styling for MediaWiki content */
 .mediawiki-preview :deep(ul),
 .mediawiki-preview :deep(ol) {
   margin: 1rem 0;
@@ -617,12 +640,11 @@ export default {
   margin-bottom: 0.5rem;
 }
 
-/* Article preview iframe - fullscreen */
+/* Article preview iframe for non-MediaWiki pages */
 .article-preview-iframe {
   width: 100%;
   height: 100%;
   min-height: calc(100vh - 140px);
-  /* Full height minus header and footer */
   border: none;
   background-color: white;
   transition: opacity 0.3s ease;
@@ -633,7 +655,7 @@ export default {
   background-color: #1a1a1a;
 }
 
-/* Loading spinner */
+/* Loading spinner styling */
 .spinner-border.text-primary {
   color: var(--wiki-primary) !important;
   width: 3rem;
@@ -641,7 +663,7 @@ export default {
   border-width: 0.3em;
 }
 
-/* Alert styling */
+/* Error alert styling with left border accent */
 .alert-danger {
   background-color: rgba(153, 0, 0, 0.1);
   border: 1px solid var(--wiki-danger);
@@ -657,11 +679,12 @@ export default {
   margin-top: 0.5rem;
 }
 
+/* Dark mode error alert */
 [data-theme="dark"] .alert-danger {
   background-color: rgba(230, 128, 128, 0.2);
 }
 
-/* Button styling */
+/* Outline button with hover effects */
 .btn-outline-primary {
   border-color: var(--wiki-primary);
   color: var(--wiki-primary);
@@ -677,6 +700,7 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 102, 153, 0.3);
 }
 
+/* Secondary button styling */
 .btn-secondary {
   background-color: var(--wiki-text-muted);
   border-color: var(--wiki-text-muted);
@@ -688,6 +712,7 @@ export default {
   border-color: var(--wiki-text-muted);
 }
 
+/* Dark mode secondary button */
 [data-theme="dark"] .btn-secondary {
   background-color: #5a6268;
   border-color: #5a6268;
@@ -698,7 +723,7 @@ export default {
   border-color: #6c757d;
 }
 
-/* Modal footer - matches theme */
+/* Modal footer with theme support */
 .modal-footer {
   border-top: 1px solid var(--wiki-border);
   padding: 1rem 1.5rem;
@@ -706,7 +731,7 @@ export default {
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-/* Modal content - ensures proper background - fullscreen */
+/* Modal content fullscreen layout */
 .modal-content {
   background-color: var(--wiki-modal-bg);
   border-color: var(--wiki-border);
@@ -716,7 +741,7 @@ export default {
   flex-direction: column;
 }
 
-/* Icon styling */
+/* Icon hover animation */
 .fas {
   transition: transform 0.2s ease;
 }
@@ -725,17 +750,16 @@ export default {
   transform: scale(1.1);
 }
 
-/* Text muted */
+/* Muted text color */
 .text-muted {
   color: var(--wiki-text-muted);
   transition: color 0.3s ease;
 }
 
-/* Responsive adjustments - fullscreen on mobile too */
+/* Responsive adjustments for mobile devices */
 @media (max-width: 768px) {
   .modal-body {
     min-height: calc(100vh - 120px);
-    /* Slightly less on mobile due to smaller header/footer */
   }
 
   .article-preview-iframe {
