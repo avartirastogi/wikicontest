@@ -2,6 +2,7 @@
   <div>
 
     <!-- HERO SECTION - Professional Clean Design -->
+    <!-- Main landing page hero with title, description, and call-to-action buttons -->
     <section class="hero">
       <div class="container">
         <div class="hero-content">
@@ -12,8 +13,11 @@
             fostering collaborative knowledge creation.
           </p>
 
+          <!-- Primary action buttons for navigation -->
           <div class="hero-buttons">
+            <!-- Browse contests button - always visible -->
             <router-link class="btn btn-primary btn-lg" to="/contests">Browse Contests</router-link>
+            <!-- Get started button - redirects to OAuth if not logged in, dashboard if logged in -->
             <a
               @click.prevent="handleGetStarted"
               class="btn btn-outline-primary btn-lg"
@@ -27,9 +31,11 @@
     </section>
 
     <!-- FEATURES -->
+    <!-- Feature cards explaining platform benefits for different user types -->
     <section class="features container py-5">
       <div class="row g-4">
 
+        <!-- Participant features card -->
         <div class="col-12 col-md-4">
           <div class="feature-card">
             <i class="fas fa-users icon"></i>
@@ -38,6 +44,7 @@
           </div>
         </div>
 
+        <!-- Organizer features card -->
         <div class="col-12 col-md-4">
           <div class="feature-card">
             <i class="fas fa-plus-circle icon"></i>
@@ -46,6 +53,7 @@
           </div>
         </div>
 
+        <!-- Judge features card -->
         <div class="col-12 col-md-4">
           <div class="feature-card">
             <i class="fas fa-gavel icon"></i>
@@ -107,11 +115,6 @@ export default {
 </script>
 
 <style scoped>
-
-/* ==========================================================
-   Professional Hero Section - Clean & Minimal
-   ========================================================== */
-
 /* Hero section - professional solid background */
 .hero {
   background-color: var(--wiki-primary);
@@ -121,6 +124,7 @@ export default {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Dark mode hero background */
 [data-theme="dark"] .hero {
   background-color: #1a2332;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -179,39 +183,40 @@ export default {
   text-decoration: none;
 }
 
+/* Primary button - white on colored background */
 .hero-buttons .btn-primary {
   background-color: #ffffff;
   color: var(--wiki-primary);
   border: 1px solid #ffffff;
 }
 
+/* Primary button hover with lift effect */
 .hero-buttons .btn-primary:hover {
   background-color: rgba(255, 255, 255, 0.95);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Outline button - transparent with border */
 .hero-buttons .btn-outline-primary {
   background-color: transparent;
   color: #ffffff;
   border: 2px solid rgba(255, 255, 255, 0.8);
 }
 
+/* Outline button hover with subtle background */
 .hero-buttons .btn-outline-primary:hover {
   background-color: rgba(255, 255, 255, 0.1);
   border-color: #ffffff;
   color: #ffffff;
 }
 
-/* ==========================================================
-   Features Section - Professional Card Design
-   ========================================================== */
-
 .features {
   background-color: var(--wiki-light-bg);
   padding: 4rem 0;
 }
 
+/* Dark mode features section */
 [data-theme="dark"] .features {
   background-color: var(--wiki-bg);
 }
@@ -228,17 +233,19 @@ export default {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+/* Dark mode feature card shadow */
 [data-theme="dark"] .feature-card {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-/* Subtle hover effect */
+/* Subtle hover effect with lift and border highlight */
 .feature-card:hover {
   border-color: var(--wiki-primary);
   box-shadow: 0 4px 12px rgba(0, 102, 153, 0.12);
   transform: translateY(-2px);
 }
 
+/* Dark mode hover effect */
 [data-theme="dark"] .feature-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
@@ -251,6 +258,7 @@ export default {
   transition: color 0.2s ease;
 }
 
+/* Icon color change on card hover */
 .feature-card:hover .icon {
   color: var(--wiki-primary-hover);
 }
@@ -272,10 +280,7 @@ export default {
   margin: 0;
 }
 
-/* ==========================================================
-   Responsive Design
-   ========================================================== */
-
+/* Tablet and smaller devices */
 @media (max-width: 768px) {
   .hero {
     padding: 3.5rem 0;
@@ -294,6 +299,7 @@ export default {
     margin-bottom: 2rem;
   }
 
+  /* Stack buttons vertically on mobile */
   .hero-buttons {
     flex-direction: column;
     align-items: stretch;
@@ -312,6 +318,7 @@ export default {
   }
 }
 
+/* Mobile devices */
 @media (max-width: 576px) {
   .hero-title {
     font-size: 1.875rem;

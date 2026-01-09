@@ -1,6 +1,6 @@
 <template>
   <div class="container py-5">
-    <!-- Back button -->
+    <!-- Navigation and Action Buttons -->
     <div class="mb-4 d-flex justify-content-between align-items-center">
       <button class="btn btn-outline-secondary" @click="goBack">
         <i class="fas fa-arrow-left me-2"></i>Back to Contests
@@ -10,6 +10,7 @@
           title="View Contest Leaderboard">
           <i class="fas fa-trophy me-2"></i>Leaderboard
         </button>
+        <!-- Only contest creators and admins can delete -->
         <button v-if="canDeleteContest" class="btn btn-danger" @click="handleDeleteContest" :disabled="deletingContest">
           <span v-if="deletingContest" class="spinner-border spinner-border-sm me-2"></span>
           <i v-else class="fas fa-trash me-2"></i>
@@ -22,13 +23,14 @@
       </div>
     </div>
 
-    <!-- Loading/Error States -->
+    <!-- Loading State -->
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
 
+    <!-- Error State -->
     <div v-else-if="error" class="alert alert-danger">
       <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
       <button class="btn btn-sm btn-outline-danger ms-3" @click="goBack">Go Back</button>
@@ -51,6 +53,7 @@
       <!-- Main Content -->
       <div class="row">
         <div :class="canViewSubmissions ? 'col-md-12' : 'col-md-12'">
+          <!-- Basic Contest Information -->
           <div class="card mb-4">
             <div class="card-header">
               <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Contest Details</h5>
@@ -73,7 +76,7 @@
         </div>
       </div>
 
-      <!-- Scoring Column -->
+      <!-- Scoring System Display -->
       <div class="col-md-12">
         <div class="scoring-card">
           <div class="card-header">
@@ -105,7 +108,7 @@
               </div>
             </div>
 
-            <!-- Simple Scoring Display -->
+            <!-- Simple Accept/Reject Scoring Display -->
             <div v-else>
               <div class="tag tag-simple">Simple Scoring</div>
 
@@ -130,7 +133,7 @@
         </div>
       </div>
 
-      <!-- Description Section -->
+      <!-- Contest Description -->
       <div v-if="contest.description" class="card mb-4 description-section">
         <div class="card-header">
           <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Description</h5>
@@ -140,6 +143,7 @@
         </div>
       </div>
 
+      <!-- Contest Rules -->
       <div v-if="contest.rules && contest.rules.text" class="card mb-4">
         <div class="card-header">
           <h5 class="mb-0"><i class="fas fa-book me-2"></i>Contest Rules</h5>
@@ -149,6 +153,7 @@
         </div>
       </div>
 
+      <!-- Submission Type Information -->
       <div class="card mb-4">
         <div class="card-header">
           <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Submission Type Allowed</h5>
@@ -175,7 +180,7 @@
         </div>
       </div>
 
-      <!-- Required Categories Section -->
+      <!-- Required MediaWiki Categories -->
       <div v-if="contest.categories && contest.categories.length > 0" class="card mb-4">
         <div class="card-header">
           <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Required Categories</h5>
@@ -198,7 +203,7 @@
         </div>
       </div>
 
-       <!-- Minimum Reference Count Section -->
+      <!-- Minimum Reference Requirement -->
       <div v-if="contest.min_reference_count > 0" class="card mb-4">
         <div class="card-header">
           <h5 class="mb-0"><i class="fas fa-link me-2"></i>Minimum Reference Count</h5>
@@ -214,7 +219,7 @@
         </div>
       </div>
 
-      <!-- Jury Members Section -->
+      <!-- Jury Members List -->
       <div v-if="contest.jury_members && contest.jury_members.length > 0" class="card mb-4">
         <div class="card-header">
           <h5 class="mb-0"><i class="fas fa-users me-2"></i>Jury Members</h5>
@@ -229,7 +234,7 @@
         </div>
       </div>
 
-      <!-- Submissions Section -->
+      <!-- Submissions Table (Visible to Jury and Organizers) -->
       <div v-if="canViewSubmissions" class="card mb-4">
         <div class="card-header">
           <div class="d-flex justify-content-between align-items-center">
@@ -238,6 +243,7 @@
               <span class="spinner-border spinner-border-sm me-2"></span>
               {{ loadingSubmissions ? 'Loading...' : 'Refreshing...' }}
             </button>
+            <!-- Refresh metadata fetches latest article data from MediaWiki -->
             <button v-else class="btn btn-sm btn-outline-light" @click="refreshMetadata"
               :disabled="submissions.length === 0" title="Refresh article metadata"
               style="color: white; border-color: white;">
@@ -265,22 +271,26 @@
               </thead>
               <tbody>
                 <tr v-for="submission in submissions" :key="submission.id">
+                  <!-- Article Title with Metadata -->
                   <td>
                     <a href="#" @click.prevent="showArticlePreview(submission)"
                       class="text-decoration-none article-title-link" :title="submission.article_link">
                       {{ submission.article_title }}
                       <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
                     </a>
+                    <!-- Total byte count -->
                     <div v-if="submission.article_word_count !== null" class="text-muted small mt-1">
                       <i class="fas fa-file-alt me-1"></i>Total bytes:
                       {{ formatByteCountWithExact((submission.article_word_count || 0) +
                         (submission.article_expansion_bytes || 0)) }}
                     </div>
+                    <!-- Original article size -->
                     <div v-if="submission.article_word_count !== null &&
                       submission.article_word_count !== undefined" class="text-muted small mt-1">
                       <i class="fas fa-clock me-1"></i>Original bytes:
                       {{ formatByteCountWithExact(submission.article_word_count) }}
                     </div>
+                    <!-- Expansion bytes (can be negative for content removal) -->
                     <div v-if="submission.article_expansion_bytes !== null &&
                       submission.article_expansion_bytes !== undefined" class="text-muted small mt-1">
                       <i class="me-1" :class="submission.article_expansion_bytes > 0
@@ -301,6 +311,7 @@
                       </span>
                     </div>
                   </td>
+                  <!-- Author Information with Latest Revision -->
                   <td>
                     <div v-if="submission.article_author">
                       <i class="fas fa-user me-1"></i>{{ submission.article_author }}
@@ -309,6 +320,7 @@
                     <div v-if="submission.article_created_at" class="text-muted small mt-1">
                       <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
                     </div>
+                    <!-- Latest revision author may differ from original -->
                     <div v-if="submission.latest_revision_author" class="mt-2 pt-2"
                       style="border-top: 1px solid #dee2e6;">
                       <div>
@@ -347,6 +359,7 @@
 
       <!-- Bottom Action Row -->
       <div class="d-flex justify-content-between align-items-center gap-2 mb-4">
+        <!-- Debug warning for auth issues -->
         <div v-if="contest && !currentUser && !checkingAuth" class="alert alert-warning py-1 px-2 mb-0 me-auto">
           <i class="fas fa-exclamation-triangle me-1"></i>
           <strong>User not loaded!</strong>
@@ -355,6 +368,7 @@
           </button>
         </div>
 
+        <!-- Submit article button for active contests -->
         <button v-if="contest?.status === 'current' && isAuthenticated && !canViewSubmissions"
           class="btn btn-primary ms-auto" @click="handleSubmitArticle">
           <i class="fas fa-paper-plane me-2"></i>Submit Article
@@ -363,11 +377,10 @@
     </div>
   </div>
 
-  <!-- Submit Article Modal -->
+  <!-- Modals -->
   <SubmitArticleModal v-if="submittingToContestId" :contest-id="submittingToContestId"
     @submitted="handleArticleSubmitted" />
 
-  <!-- Article Preview Modal -->
   <ArticlePreviewModal v-if="!!currentSubmission" :can-review="canUserReview"
     :article-url="currentSubmission.article_link" :article-title="currentSubmission.article_title"
     :submission-id="currentSubmission.id" :submission="currentSubmission"
@@ -386,6 +399,7 @@
 
         <div class="modal-body">
           <form @submit.prevent="saveContestEdits">
+            <!-- Basic Contest Information -->
             <div class="mb-3">
               <label class="form-label">Contest Name</label>
               <input v-model="editForm.name" class="form-control" required />
@@ -415,6 +429,7 @@
               </select>
             </div>
 
+            <!-- Contest Date Range -->
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Start Date</label>
@@ -427,7 +442,7 @@
               </div>
             </div>
 
-            <!-- Organizers Section -->
+            <!-- Organizer Management with Search -->
             <div class="mb-3">
               <label class="form-label">
                 Contest Organizers
@@ -464,6 +479,7 @@
                         <i class="fas fa-user me-2 text-success"></i>
                         <strong>{{ user.username }}</strong>
                       </div>
+                      <!-- Warn when adding self as organizer -->
                       <div v-if="isCurrentUser(user.username)" class="self-warning-badge">
                         <i class="fas fa-exclamation-triangle me-1"></i>
                         <small>This is you</small>
@@ -478,7 +494,7 @@
               </small>
             </div>
 
-            <!-- Jury Members Section -->
+            <!-- Jury Member Management with Search -->
             <div class="mb-3">
               <label class="form-label">
                 Jury Members
@@ -514,6 +530,7 @@
                         <i class="fas fa-user me-2 text-primary"></i>
                         <strong>{{ user.username }}</strong>
                       </div>
+                      <!-- Warn when adding self as jury -->
                       <div v-if="isCurrentUser(user.username)" class="self-warning-badge">
                         <i class="fas fa-exclamation-triangle me-1"></i>
                         <small>This is you</small>
@@ -528,7 +545,7 @@
               </small>
             </div>
 
-            <!-- Scoring Configuration -->
+            <!-- Simple Scoring Configuration -->
             <div v-if="editForm.scoring_mode === 'simple'">
               <div class="mb-3">
                 <label class="form-label">Accepted Points</label>
@@ -541,6 +558,7 @@
               </div>
             </div>
 
+            <!-- Multi-Parameter Scoring Configuration -->
             <div v-if="editForm.scoring_mode === 'multi'">
               <div class="mb-3">
                 <label class="form-label">Maximum Score</label>
@@ -556,6 +574,7 @@
 
               <h6>Scoring Parameters</h6>
 
+              <!-- Dynamic parameter list -->
               <div v-for="(param, index) in editForm.scoring_parameters.parameters" :key="index"
                 class="border rounded p-3 mb-2">
                 <div class="row">
@@ -586,6 +605,7 @@
               </button>
             </div>
 
+            <!-- Article Requirements -->
             <div class="mb-3">
               <label class="form-label">Minimum Byte Count *</label>
               <input type="number" v-model.number="editForm.min_byte_count" class="form-control" min="0"
@@ -603,19 +623,20 @@
             </div>
 
 
-
-            <!-- Category URLs -->
+            <!-- Continuing from edit form - Category URLs section -->
             <div class="mb-3">
               <label class="form-label">
                 Category URLs *
                 <span class="text-muted">(MediaWiki category pages)</span>
               </label>
 
+              <!-- Dynamic category URL inputs -->
               <div v-for="(category, index) in editForm.categories" :key="index" class="mb-2">
                 <div class="input-group">
                   <input type="url" class="form-control" v-model="editForm.categories[index]"
                     :placeholder="index === 0 ? 'https://en.wikipedia.org/wiki/Category:Example' : 'Add another category URL'"
                     required />
+                  <!-- Allow removing categories except the first one -->
                   <button v-if="editForm.categories.length > 1" type="button" class="btn btn-outline-danger"
                     @click="removeCategory(index)" title="Remove category">
                     <i class="fas fa-times"></i>
@@ -666,7 +687,7 @@ export default {
     const route = useRoute()
     const store = useStore()
 
-    // State
+    // Component state
     const contest = ref(null)
     const loading = ref(true)
     const error = ref(null)
@@ -683,19 +704,22 @@ export default {
     const jurySearchResults = ref([])
     const organizerSearchQuery = ref('')
     const organizerSearchResults = ref([])
+
+    // Debounce timers for search functionality
     let jurySearchTimeout = null
     let organizerSearchTimeout = null
     const scoringMode = ref('simple')
 
-    // Current submission ID for preview
+    // Track current submission for preview modal
     const currentSubmissionId = ref(null)
 
-    // Computed property to get current submission reactively
+    // Get submission reactively to ensure updates propagate
     const currentSubmission = computed(() => {
       if (!currentSubmissionId.value) return null
       return submissions.value.find(s => s.id === currentSubmissionId.value)
     })
 
+    // Get current user from multiple possible store locations
     const currentUser = computed(() => {
       if (store.state && store.state.currentUser) {
         return store.state.currentUser
@@ -706,11 +730,13 @@ export default {
       return null
     })
 
+    // Check if user is authenticated with valid data
     const isAuthenticated = computed(() => {
       const user = currentUser.value
       return !!user && !!user.id && !!user.username
     })
 
+    // Determine if user can view submissions (organizers and jury only)
     const canViewSubmissions = computed(() => {
       if (!isAuthenticated.value || !contest.value || !currentUser.value) {
         return false
@@ -719,11 +745,13 @@ export default {
       const username = (currentUser.value.username || '').trim().toLowerCase()
       const contestData = contest.value
 
+      // Contest creator can view submissions
       const contestCreator = (contestData.created_by || '').trim().toLowerCase()
       if (contestCreator && username === contestCreator) {
         return true
       }
 
+      // Jury members can view submissions
       if (contestData.jury_members && Array.isArray(contestData.jury_members)) {
         const juryUsernames = contestData.jury_members.map(j => (j || '').trim().toLowerCase())
         return juryUsernames.includes(username)
@@ -732,11 +760,7 @@ export default {
       return false
     })
 
-    // Check if user can delete contest
-    // Rules:
-    // - Contest creator can delete their own contest.
-    // - Any admin-level user (admin or superadmin) also gets delete permission.
-    //   This relies on "role" inside currentUser coming from backend (user.is_admin()).
+    // Determine if user can delete contest (creator or admin/superadmin)
     const checkDeletePermission = () => {
       canDeleteContest.value = false
 
@@ -761,10 +785,8 @@ export default {
 
       const usernameLower = username.toLowerCase()
       const creatorLower = contestCreator.toLowerCase()
-      // Allow delete if:
-      // - user is contest creator, OR
-      // - user is admin-level (admin or superadmin)
 
+      // Allow delete if user is creator or admin-level
       if (usernameLower === creatorLower) {
         canDeleteContest.value = true
         return
@@ -778,9 +800,11 @@ export default {
       canDeleteContest.value = false
     }
 
+    // Format date to IST timezone with full details
     const formatDate = (dateString) => {
       if (!dateString) return 'No date'
       try {
+        // Ensure UTC format for consistent parsing
         let utcDateString = dateString
         if (!dateString.endsWith('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
           utcDateString = dateString + 'Z'
@@ -800,6 +824,7 @@ export default {
       }
     }
 
+    // Format date in shorter format for table display
     const formatDateShort = (dateString) => {
       if (!dateString) return ''
       try {
@@ -822,24 +847,19 @@ export default {
       }
     }
 
-    // Format byte count for display
-    // Converts bytes to appropriate unit (bytes, KB, MB)
+    // Convert bytes to human-readable format (KB/MB)
     const formatByteCount = (bytes) => {
       if (!bytes) return ''
       if (bytes >= 1048576) {
-        // 1 MB = 1024 * 1024 bytes
         return `${(bytes / 1048576).toFixed(1)} MB`
       }
       if (bytes >= 1024) {
-        // 1 KB = 1024 bytes
         return `${(bytes / 1024).toFixed(1)} KB`
       }
       return `${bytes} bytes`
     }
 
-    // Format byte count with exact bytes in parentheses
-    // Shows formatted size (KB/MB) with exact byte count in parentheses
-    // Example: "1.2 KB (1224 bytes)" or "-500 bytes" for negative values
+    // Format bytes with exact count in parentheses
     const formatByteCountWithExact = (bytes) => {
       if (!bytes && bytes !== 0) return ''
 
@@ -847,54 +867,44 @@ export default {
 
       let formatted = ''
       if (absBytes >= 1048576) {
-        // 1 MB = 1024 * 1024 bytes
         formatted = `${(absBytes / 1048576).toFixed(1)} MB (${bytes} bytes)`
       } else if (absBytes >= 1024) {
-        // 1 KB = 1024 bytes
         formatted = `${(absBytes / 1024).toFixed(1)} KB (${bytes} bytes)`
       } else {
-        // For values less than 1 KB, just show bytes (no parentheses needed)
         formatted = `${bytes} bytes`
       }
 
       return formatted
     }
 
-    // Extract category name from MediaWiki category URL
-    // Example: "https://en.wikipedia.org/wiki/Category:Testcat" -> "Category:Testcat"
+    // Extract category name from full MediaWiki URL
     const getCategoryName = (categoryUrl) => {
       if (!categoryUrl) return ''
 
       try {
-        // Extract the page title from URL
         const url = new URL(categoryUrl)
         let pageTitle = ''
 
-        // Standard MediaWiki URL format: /wiki/Category:Name
+        // Parse standard MediaWiki URL format
         if (url.pathname.includes('/wiki/')) {
           pageTitle = decodeURIComponent(url.pathname.split('/wiki/')[1])
         } else if (url.searchParams.has('title')) {
-          // Old style: /w/index.php?title=Category:Name
           pageTitle = decodeURIComponent(url.searchParams.get('title'))
         } else {
-          // Fallback: last path segment
+          // Fallback to last path segment
           const parts = url.pathname.split('/').filter(p => p)
           if (parts.length > 0) {
             pageTitle = decodeURIComponent(parts[parts.length - 1])
           }
         }
 
-        // Return the page title (which should be "Category:Name")
         return pageTitle || categoryUrl
       } catch (e) {
-        // If URL parsing fails, return the original URL
         return categoryUrl
       }
     }
 
-
-    // Format raw byte count into a short human-readable string
-    // Keeps it simple to avoid template crashes when data is present
+    // Simple byte count formatter
     const formatWordCount = (bytes) => {
       if (bytes === null || bytes === undefined) return '0 bytes'
       const absBytes = Math.abs(bytes)
@@ -906,7 +916,8 @@ export default {
       }
       return `${absBytes} bytes`
     }
-    // Get status label
+
+    // Convert status key to display label
     const getStatusLabel = (status) => {
       const labels = {
         current: 'Active',
@@ -917,8 +928,7 @@ export default {
       return labels[status] || 'Unknown'
     }
 
-    // Get status badge color
-
+    // Get Bootstrap color class for submission status
     const getStatusColor = (status) => {
       switch (status?.toLowerCase()) {
         case 'accepted':
@@ -932,7 +942,7 @@ export default {
       }
     }
 
-    // Load contest data by name
+    // Load contest by ID or name from route
     const loadContest = async (id = null) => {
       loading.value = true
       error.value = null
@@ -947,6 +957,7 @@ export default {
           data = await api.get(`/contest/name/${contestName}`)
         }
 
+        // Ensure scoring parameters are initialized
         contest.value = {
           ...data,
           scoring_parameters: data.scoring_parameters
@@ -954,13 +965,10 @@ export default {
             : { enabled: false }
         }
 
-
-        // Check auth and permissions after loading contest
-
+        // Check permissions after loading contest
         await checkAuthAndPermissions()
 
-        // Load submissions if user can view them
-
+        // Load submissions if user has access
         if (canViewSubmissions.value) loadSubmissions()
       } catch (err) {
         console.error('Error loading contest:', err)
@@ -970,27 +978,25 @@ export default {
       }
     }
 
-    // Check auth and permissions
-
+    // Verify user authentication and check permissions
     const checkAuthAndPermissions = async () => {
       checkingAuth.value = true
       canDeleteContest.value = false
 
       try {
-        // Check if user is already in the store
+        // Try to get user from store
         let loadedUser = store.currentUser || (store.state && store.state.currentUser) || currentUser.value
 
-        // If user is not in store, try to load it via checkAuth
+        // If not in store, fetch from backend
         if (!loadedUser) {
           await store.checkAuth()
           await new Promise(resolve => setTimeout(resolve, 150))
           loadedUser = store.currentUser || (store.state && store.state.currentUser) || currentUser.value
         }
 
-        // Wait for reactive state to propagate
+        // Allow time for reactive updates
         await new Promise(resolve => setTimeout(resolve, 100))
 
-        // Check delete permission
         checkDeletePermission()
       } catch (error) {
         console.error('Failed to check auth:', error)
@@ -1000,9 +1006,7 @@ export default {
       }
     }
 
-    // Load submissions for the contest
-
-
+    // Fetch all submissions for this contest
     const loadSubmissions = async () => {
       if (!contest.value || !canViewSubmissions.value) {
         return
@@ -1021,7 +1025,7 @@ export default {
       }
     }
 
-    // Refresh article metadata for all submissions in the contes
+    // Refresh article metadata from MediaWiki for all submissions
     const refreshMetadata = async () => {
       if (!contest.value || !canViewSubmissions.value || submissions.value.length === 0) {
         return
@@ -1034,7 +1038,6 @@ export default {
           `Metadata refreshed: ${response.updated} updated, ${response.failed} failed`,
           response.failed === 0 ? 'success' : 'warning'
         )
-        // Reload submissions to show updated data
         await loadSubmissions()
       } catch (error) {
         console.error('Failed to refresh metadata:', error)
@@ -1044,8 +1047,7 @@ export default {
       }
     }
 
-
-    // Handle delete contest
+    // Delete contest with confirmation
     const handleDeleteContest = async () => {
       if (!contest.value) return
 
@@ -1060,7 +1062,6 @@ export default {
       try {
         await api.delete(`/contest/${contest.value.id}`)
         showAlert('Contest deleted successfully', 'success')
-        // Navigate back to contests list
         router.push({ name: 'Contests' })
       } catch (error) {
         console.error('Failed to delete contest:', error)
@@ -1069,7 +1070,8 @@ export default {
         deletingContest.value = false
       }
     }
-    // Handle submit article
+
+    // Open article submission modal
     const handleSubmitArticle = () => {
       if (!store.isAuthenticated) {
         showAlert('Please login to submit an article', 'warning')
@@ -1085,11 +1087,13 @@ export default {
       }, 100)
     }
 
+    // Refresh after article submission
     const handleArticleSubmitted = () => {
       submittingToContestId.value = null
       loadContest()
     }
 
+    // Manually refresh authentication status
     const forceAuthRefresh = async () => {
       checkingAuth.value = true
       try {
@@ -1103,11 +1107,12 @@ export default {
       }
     }
 
+    // Navigate back to contests list
     const goBack = () => {
       router.push({ name: 'Contests' })
     }
 
-    // store only submission ID, rely on computed property
+    // Show article preview modal for submission
     const showArticlePreview = (submission) => {
       currentSubmissionId.value = submission.id
 
@@ -1120,11 +1125,10 @@ export default {
       }, 100)
     }
 
-    // Update the actual submission in the array
+    // Update submission in array after review
     const handleSubmissionReviewed = (reviewData) => {
       console.log('Review received:', reviewData)
 
-      // Find and update the submission in the array
       const submissionIndex = submissions.value.findIndex(
         s => s.id === reviewData.submissionId
       )
@@ -1139,12 +1143,14 @@ export default {
           reviewed_at: new Date().toISOString()
         }
 
+        // Trigger reactivity
         submissions.value = [...submissions.value]
 
         showAlert('Submission reviewed successfully', 'success')
       }
     }
 
+    // Watch for user changes and update permissions
     watch(() => currentUser.value, (newUser) => {
       if (newUser && contest.value && !checkingAuth.value) {
         setTimeout(() => {
@@ -1155,6 +1161,7 @@ export default {
       }
     }, { deep: true })
 
+    // Edit form state
     const editForm = reactive({
       name: '',
       project_name: '',
@@ -1181,12 +1188,14 @@ export default {
 
     let editModal = null
 
+    // Initialize modal on mount
     onMounted(() => {
       loadContest()
       const modalEl = document.getElementById('editContestModal')
       if (modalEl) editModal = new bootstrap.Modal(modalEl)
     })
 
+    // Check if username matches current user
     const isCurrentUser = (username) => {
       const currentUsername = currentUser.value?.username
       if (!currentUsername || !username) return false
@@ -1194,7 +1203,7 @@ export default {
         String(username).trim().toLowerCase()
     }
 
-    // Search for jury members
+    // Search jury members with debounce
     const searchJuryMembers = async () => {
       const query = jurySearchQuery.value.trim()
 
@@ -1207,9 +1216,11 @@ export default {
         clearTimeout(jurySearchTimeout)
       }
 
+      // Debounce to avoid excessive API calls
       jurySearchTimeout = setTimeout(async () => {
         try {
           const response = await api.get(`/user/search?q=${encodeURIComponent(query)}&limit=10`)
+          // Filter out already selected users
           jurySearchResults.value = (response.users || []).filter(
             user => !editForm.selectedJuryMembers.includes(user.username)
           )
@@ -1220,6 +1231,7 @@ export default {
       }, 300)
     }
 
+    // Add jury member with self-selection warning
     const addJuryMember = (username) => {
       if (isCurrentUser(username)) {
         const confirmed = window.confirm(
@@ -1238,13 +1250,14 @@ export default {
       }
     }
 
+    // Remove jury member from selection
     const removeJuryMember = (username) => {
       editForm.selectedJuryMembers = editForm.selectedJuryMembers.filter(
         u => u !== username
       )
     }
 
-    // Search for organizers
+    // Search organizers with debounce
     const searchOrganizers = async () => {
       const query = organizerSearchQuery.value.trim()
 
@@ -1270,6 +1283,7 @@ export default {
       }, 300)
     }
 
+    // Add organizer with confirmation
     const addOrganizer = (username) => {
       if (isCurrentUser(username)) {
         const confirmed = window.confirm(
@@ -1287,22 +1301,26 @@ export default {
       }
     }
 
+    // Remove organizer from selection
     const removeOrganizer = (username) => {
       editForm.selectedOrganizers = editForm.selectedOrganizers.filter(
         u => u !== username
       )
     }
 
+    // Add new category field
     const addCategory = () => {
       editForm.categories.push('')
     }
 
+    // Remove category field if more than one exists
     const removeCategory = (index) => {
       if (editForm.categories.length > 1) {
         editForm.categories.splice(index, 1)
       }
     }
 
+    // Populate edit form with contest data
     const openEditModal = () => {
       if (!contest.value) return
 
@@ -1316,24 +1334,28 @@ export default {
       editForm.min_byte_count = Number(contest.value.min_byte_count ?? 0)
       editForm.min_reference_count = Number(contest.value.min_reference_count ?? 0)
 
+      // Populate jury members
       if (Array.isArray(contest.value.jury_members)) {
         editForm.selectedJuryMembers = [...contest.value.jury_members]
       } else {
         editForm.selectedJuryMembers = []
       }
 
+      // Populate organizers
       if (Array.isArray(contest.value.organizers)) {
         editForm.selectedOrganizers = [...contest.value.organizers]
       } else {
         editForm.selectedOrganizers = []
       }
 
+      // Populate categories
       if (Array.isArray(contest.value.categories) && contest.value.categories.length > 0) {
         editForm.categories = [...contest.value.categories]
       } else {
         editForm.categories = ['']
       }
 
+      // Populate scoring configuration
       if (contest.value.scoring_parameters?.enabled) {
         editForm.scoring_mode = 'multi'
 
@@ -1356,6 +1378,7 @@ export default {
         }
       }
 
+      // Reset search states
       jurySearchQuery.value = ''
       jurySearchResults.value = []
       organizerSearchQuery.value = ''
@@ -1364,8 +1387,10 @@ export default {
       if (editModal) editModal.show()
     }
 
+    // Save contest edits with validation
     const saveContestEdits = async () => {
       try {
+        // Validate multi-parameter scoring weights sum to 100%
         if (editForm.scoring_mode === 'multi') {
           const totalWeight = editForm.scoring_parameters.parameters
             .reduce((sum, p) => sum + Number(p.weight || 0), 0)
@@ -1376,12 +1401,14 @@ export default {
           }
         }
 
+        // Ensure at least one category is provided
         const validCategories = editForm.categories.filter(cat => cat && cat.trim())
         if (validCategories.length === 0) {
           showAlert('At least one category URL is required', 'warning')
           return
         }
 
+        // Build update payload
         const payload = {
           name: editForm.name,
           project_name: editForm.project_name,
@@ -1397,6 +1424,7 @@ export default {
           min_reference_count: Number(editForm.min_reference_count),
         }
 
+        // Add scoring configuration based on mode
         if (editForm.scoring_mode === 'multi') {
           payload.scoring_parameters = {
             enabled: true,
@@ -1415,6 +1443,7 @@ export default {
         showAlert('Contest updated successfully', 'success')
         editModal.hide()
 
+        // Reload contest to show changes
         await loadContest(contest.value.id)
       } catch (error) {
         showAlert(
@@ -1424,6 +1453,7 @@ export default {
       }
     }
 
+    // Check if user can review submissions (jury members only)
     const canUserReview = computed(() => {
       if (!isAuthenticated.value || !contest.value || !currentUser.value) {
         return false
@@ -1444,6 +1474,7 @@ export default {
       return false
     })
 
+    // Navigate to contest leaderboard
     const goToLeaderboard = () => {
       if (!contest.value) return
 
@@ -1512,16 +1543,20 @@ export default {
 </script>
 
 <style scoped>
+/* Contest View Styling with Wikipedia Colors */
+/* Main Container */
 .contest-view {
   max-width: 1200px;
   margin: 0 auto;
 }
 
+/* Header Section */
 .contest-header-section {
   border-bottom: 2px solid var(--wiki-primary);
   padding-bottom: 1rem;
 }
 
+/* Main contest title styling with theme support */ 
 .contest-title {
   color: var(--wiki-dark);
   font-weight: 700;
@@ -1530,10 +1565,12 @@ export default {
   transition: color 0.3s ease;
 }
 
+/* Dark theme override for title */
 [data-theme="dark"] .contest-title {
   color: #ffffff !important;
 }
 
+/* Metadata container below contest title */
 .contest-meta {
   display: flex;
   align-items: center;
@@ -1541,6 +1578,7 @@ export default {
   flex-wrap: wrap;
 }
 
+/* Base card container with border and shadow */
 .card {
   border: 1px solid var(--wiki-border);
   border-radius: 8px;
@@ -1548,15 +1586,18 @@ export default {
   transition: box-shadow 0.2s ease;
 }
 
+/* Dark theme card background and border */
 [data-theme="dark"] .card {
   background-color: #2a2a2a;
   border-color: #444;
 }
 
+/* Elevated shadow on card hover */
 .card:hover {
   box-shadow: 0 4px 8px rgba(0, 102, 153, 0.15);
 }
 
+/* Card header with primary background */
 .card-header {
   background-color: var(--wiki-primary);
   color: white;
@@ -1565,39 +1606,47 @@ export default {
   font-weight: 600;
 }
 
+/* Card body content area */
 .card-body {
   padding: 1.5rem;
   color: var(--wiki-dark);
 }
 
+/* Paragraph spacing within card body */
 .card-body p {
   margin-bottom: 0.75rem;
   color: var(--wiki-text);
 }
 
+/* Ensure strong text is visible in dark mode */
 [data-theme="dark"] .card-body strong {
   color: #ffffff;
 }
 
+/* Base badge styling */
 .badge {
   font-weight: 500;
   padding: 0.4em 0.8em;
   font-size: 0.85em;
 }
 
+/* Primary badge uses theme primary color */
 .badge.bg-primary {
   background-color: var(--wiki-primary) !important;
 }
 
+/* Info badge styled as primary with white text */
 .badge.bg-info {
   background-color: var(--wiki-primary) !important;
   color: white;
 }
 
+/* Remove default top margin from tables */
 .table {
   margin-top: 0;
 }
 
+/* Table header with light background and primary accent */
 .table thead th {
   background-color: rgba(0, 102, 153, 0.1);
   color: var(--wiki-primary);
@@ -1606,32 +1655,38 @@ export default {
   padding: 0.75rem;
 }
 
+/* Dark theme table header with adjusted opacity */
 [data-theme="dark"] .table thead th {
   background-color: rgba(93, 184, 230, 0.15);
   border-bottom-color: var(--wiki-primary);
 }
 
+/* Table body cell styling */
 .table tbody td {
   padding: 0.75rem;
   vertical-align: middle;
   color: var(--wiki-text);
 }
 
+/* Row hover effect for better readability */
 .table tbody tr:hover {
   background-color: var(--wiki-hover-bg);
 }
 
+/* Links within tables */
 .table a {
   color: var(--wiki-primary);
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
+/* Link hover state with underline */
 .table a:hover {
   color: var(--wiki-primary-hover);
   text-decoration: underline;
 }
 
+/* Clickable article titles with pointer cursor */
 .article-title-link {
   cursor: pointer;
   color: var(--wiki-primary);
@@ -1644,12 +1699,14 @@ export default {
   text-decoration: underline;
 }
 
+/* Primary outline button */
 .btn-outline-primary {
   border-color: var(--wiki-primary);
   color: var(--wiki-primary);
   transition: all 0.2s ease;
 }
 
+/* Outline button hover with lift effect */
 .btn-outline-primary:hover {
   background-color: var(--wiki-primary);
   border-color: var(--wiki-primary);
@@ -1658,12 +1715,14 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 102, 153, 0.3);
 }
 
+/* Solid primary button */
 .btn-primary {
   background-color: var(--wiki-primary);
   border-color: var(--wiki-primary);
   transition: all 0.2s ease;
 }
 
+/* Primary button hover with lift effect */
 .btn-primary:hover {
   background-color: var(--wiki-primary-hover);
   border-color: var(--wiki-primary-hover);
@@ -1671,6 +1730,7 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 102, 153, 0.3);
 }
 
+/* Danger button for destructive actions */
 .btn-danger {
   background-color: var(--wiki-danger);
   border-color: var(--wiki-danger);
@@ -1678,6 +1738,7 @@ export default {
   transition: all 0.2s
 }
 
+/* Danger button hover state */
 .btn-danger:hover {
   background-color: var(--wiki-danger-hover);
   border-color: var(--wiki-danger-hover);
@@ -1685,6 +1746,7 @@ export default {
   box-shadow: 0 2px 4px rgba(153, 0, 0, 0.2);
 }
 
+/* Dark theme danger button */
 [data-theme="dark"] .btn-danger {
   background-color: #990000;
   border-color: #990000;
@@ -1695,6 +1757,7 @@ export default {
   border-color: #7a0000;
 }
 
+/* Secondary outline button */
 .btn-outline-secondary {
   border-color: var(--wiki-text-muted);
   color: var(--wiki-text-muted);
@@ -1707,38 +1770,42 @@ export default {
   color: white;
 }
 
-/* Alert Styling */
+/* Base alert with left border accent */
 .alert {
   border-radius: 0.5rem;
   border-left: 4px solid;
   padding: 0.75rem 1rem;
 }
 
+/* Info alert with primary color scheme */
 .alert-info {
   background-color: rgba(0, 102, 153, 0.1);
   border-color: var(--wiki-primary);
   color: var(--wiki-primary);
 }
 
+/* Dark theme info alert with higher opacity */
 [data-theme="dark"] .alert-info {
   background-color: rgba(93, 184, 230, 0.2);
   border-color: var(--wiki-primary);
   color: var(--wiki-primary);
 }
 
+/* Danger alert for errors */
 .alert-danger {
   background-color: rgba(153, 0, 0, 0.1);
   border-color: var(--wiki-danger);
   color: var(--wiki-danger);
 }
 
+/* Warning alert uses danger colors */
 .alert-warning {
   background-color: rgba(153, 0, 0, 0.1);
   border-color: var(--wiki-danger);
   color: var(--wiki-danger);
 }
 
-/* Spinner */
+/* Primary colored loading spinner */
 .spinner-border.text-primary {
   color: var(--wiki-primary) !important;
   width: 3rem;
@@ -1746,19 +1813,18 @@ export default {
   border-width: 0.3em;
 }
 
-/* Description section - preserve formatting and line breaks */
+/* Container for description content */
 .description-section {
   margin-top: 0;
 }
 
+/* Text with preserved line breaks and word wrapping */
 .description-text {
   white-space: pre-line;
-  /* Preserves line breaks and wraps text */
   line-height: 1.6;
   margin-bottom: 0;
   color: var(--wiki-text);
   word-wrap: break-word;
-  /* Break long words if needed */
   transition: color 0.3s ease;
 }
 
@@ -1766,6 +1832,7 @@ export default {
   color: var(--wiki-text);
 }
 
+/* Autocomplete dropdown container */
 .jury-autocomplete {
   border: 1px solid var(--wiki-border);
   border-top: none;
@@ -1776,29 +1843,34 @@ export default {
   transition: background-color 0.2s ease;
 }
 
+/* Dark theme dropdown with deeper shadow */
 [data-theme="dark"] .jury-autocomplete {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
+/* Individual autocomplete suggestion item */
 .jury-autocomplete .p-2 {
   transition: background-color 0.2s ease;
   color: var(--wiki-text);
 }
 
+/* Suggestion hover state */
 .jury-autocomplete .p-2:hover {
   background-color: var(--wiki-hover-bg) !important;
 }
 
-/* Self-selection warning */
+/* Warning indicator for self-selection */
 .jury-autocomplete .bg-warning-subtle {
   background-color: rgba(255, 193, 7, 0.25) !important;
   border-left: 4px solid #ffc107;
 }
 
+/* Dark theme self-selection warning */
 [data-theme="dark"] .jury-autocomplete .bg-warning-subtle {
   background-color: rgba(255, 193, 7, 0.35) !important;
 }
 
+/* Badge displayed on self-selection warning */
 .self-warning-badge {
   background-color: #ffc107;
   color: #000;
@@ -1814,12 +1886,12 @@ export default {
   color: #fff;
 }
 
-/* Text styling */
+/* Primary text color within autocomplete */
 .jury-autocomplete .text-primary {
   color: var(--wiki-primary) !important;
 }
 
-/* Responsive */
+/* Adjustments for screens 768px and below */
 @media (max-width: 768px) {
   .contest-title {
     font-size: 2rem;
@@ -1839,7 +1911,7 @@ export default {
   }
 }
 
-/* Full screen modal styling */
+/* Modal that takes entire viewport */
 .modal-fullscreen {
   width: 100vw;
   max-width: 100%;
@@ -1848,6 +1920,7 @@ export default {
   padding: 0;
 }
 
+/* Modal content fills viewport height */
 .modal-fullscreen .modal-content {
   height: 100vh;
   border: 0;
@@ -1856,27 +1929,30 @@ export default {
   flex-direction: column;
 }
 
+/* Scrollable modal body */
 .modal-fullscreen .modal-body {
   flex: 1;
   overflow-y: auto;
   padding: 2rem;
 }
 
-/* Better spacing for full screen layout */
+/* Row spacing within fullscreen modal */
 .modal-fullscreen .modal-body .row {
   margin-bottom: 1rem;
 }
 
+/* Override margin-bottom utility class */
 .modal-fullscreen .modal-body .mb-3 {
   margin-bottom: 1.5rem !important;
 }
 
-/* Ensure form uses available space well */
+/* Center and constrain form width */
 .modal-fullscreen .modal-body form {
   max-width: 1200px;
   margin: 0 auto;
 }
 
+/* Card container for scoring criteria */
 .scoring-card {
   background: white;
   border: 1px solid #e5e7eb;
@@ -1890,11 +1966,12 @@ export default {
   border-color: #404040;
 }
 
+/* Inner content padding */
 .scoring-content {
   padding: 1.25rem;
 }
 
-/* Tags */
+/* Base tag styling for categories */
 .tag {
   display: inline-block;
   padding: 0.375rem 0.5rem;
@@ -1903,16 +1980,19 @@ export default {
   font-weight: 600;
 }
 
+/* Multi-parameter tag in green */
 .tag-multi {
   background: #28a745;
   color: white;
 }
 
+/* Simple scoring tag in blue */
 .tag-simple {
   background: #17a2b8;
   color: white;
 }
 
+/* Flex container for scoring metadata */
 .scoring-meta {
   display: flex;
   align-items: center;
@@ -1922,13 +2002,14 @@ export default {
   flex-wrap: wrap;
 }
 
+/* Maximum points display */
 .max-points {
   color: var(--wiki-primary);
   font-weight: 600;
   font-size: 0.9375rem;
 }
 
-/* Parameters */
+/* Vertical list of scoring parameters */
 .params-list {
   display: flex;
   flex-direction: column;
@@ -1936,6 +2017,7 @@ export default {
   margin-bottom: 1rem;
 }
 
+/* Individual parameter container */
 .param-item {
   padding: 0.5rem;
   background: #f9fafb;
@@ -1947,6 +2029,7 @@ export default {
   background: #1f1f1f;
 }
 
+/* Parameter label and value row */
 .param-row {
   display: flex;
   justify-content: space-between;
@@ -1954,13 +2037,13 @@ export default {
   margin-bottom: 0.375rem;
 }
 
+/* Parameter name label */
 .param-label {
   font-weight: 600;
-
   font-size: 0.9375rem;
 }
 
-
+/* Parameter point value badge */
 .param-value {
   background: var(--wiki-primary);
   color: white;
@@ -1970,6 +2053,7 @@ export default {
   font-size: 0.8125rem;
 }
 
+/* Additional parameter description */
 .param-note {
   color: #6b7280;
   font-size: 0.8125rem;
@@ -1981,7 +2065,7 @@ export default {
   color: #9ca3af;
 }
 
-/* Info Note */
+/* Informational message box */
 .info-note {
   display: flex;
   align-items: center;
@@ -2002,15 +2086,15 @@ export default {
   font-size: 0.9375em;
 }
 
-/* Simple Points */
+/* Responsive grid for point items */
 .points-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 1rem;
   margin-top: 1rem;
-
 }
 
+/* Individual point display card */
 .point-item {
   display: flex;
   justify-content: space-between;
@@ -2025,19 +2109,21 @@ export default {
   background: #1f1f1f;
 }
 
+/* Point category label */
 .point-label {
   font-weight: 500;
   color: #6b7280;
   font-size: 15px;
 }
 
+/* Numeric point value */
 .point-value {
   font-weight: 700;
   font-size: 1.25rem;
   color: var(--wiki-primary)
 }
 
-/* Submissions Info */
+/* Submission count display */
 .submissions-info {
   display: flex;
   justify-content: space-between;
@@ -2048,7 +2134,6 @@ export default {
   margin-top: 1.25rem;
   font-size: 0.9375rem;
   border: 2px solid var(--wiki-border);
-
 }
 
 [data-theme="dark"] .submissions-info {
@@ -2060,12 +2145,13 @@ export default {
   font-weight: 500;
 }
 
+/* Highlighted submission count */
 .submissions-info strong {
   color: var(--wiki-primary);
   font-size: 1.25rem;
 }
 
-/* Responsive */
+/* Adjustments for screens 640px and below */
 @media (max-width: 640px) {
   .scoring-meta {
     flex-direction: column;
@@ -2077,19 +2163,21 @@ export default {
   }
 }
 
+/* Flex container for organizer chips */
 .organizers-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-/* Manage Organizers Modal */
+/* Vertical grid for organizer management */
 .organizers-grid {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
+/* Individual organizer card in management modal */
 .organizer-card {
   display: flex;
   justify-content: space-between;
@@ -2101,6 +2189,7 @@ export default {
   transition: all 0.2s ease;
 }
 
+/* Organizer card hover with subtle highlight */
 .organizer-card:hover {
   background-color: rgba(0, 102, 153, 0.05);
   border-color: var(--wiki-primary);
@@ -2115,7 +2204,7 @@ export default {
   background-color: rgba(93, 184, 230, 0.1);
 }
 
-/* Organizer Info Text */
+/* Informational text about organizers */
 .organizer-info-text {
   color: var(--wiki-text);
   font-size: 0.95rem;
@@ -2129,7 +2218,7 @@ export default {
   background-color: rgba(40, 167, 69, 0.1);
 }
 
-/* Organizers Flex Container */
+/* Flex wrapper for organizer chips */
 .organizers-flex {
   display: flex;
   flex-wrap: wrap;
@@ -2137,7 +2226,7 @@ export default {
   margin-top: 0.5rem;
 }
 
-/* Organizer Chip */
+/* Individual organizer chip/badge */
 .organizer-chip {
   display: flex;
   align-items: center;
@@ -2150,22 +2239,21 @@ export default {
   position: relative;
 }
 
+/* Chip hover with lift effect */
 .organizer-chip:hover {
   background-color: var(--wiki-primary);
   transform: translateY(-2px);
 }
 
-/* Dark mode adjustments */
 [data-theme="dark"] .organizer-chip {
   background-color: var(--wiki-primary);
-  ;
 }
 
 [data-theme="dark"] .organizer-chip:hover {
   background-color: var(--wiki-primary);
 }
 
-/* Responsive */
+/* Mobile adjustments for organizers section */
 @media (max-width: 768px) {
   .organizers-flex {
     gap: 0.5rem;

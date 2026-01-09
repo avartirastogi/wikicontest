@@ -1,5 +1,6 @@
 <template>
   <div class="container py-5">
+    <!-- Page Header with Create Button -->
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4">
       <h2 class="mb-3 mb-sm-0">Contests</h2>
       <button
@@ -11,7 +12,7 @@
       </button>
     </div>
 
-    <!-- Contest Categories Tabs -->
+    <!-- Contest Category Tabs -->
     <ul class="nav nav-tabs mb-4" id="contestTabs">
       <li class="nav-item">
         <button
@@ -42,7 +43,7 @@
       </li>
     </ul>
 
-    <!-- Loading State -->
+    <!-- Loading Spinner -->
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -51,10 +52,12 @@
 
     <!-- Contest List -->
     <div v-else id="contestList">
+      <!-- Empty State Message -->
       <div v-if="currentContests.length === 0" class="alert alert-info text-center">
         <i class="fas fa-info-circle me-2"></i>
         No {{ activeCategory }} contests available.
       </div>
+      <!-- Contest Cards -->
       <div v-else class="contest-list">
         <div
           v-for="contest in currentContests"
@@ -62,9 +65,8 @@
           class="contest-item"
           @click="viewContest(contest)"
         >
-          <!-- Contest Card Layout -->
           <div class="contest-card">
-            <!-- Header Row: Title and Timestamp -->
+            <!-- Contest Header: Title and Creation Timestamp -->
             <div class="contest-header">
               <div class="contest-title-section">
                 <span
@@ -79,7 +81,7 @@
               </div>
             </div>
 
-            <!-- Tags Row: Status, Project, Submissions, Creator -->
+            <!-- Contest Metadata Tags -->
             <div class="contest-tags">
               <!-- Status Badge -->
               <span
@@ -90,22 +92,24 @@
                 {{ getStatusLabel(contest.status) }}
               </span>
 
-              <!-- Project Tag -->
+              <!-- Project/Wiki Badge -->
               <span class="contest-tag project-tag">
                 <i class="fas fa-briefcase"></i>
                 {{ contest.project_name }}
               </span>
 
-              <!-- Submissions Count Badge -->
+              <!-- Submission Count Badge -->
               <span class="contest-tag submissions-tag">
                 <i class="fas fa-file-alt"></i>
                 {{ contest.submission_count || 0 }} {{ contest.submission_count === 1 ? 'submission' : 'submissions' }}
               </span>
 
-              <!-- Organizers with Avatars -->
+              <!-- Organizers with Avatar Bubbles -->
               <div class="organizers-section">
-                <span class="organizers-label">Organizers:</span>
+                <span class="organizers-label"><i class="fas fa-user-cog"></i>
+                </span>
                 <div class="organizers-avatars">
+                  <!-- Show first 3 organizers -->
                   <div
                     v-for="(organizer, index) in getOrganizers(contest)"
                     :key="index"
@@ -114,7 +118,7 @@
                   >
                     {{ getInitials(organizer) }}
                   </div>
-                  <!-- Show +N if more than 3 organizers -->
+                  <!-- Show count of remaining organizers if more than 3 -->
                   <div
                     v-if="getOrganizers(contest).length > 3"
                     class="organizer-avatar organizer-more"
@@ -125,7 +129,7 @@
                 </div>
               </div>
 
-              <!-- Date Range Tag (if dates available) -->
+              <!-- Date Range Badge -->
               <span v-if="contest.start_date || contest.end_date" class="contest-tag date-tag">
                 <i class="fas fa-calendar-alt"></i>
                 {{ formatDateRange(contest.start_date, contest.end_date) }}
@@ -136,14 +140,13 @@
       </div>
     </div>
 
-    <!-- Submit Article Modal -->
+    <!-- Modals -->
     <SubmitArticleModal
       v-if="submittingToContestId"
       :contest-id="submittingToContestId"
       @submitted="handleArticleSubmitted"
     />
 
-    <!-- Create Contest Modal -->
     <CreateContestModal
       ref="createContestModal"
       @created="handleContestCreated"
@@ -174,14 +177,14 @@ export default {
     const submittingToContestId = ref(null)
     const createContestModal = ref(null)
 
-    // Computed property for current contests
+    // Get contests for currently selected category
     const currentContests = computed(() => {
       return store.getContestsByCategory(activeCategory.value)
     })
 
     const isAuthenticated = computed(() => store.isAuthenticated)
 
-    // Get organizers list (creator + organizers array)
+    // Combine creator and organizers array into single list
     const getOrganizers = (contest) => {
       const organizers = []
       
@@ -190,10 +193,9 @@ export default {
         organizers.push(contest.created_by)
       }
       
-      // Add other organizers
+      // Add additional organizers, excluding duplicates
       if (contest.organizers && Array.isArray(contest.organizers)) {
         contest.organizers.forEach(org => {
-          // Don't add creator again if they're in organizers array
           if (org && org !== contest.created_by) {
             organizers.push(org)
           }
@@ -203,49 +205,49 @@ export default {
       return organizers
     }
 
-    // Get initials from username
+    // Extract initials from username for avatar display
     const getInitials = (username) => {
       if (!username) return '?'
       
       const parts = username.trim().split(/\s+/)
       
       if (parts.length >= 2) {
-        // If multiple words, take first letter of first two words
+        // Multiple words: use first letter of first two words
         return (parts[0][0] + parts[1][0]).toUpperCase()
       } else {
-        // If single word, take first two letters
+        // Single word: use first two characters
         return username.substring(0, 2).toUpperCase()
       }
     }
 
-    // Get color for avatar based on username
+    // Generate consistent color for avatar based on username hash
     const getAvatarColor = (username) => {
       if (!username) return '#6c757d'
       
-      // Simple hash function to generate consistent color
+      // Simple hash function for consistent color generation
       let hash = 0
       for (let i = 0; i < username.length; i++) {
         hash = username.charCodeAt(i) + ((hash << 5) - hash)
       }
       
-      // Convert to HSL color for better variety
+      // Convert to HSL for better color variety
       const hue = hash % 360
       return `hsl(${hue}, 65%, 50%)`
     }
 
-    // Set active category
+    // Switch between current, upcoming, and past contests
     const setActiveCategory = (category) => {
       activeCategory.value = category
     }
 
-    // Truncate text helper
+    // Truncate long text with ellipsis
     const truncateText = (text, maxLength) => {
       if (!text) return ''
       if (text.length <= maxLength) return text
       return text.substring(0, maxLength) + '...'
     }
 
-    // Format date for display
+    // Format timestamp for display in contest header
     const formatDate = (dateString) => {
       if (!dateString) return ''
       try {
@@ -262,7 +264,7 @@ export default {
       }
     }
 
-    // Format date range
+    // Format start and end dates into readable range
     const formatDateRange = (startDate, endDate) => {
       if (!startDate && !endDate) return ''
 
@@ -286,7 +288,7 @@ export default {
       return ''
     }
 
-    // Get status label
+    // Convert status key to human-readable label
     const getStatusLabel = (status) => {
       const labels = {
         current: 'Active',
@@ -297,7 +299,7 @@ export default {
       return labels[status] || 'Unknown'
     }
 
-    // Get status CSS class
+    // Get CSS class for status badge styling
     const getStatusClass = (status) => {
       const classes = {
         current: 'status-active',
@@ -308,7 +310,7 @@ export default {
       return classes[status] || 'status-unknown'
     }
 
-    // Get status icon
+    // Get icon class for status badge
     const getStatusIcon = (status) => {
       const icons = {
         current: 'fas fa-circle',
@@ -319,7 +321,7 @@ export default {
       return icons[status] || 'fas fa-question-circle'
     }
 
-    // View contest details
+    // Navigate to contest detail page using slugified name
     const viewContest = (contest) => {
       let contestData = contest
       if (typeof contest === 'number' || typeof contest === 'string') {
@@ -335,7 +337,7 @@ export default {
       router.push({ name: 'ContestView', params: { name: contestSlug } })
     }
 
-    // Show create contest modal
+    // Open modal to create new contest
     const showCreateContestModal = () => {
       if (!store.isAuthenticated) {
         showAlert('Please login to create a contest', 'warning')
@@ -349,12 +351,12 @@ export default {
       }
     }
 
-    // Handle contest created
+    // Refresh contest list after new contest is created
     const handleContestCreated = () => {
-      // Contests will be reloaded automatically by store
+      // Store automatically reloads contests
     }
 
-    // Handle submit article
+    // Open article submission modal for specific contest
     const handleSubmitArticle = (contestId) => {
       if (!store.isAuthenticated) {
         showAlert('Please login to submit an article', 'warning')
@@ -371,13 +373,13 @@ export default {
       }, 100)
     }
 
-    // Handle article submitted
+    // Refresh after article submission
     const handleArticleSubmitted = () => {
       submittingToContestId.value = null
       store.loadContests()
     }
 
-    // Load contests on mount
+    // Load contests on component mount
     onMounted(async () => {
       loading.value = true
       try {
@@ -419,6 +421,7 @@ export default {
 <style scoped>
 /* Contests Page Styling with Wikipedia Colors */
 
+/* Page Header */
 h2 {
   color: var(--wiki-dark);
   font-weight: 700;
@@ -430,6 +433,7 @@ h2 {
   color: #ffffff !important;
 }
 
+/* Primary Action Button */
 .btn-primary {
   background-color: var(--wiki-primary);
   border-color: var(--wiki-primary);
@@ -446,6 +450,7 @@ h2 {
   box-shadow: 0 2px 4px rgba(0, 102, 153, 0.2);
 }
 
+/* Category Navigation Tabs */
 .nav-tabs {
   border-bottom: 1px solid var(--wiki-border);
   margin-bottom: 2rem;
@@ -489,12 +494,14 @@ h2 {
   font-weight: 600;
 }
 
+/* Contest List Container */
 .contest-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
+/* Individual Contest Item */
 .contest-item {
   margin-bottom: 1rem;
   cursor: pointer;
@@ -505,6 +512,7 @@ h2 {
   transform: translateY(-2px);
 }
 
+/* Contest Card Styling */
 .contest-card {
   background-color: #ffffff;
   border: 1px solid var(--wiki-border);
@@ -529,6 +537,7 @@ h2 {
   box-shadow: 0 4px 12px rgba(77, 166, 204, 0.2);
 }
 
+/* Contest Header Layout */
 .contest-header {
   display: flex;
   justify-content: space-between;
@@ -544,6 +553,7 @@ h2 {
   flex: 1;
 }
 
+/* Contest Title Link */
 .contest-title-link {
   color: var(--wiki-primary);
   font-size: 1.4rem;
@@ -568,6 +578,7 @@ h2 {
   text-decoration: underline;
 }
 
+/* Creation Timestamp */
 .contest-timestamp {
   color: #666;
   font-size: 0.875rem;
@@ -579,6 +590,7 @@ h2 {
   color: #aaa;
 }
 
+/* Tags Container */
 .contest-tags {
   display: flex;
   flex-wrap: wrap;
@@ -586,6 +598,7 @@ h2 {
   align-items: center;
 }
 
+/* Base Tag Styling */
 .contest-tag {
   display: inline-flex;
   align-items: center;
@@ -602,6 +615,7 @@ h2 {
   font-size: 0.65rem;
 }
 
+/* Status Badge Variants */
 .status-tag {
   background-color: #f5f5f5;
   color: #424242;
@@ -632,6 +646,7 @@ h2 {
   border: 1px solid #e0e0e0;
 }
 
+/* Dark mode status badge overrides */
 [data-theme="dark"] .status-tag {
   background-color: #f5f5f5 !important;
   color: #424242 !important;
@@ -656,6 +671,7 @@ h2 {
   border-color: #ce93d8 !important;
 }
 
+/* Project Badge */
 .project-tag {
   background-color: #e3f2fd;
   color: #1565c0;
@@ -668,6 +684,7 @@ h2 {
   border-color: #90caf9 !important;
 }
 
+/* Submissions Badge */
 .submissions-tag {
   background-color: #e8f5e9;
   color: #2e7d32;
@@ -680,6 +697,7 @@ h2 {
   border-color: #a5d6a7 !important;
 }
 
+/* Date Range Badge */
 .date-tag {
   background-color: #fff3e0;
   color: #e65100;
@@ -693,7 +711,7 @@ h2 {
   border-color: #ffcc80 !important;
 }
 
-/* Organizers Section Styling */
+/* Organizers Section */
 .organizers-section {
   display: inline-flex;
   align-items: center;
@@ -720,6 +738,7 @@ h2 {
   color: #0066cc !important;
 }
 
+/* Organizer Avatar Bubbles */
 .organizers-avatars {
   display: flex;
   align-items: center;
@@ -748,11 +767,13 @@ h2 {
   z-index: 10;
 }
 
+/* +N overflow indicator */
 .organizer-more {
   background: var(--wiki-primary);
   font-size: 0.6rem;
 }
 
+/* Empty State Alert */
 .alert-info {
   background-color: rgba(0, 102, 153, 0.1);
   border: 1px solid var(--wiki-primary);
@@ -775,6 +796,7 @@ h2 {
   color: #ffffff;
 }
 
+/* Loading Spinner */
 .spinner-border.text-primary {
   color: var(--wiki-primary) !important;
   width: 3rem;
@@ -782,7 +804,7 @@ h2 {
   border-width: 0.3em;
 }
 
-/* Responsive adjustments */
+/* Tablet Responsive */
 @media (max-width: 768px) {
   .container {
     padding-left: 1rem;
@@ -845,6 +867,7 @@ h2 {
   }
 }
 
+/* Mobile Responsive */
 @media (max-width: 576px) {
   h2 {
     font-size: 1.5rem;

@@ -11,16 +11,16 @@
 
 import axios from 'axios'
 
-// Create axios instance with default configuration
+// Configure axios instance with base settings for all API requests
 const api = axios.create({
   baseURL: '/api',
-  withCredentials: true, // Include cookies for JWT authentication
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
   }
 })
 
-// Helper function to get cookie value
+// Extract cookie value by name from document.cookie string
 function getCookie(name) {
   const value = `; ${document.cookie}`
   const parts = value.split(`; ${name}=`)
@@ -30,10 +30,10 @@ function getCookie(name) {
   return null
 }
 
-// Request interceptor - Add CSRF token to requests
+// Request interceptor to inject CSRF token into outgoing requests
 api.interceptors.request.use(
   (config) => {
-    // Add CSRF token if available
+    // Attach CSRF token from cookie to request header for Flask-JWT protection
     const csrfToken = getCookie('csrf_access_token')
     if (csrfToken) {
       config.headers['X-CSRF-TOKEN'] = csrfToken
@@ -45,29 +45,25 @@ api.interceptors.request.use(
   }
 )
 
-// Response interceptor - Handle errors globally
+// Response interceptor for centralized error handling and data extraction
 api.interceptors.response.use(
   (response) => {
-    // Return response data directly
+    // Unwrap response to return data directly instead of full axios response
     return response.data
   },
   (error) => {
-    // For 401 errors (unauthorized), don't show alert automatically
-    // This is normal for unauthenticated users and shouldn't always trigger an alert
-    // The calling code should handle 401 errors appropriately
+    // Handle 401 errors silently to avoid alert spam during auth checks
     if (error.response?.status === 401) {
       const apiError = new Error('Unauthorized')
       apiError.status = 401
       apiError.response = error.response
-      // Don't show alert for 401 - let the calling code decide
-      // This prevents "Unauthorized" alerts from showing during normal auth checks
       return Promise.reject(apiError)
     }
 
-    // Extract error message from response
+    // Extract meaningful error message from backend response
     const message = error.response?.data?.error || error.message || 'Request failed'
 
-    // Create a new error with the message
+    // Create enriched error object with status and response data
     const apiError = new Error(message)
     apiError.status = error.response?.status
     apiError.response = error.response
@@ -76,21 +72,12 @@ api.interceptors.response.use(
   }
 )
 
-// Export API methods
+// Exposed API methods wrapping axios HTTP verbs
 export default {
-  // GET request
+  // Standard HTTP methods with consistent interface
   get: (url, config = {}) => api.get(url, config),
-
-  // POST request
   post: (url, data = {}, config = {}) => api.post(url, data, config),
-
-  // PUT request
   put: (url, data = {}, config = {}) => api.put(url, data, config),
-
-  // DELETE request
   delete: (url, config = {}) => api.delete(url, config),
-
-  // PATCH request
   patch: (url, data = {}, config = {}) => api.patch(url, data, config)
 }
-

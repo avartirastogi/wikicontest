@@ -7,7 +7,7 @@
 
 import { reactive } from 'vue'
 
-// Global alert state
+// Global reactive state for all active alerts
 const alertState = reactive({
   alerts: []
 })
@@ -18,6 +18,7 @@ const alertState = reactive({
  * @param {string} type - Alert type: 'success', 'danger', 'warning', 'info'
  */
 export function showAlert(message, type = 'info') {
+  // Create unique alert with timestamp and random number to prevent collisions
   const alert = {
     id: Date.now() + Math.random(),
     message,
@@ -26,7 +27,7 @@ export function showAlert(message, type = 'info') {
 
   alertState.alerts.push(alert)
 
-  // Auto-remove after 5 seconds
+  // Auto-dismiss alert after 5 seconds
   setTimeout(() => {
     removeAlert(alert.id)
   }, 5000)
@@ -49,4 +50,3 @@ export function removeAlert(id) {
 export function getAlertState() {
   return alertState
 }
-
