@@ -8,6 +8,10 @@
  * - Crimson Red: #990000 (danger/warning)
  * - Outer Space: #484848 (text/dark)
  */
+   
+/* -----------------------------------
+   CSS CUSTOM PROPERTIES (VARIABLES)
+   ----------------------------------- */
 
 /* Wikipedia Color Variables - Light Mode (Default) */
 :root {
@@ -58,6 +62,10 @@
   --wiki-hover-bg: rgba(0, 102, 153, 0.2);
 }
 
+/* -----------------------------------
+   BASE STYLES & RESET
+   ----------------------------------- */
+
 /* Reset and base styles */
 * {
   margin: 0;
@@ -73,19 +81,28 @@ body {
   background-color: var(--wiki-light-bg);
   transition: background-color 0.3s ease, color 0.3s ease;
   font-size: 15px;
+  /* Improve font rendering across browsers */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Utility classes */
+/* -----------------------------------
+   UTILITY CLASSES
+   ----------------------------------- */
+
 .hidden {
   display: none !important;
 }
 
+/* Indicate loading state with reduced opacity */
 .loading {
   opacity: 0.6;
   pointer-events: none;
 }
+
+/* -----------------------------------
+   LINK STYLES
+   ----------------------------------- */
 
 /* Link styles - Wikipedia blue */
 a {
@@ -99,7 +116,10 @@ a:hover {
   text-decoration: underline;
 }
 
-/* Form styles */
+/* -----------------------------------
+   FORM STYLES
+   ----------------------------------- */
+
 .form-control {
   border-color: var(--wiki-input-border);
   background-color: var(--wiki-input-bg);
@@ -107,11 +127,13 @@ a:hover {
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Ensure visible border in dark mode */
 [data-theme="dark"] .form-control {
   border-width: 1px;
   border-style: solid;
 }
 
+/* Focus state with Wikipedia blue accent */
 .form-control:focus {
   border-color: var(--wiki-primary);
   box-shadow: 0 0 0 0.2rem rgba(0, 102, 153, 0.25);
@@ -120,6 +142,7 @@ a:hover {
   color: var(--wiki-text);
 }
 
+/* Adjusted focus shadow for dark mode */
 [data-theme="dark"] .form-control:focus {
   box-shadow: 0 0 0 0.2rem rgba(93, 184, 230, 0.3);
 }
@@ -135,7 +158,7 @@ a:hover {
   opacity: 0.6;
 }
 
-/* Date input color scheme */
+/* Date input color scheme - ensures proper calendar appearance */
 input[type="date"].form-control,
 input[type="datetime-local"].form-control,
 input[type="time"].form-control {
@@ -153,12 +176,16 @@ input[type="time"].form-control {
   border-color: var(--wiki-primary);
 }
 
-/* Button styles */
+/* -----------------------------------
+   BUTTON STYLES
+   ----------------------------------- */
+
 .btn {
   transition: all 0.2s ease;
   font-weight: 500;
 }
 
+/* Focus ring for accessibility */
 .btn:focus {
   box-shadow: 0 0 0 0.2rem rgba(0, 102, 153, 0.25);
 }
@@ -239,6 +266,10 @@ input[type="time"].form-control {
   color: white !important;
 }
 
+/* -----------------------------------
+   CARD STYLES
+   ----------------------------------- */
+
 /* Card styles - professional clean design */
 .card {
   border-radius: 4px;
@@ -257,6 +288,7 @@ input[type="time"].form-control {
   border-width: 1px;
 }
 
+/* Hover effect - highlight with primary color */
 .card:hover {
   border-color: var(--wiki-primary);
   box-shadow: 0 2px 8px rgba(0, 102, 153, 0.1);
@@ -277,12 +309,55 @@ input[type="time"].form-control {
   height: 100% !important;
 }
 
+/* -----------------------------------
+   BADGE & STATUS STYLES
+   ----------------------------------- */
+
 /* Status badge styles */
 .status-badge {
   font-size: 0.8em;
   padding: 0.3em 0.6em;
   font-weight: 500;
 }
+
+.badge {
+  font-weight: 500;
+  padding: 0.35em 0.65em;
+}
+
+/* Primary badge - blue background with white text */
+.badge.bg-primary {
+  background-color: var(--wiki-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Success badge - green background with white text */
+.badge.bg-success {
+  background-color: var(--wiki-success) !important;
+  color: #ffffff !important;
+}
+
+/* Warning badge - use brighter color for better visibility */
+.badge.bg-warning {
+  background-color: var(--wiki-warning) !important;
+  color: #000000 !important; /* Dark text on bright warning background */
+}
+
+/* Danger badge - red background with white text */
+.badge.bg-danger {
+  background-color: var(--wiki-danger) !important;
+  color: #ffffff !important;
+}
+
+/* Dark mode badge adjustments - ensure all badges are visible */
+[data-theme="dark"] .badge.bg-warning {
+  background-color: var(--wiki-warning) !important;
+  color: #000000 !important; /* Dark text on bright orange background for maximum contrast */
+}
+
+/* -----------------------------------
+   NAVIGATION TAB STYLES
+   ----------------------------------- */
 
 /* Nav tabs styling - Wikipedia colors - subtle border */
 .nav-tabs {
@@ -310,12 +385,17 @@ input[type="time"].form-control {
   background-color: var(--wiki-hover-bg);
 }
 
+/* Active tab indicator with primary color border */
 .nav-tabs .nav-link.active {
   color: var(--wiki-primary);
   background-color: transparent;
   border-bottom-color: var(--wiki-primary);
   font-weight: 600;
 }
+
+/* -----------------------------------
+   ALERT STYLES
+   ----------------------------------- */
 
 /* Alert styles - Enhanced visibility */
 .alert {
@@ -397,6 +477,7 @@ input[type="time"].form-control {
   filter: brightness(1);
 }
 
+/* Invert close button color for dark mode */
 [data-theme="dark"] .alert .btn-close {
   filter: invert(1) brightness(1.5);
   opacity: 0.9;
@@ -407,7 +488,10 @@ input[type="time"].form-control {
   filter: invert(1) brightness(2);
 }
 
-/* Table styles */
+/* -----------------------------------
+   TABLE STYLES
+   ----------------------------------- */
+
 .table {
   color: var(--wiki-text);
   transition: color 0.3s ease;
@@ -417,6 +501,7 @@ input[type="time"].form-control {
   background-color: var(--wiki-hover-bg);
 }
 
+/* Table header with primary color accent */
 .table thead th {
   border-bottom: 2px solid var(--wiki-primary);
   color: var(--wiki-dark);
@@ -439,7 +524,10 @@ input[type="time"].form-control {
   transition: border-color 0.3s ease;
 }
 
-/* Modal styles */
+/* -----------------------------------
+   MODAL STYLES
+   ----------------------------------- */
+
 .modal-content {
   background-color: var(--wiki-modal-bg);
   color: var(--wiki-text);
@@ -447,12 +535,14 @@ input[type="time"].form-control {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
+/* Modal header with primary color background */
 .modal-header {
   background-color: var(--wiki-primary);
   color: white;
   border-bottom: none;
 }
 
+/* Invert close button for visibility on colored background */
 .modal-header .btn-close {
   filter: invert(1);
 }
@@ -466,41 +556,9 @@ input[type="time"].form-control {
   background-color: var(--wiki-modal-bg);
 }
 
-/* Badge colors */
-.badge {
-  font-weight: 500;
-  padding: 0.35em 0.65em;
-}
-
-/* Primary badge - blue background with white text */
-.badge.bg-primary {
-  background-color: var(--wiki-primary) !important;
-  color: #ffffff !important;
-}
-
-/* Success badge - green background with white text */
-.badge.bg-success {
-  background-color: var(--wiki-success) !important;
-  color: #ffffff !important;
-}
-
-/* Warning badge - use brighter color for better visibility */
-.badge.bg-warning {
-  background-color: var(--wiki-warning) !important;
-  color: #000000 !important; /* Dark text on bright warning background */
-}
-
-/* Danger badge - red background with white text */
-.badge.bg-danger {
-  background-color: var(--wiki-danger) !important;
-  color: #ffffff !important;
-}
-
-/* Dark mode badge adjustments - ensure all badges are visible */
-[data-theme="dark"] .badge.bg-warning {
-  background-color: var(--wiki-warning) !important;
-  color: #000000 !important; /* Dark text on bright orange background for maximum contrast */
-}
+/* -----------------------------------
+   ANIMATIONS
+   ----------------------------------- */
 
 /* Animation for page transitions */
 .fade-enter-active,
@@ -512,6 +570,10 @@ input[type="time"].form-control {
 .fade-leave-to {
   opacity: 0;
 }
+
+/* -----------------------------------
+   RESPONSIVE STYLES
+   ----------------------------------- */
 
 /* Mobile-first responsive improvements */
 @media (max-width: 768px) {
@@ -559,6 +621,7 @@ input[type="time"].form-control {
     font-size: 0.95rem;
   }
   
+  /* Responsive heading sizes */
   h1 { font-size: 1.75rem; }
   h2 { font-size: 1.5rem; }
   h3 { font-size: 1.25rem; }
@@ -566,4 +629,3 @@ input[type="time"].form-control {
   h5 { font-size: 1rem; }
   h6 { font-size: 0.9rem; }
 }
-

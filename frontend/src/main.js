@@ -18,12 +18,12 @@ const app = createApp(App)
 // Use Vue Router for navigation
 app.use(router)
 
-// Process OAuth callback if we just returned from Wikimedia
+// Wait for router to be ready before processing OAuth callback
 router.isReady().then(() => {
   const store = useStore()
+  // Handle OAuth redirect from Wikimedia login
   processOAuthCallback(store, router)
 })
 
 // Mount the app to the DOM
 app.mount('#app')
-

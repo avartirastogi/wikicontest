@@ -61,6 +61,7 @@
                         <i class="fas fa-user me-2"></i>Profile
                       </router-link>
                     </li>
+                    <!-- Jury Dashboard link - only visible to jury members -->
                     <li v-if="isJury">
                       <router-link class="dropdown-item" to="/jurydashboard">
                         <i class="fas fa-tachometer-alt me-2"></i>Jury Dashboard
@@ -110,18 +111,17 @@ export default {
     const router = useRouter()
     const isJury = ref(false)
 
-    // Use store's computed properties directly - they are already reactive
-    // Don't wrap them in another computed() - that breaks reactivity
+    // Access reactive store properties directly without wrapping
     const isAuthenticated = store.isAuthenticated
     const currentUser = store.currentUser
     const theme = store.theme
 
-    // Toggle theme function
+    // Toggle between light and dark theme
     const toggleTheme = () => {
       store.toggleTheme()
     }
 
-    // Get API base URL - use full URL for OAuth to ensure proper redirect
+    // Return appropriate API base URL based on environment
     const getApiBaseUrl = () => {
       // In development, use full URL to Flask backend
       if (import.meta.env.DEV) {
@@ -131,15 +131,15 @@ export default {
       return '/api'
     }
 
-    // Check authentication on app mount
-    // This runs after initial render, so buttons will show immediately
+    // Initialize app state and check authentication on mount
     onMounted(async () => {
-      // Apply theme on mount (in case store hasn't initialized it yet)
+      // Apply saved theme preference from localStorage
       if (typeof document !== 'undefined') {
         const savedTheme = localStorage.getItem('theme') || 'light'
         store.setTheme(savedTheme)
       }
 
+      // Verify user authentication status
       try {
         // Force a fresh auth check - this will clear state if not authenticated
         await store.checkAuth()
@@ -149,38 +149,37 @@ export default {
         // checkAuth already clears state on error
         console.log('Auth check completed - user not logged in')
       }
+      // Determine if user has jury privileges
       try {
         const data = await api.get('/user/dashboard')
 
-        // 👇 FRONTEND-ONLY JURY CHECK
+        // Frontend-only check: user is jury if they have assigned contests
         isJury.value = Array.isArray(data.jury_contests) && data.jury_contests.length > 0
       } catch (e) {
         isJury.value = false
       }
     })
 
-    // Logout handler
+    // Handle user logout and cleanup
     const handleLogout = async () => {
       try {
-        // Logout clears state immediately
+        // Clear user session and state
         await store.logout()
 
         // Small delay to ensure cookies are cleared on backend
         await new Promise(resolve => setTimeout(resolve, 200))
 
-        // Force a fresh auth check to verify logout worked
-        // This ensures state is definitely cleared
+        // Verify logout by forcing fresh auth check
         await store.checkAuth()
 
         // Show success message
         const { showAlert } = await import('./utils/alerts')
         showAlert('Logged out successfully', 'success')
 
-        // Redirect to home - state is already cleared
+        // Redirect to home page
         router.push('/')
       } catch (error) {
-        // Even if logout fails, ensure state is cleared
-        // Force checkAuth to clear any stale state
+        // Ensure state is cleared even if logout request fails
         await store.checkAuth()
 
         const { showAlert } = await import('./utils/alerts')
@@ -209,10 +208,6 @@ export default {
  * Crimson Red: #990000 (danger/warning)
  * Outer Space: #484848 (text/dark)
  */
-
-/* ================================
-   WIKIMEDIA UI UPGRADE – PREMIUM
-   ================================ */
 
 /* --- Brand Colors --- */
 :root {
@@ -244,9 +239,6 @@ input {
   letter-spacing: 0.2px;
 }
 
-/* =======================
-   NAVBAR - Professional Design
-   ======================= */
 .navbar {
   background: var(--wiki-navbar-bg) !important;
   border-bottom: 1px solid var(--wiki-border);
@@ -256,6 +248,7 @@ input {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
+/* Dark mode navbar styling */
 [data-theme="dark"] .navbar {
   background: var(--wiki-navbar-bg) !important;
   border-bottom: 1px solid var(--wiki-border);
@@ -336,9 +329,6 @@ input {
   background: var(--wiki-hover-bg);
 }
 
-/* =======================
-   Buttons - Professional Style
-   ======================= */
 .btn-primary {
   background: var(--wiki-primary);
   border: 1px solid var(--wiki-primary);
@@ -408,9 +398,6 @@ input {
   background: var(--wiki-hover-bg);
 }
 
-/* =======================
-   Dropdown Menu - Professional
-   ======================= */
 .dropdown-menu {
   border-radius: 4px;
   padding: 0.25rem 0;
@@ -463,9 +450,6 @@ input {
   color: #990000 !important;
 }
 
-/* =======================
-   Global Card UI - Professional
-   ======================= */
 .card {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   border: 1px solid var(--wiki-border);
@@ -493,9 +477,6 @@ input {
   font-size: 1.1rem;
 }
 
-/* =======================
-   Responsive Enhancements
-   ======================= */
 @media (max-width: 768px) {
   .navbar-brand {
     font-size: 1.3rem;

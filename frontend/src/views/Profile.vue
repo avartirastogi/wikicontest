@@ -5,14 +5,17 @@
 
     <transition name="fade-scale">
 
+      <!-- User Profile Card -->
       <div v-if="currentUser" class="profile-card">
 
+        <!-- Profile Header with Avatar and Badge -->
         <div class="profile-header">
           <div class="avatar">
             <i class="fas fa-user"></i>
           </div>
           <div class="username-with-badge">
             <h3>{{ displayUsername }}</h3>
+            <!-- Role badge color changes based on user role -->
             <span
               class="role-badge"
               :class="userRole === 'superadmin' ? 'badge-superadmin' : 'badge-user'"
@@ -23,6 +26,7 @@
           <p class="tagline">Wikimedia Contributor</p>
         </div>
 
+        <!-- User Information Section -->
         <div class="info-section">
           <div class="info-item">
             <i class="fas fa-user-circle"></i>
@@ -43,6 +47,7 @@
             <i class="fas fa-shield-alt"></i>
             <span>
               <strong>Role</strong> :
+              <!-- Role text with dynamic styling -->
               <span
                 class="role-text"
                 :class="userRole === 'superadmin' ? 'role-superadmin' : 'role-user'"
@@ -55,6 +60,7 @@
 
       </div>
 
+      <!-- Fallback message if not logged in -->
       <div v-else class="alert-message">
         <i class="fas fa-exclamation-triangle"></i>
         Please login to view your profile.
@@ -78,16 +84,16 @@ export default {
     const route = useRoute()
     const currentUser = computed(() => store.currentUser)
 
-    // Function to refresh user data from backend
+    // Refresh user data from backend to get latest role information
     const refreshUserData = async () => {
       console.log('🔄 Refreshing user data...')
       try {
-        // Force a fresh auth check to get latest role from database
+        // Force auth check to fetch latest data from database
         await store.checkAuth()
-        // Wait for reactive state to update
+        // Allow time for reactive state to propagate
         await new Promise(resolve => setTimeout(resolve, 300))
 
-        // Log what we got
+        // Log refreshed data for debugging
         console.log('🔄 After refresh - currentUser:', JSON.stringify(currentUser.value, null, 2))
         console.log('🔄 After refresh - role:', currentUser.value?.role)
       } catch (error) {
@@ -95,22 +101,22 @@ export default {
       }
     }
 
-    // Refresh user data when profile page loads to ensure we have latest role info
+    // Refresh user data when profile page loads
     onMounted(async () => {
       console.log('📄 Profile page mounted')
       console.log('📄 Current user before refresh:', JSON.stringify(currentUser.value, null, 2))
       console.log('📄 Current user role before refresh:', currentUser.value?.role)
 
-      // Refresh user data
+      // Refresh to ensure latest role data
       await refreshUserData()
 
-      // Debug: log current user to see what data we have
+      // Debug logging to verify role is loaded correctly
       console.log('📄 Profile mounted - currentUser after refresh:', JSON.stringify(currentUser.value, null, 2))
       console.log('📄 Profile mounted - currentUser.role after refresh:', currentUser.value?.role)
       console.log('📄 Store currentUser:', JSON.stringify(store.currentUser, null, 2))
       console.log('📄 Store state.currentUser:', JSON.stringify(store.state?.currentUser, null, 2))
 
-      // Final verification - log the exact role value
+      // Final verification of role value
       if (currentUser.value) {
         console.log('📄 FINAL ROLE CHECK:')
         console.log('  - currentUser.value.role:', currentUser.value.role)
@@ -121,13 +127,13 @@ export default {
       }
     })
 
-    // Also refresh when route is activated (for keep-alive scenarios)
+    // Refresh when route is activated for keep-alive scenarios
     onActivated(async () => {
       console.log('📄 Profile page activated - refreshing data')
       await refreshUserData()
     })
 
-    // Watch for route changes to refresh data when navigating to profile
+    // Watch for route changes to refresh when navigating to profile
     watch(() => route.path, async (newPath) => {
       if (newPath === '/profile') {
         console.log('📄 Route changed to profile - refreshing data')
@@ -135,15 +141,16 @@ export default {
       }
     }, { immediate: false })
 
-    // Watch currentUser changes to log when role updates
+    // Watch for role changes to log updates
     watch(() => currentUser.value?.role, (newRole, oldRole) => {
       console.log('📄 Role changed:', { oldRole, newRole })
+      // Special check for known superadmin user
       if (currentUser.value?.username === 'Adityakumar0545' && newRole !== 'superadmin') {
         console.error(' [ERROR] Adityakumar0545 role is not superadmin! Current:', newRole)
       }
     })
 
-    // Watch store.state.currentUser.role directly for immediate updates
+    // Watch store state directly for immediate role updates
     watch(() => store.state?.currentUser?.role, (newRole) => {
       console.log('📄 Store state role changed to:', newRole)
       if (newRole === 'superadmin') {
@@ -151,11 +158,9 @@ export default {
       }
     }, { immediate: true })
 
-
-    // Format role text for display (capitalize first letter)
-    // CRITICAL: Check multiple sources to ensure we get the latest role
+    // Format role for display with capitalization
     const formattedRole = computed(() => {
-      // Try to get role from multiple sources
+      // Check multiple sources to ensure we get the latest role
       const role = currentUser.value?.role ||
                    store.currentUser?.role ||
                    store.state?.currentUser?.role ||
@@ -170,10 +175,9 @@ export default {
       return normalizedRole.charAt(0).toUpperCase() + normalizedRole.slice(1)
     })
 
-    // Get role for badge class styling
-    // CRITICAL: Check multiple sources to ensure we get the latest role
+    // Get lowercase role for CSS class application
     const userRole = computed(() => {
-      // Try to get role from multiple sources
+      // Check multiple sources to ensure we get the latest role
       const role = currentUser.value?.role ||
                    store.currentUser?.role ||
                    store.state?.currentUser?.role ||
@@ -186,7 +190,7 @@ export default {
       return String(role).toLowerCase().trim()
     })
 
-    // Computed properties for displaying user info with fallbacks
+    // Display username with fallback to multiple sources
     const displayUsername = computed(() => {
       return currentUser.value?.username ||
              store.currentUser?.username ||
@@ -194,6 +198,7 @@ export default {
              'N/A'
     })
 
+    // Display email with fallback to multiple sources
     const displayEmail = computed(() => {
       return currentUser.value?.email ||
              store.currentUser?.email ||
@@ -201,6 +206,7 @@ export default {
              'N/A'
     })
 
+    // Display user ID with fallback to multiple sources
     const displayUserId = computed(() => {
       return currentUser.value?.id ||
              store.currentUser?.id ||
@@ -221,19 +227,16 @@ export default {
 </script>
 
 <style scoped>
-/* ===============================
-   Professional Profile Page UI
-   =============================== */
+/* Profile Page Styling */
 
+/* Main Container */
 .profile-container {
   max-width: 700px;
   margin: auto;
   padding: 3rem 1rem;
 }
 
-/* ===============================
-   Page Title - Professional
-   =============================== */
+/* Page Title */
 .page-title {
   text-align: center;
   font-size: 2rem;
@@ -245,9 +248,7 @@ export default {
   padding-bottom: 0.5rem;
 }
 
-/* ===============================
-   Profile Card - Professional
-   =============================== */
+/* Profile Card Container */
 .profile-card {
   background-color: var(--wiki-card-bg);
   border-radius: 4px;
@@ -261,14 +262,13 @@ export default {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* ===============================
-   Profile Header with Avatar
-   =============================== */
+/* Profile Header Section */
 .profile-header {
   text-align: center;
   margin-bottom: 2.2rem;
 }
 
+/* User Avatar Circle */
 .avatar {
   width: 80px;
   height: 80px;
@@ -289,6 +289,7 @@ export default {
   background: var(--wiki-primary-hover);
 }
 
+/* Username and Badge Container */
 .username-with-badge {
   display: flex;
   align-items: center;
@@ -304,9 +305,7 @@ export default {
   margin-bottom: 0.25rem;
 }
 
-/* ===============================
-   Role Badge Styles
-   =============================== */
+/* Role Badge Styling */
 .role-badge {
   display: inline-block;
   padding: 0.35rem 0.75rem;
@@ -318,7 +317,7 @@ export default {
   transition: all 0.2s ease;
 }
 
-/* User role badge - blue color for visibility */
+/* User role badge in blue */
 .badge-user {
   background-color: rgba(0, 123, 255, 0.15);
   color: #007bff;
@@ -332,7 +331,7 @@ export default {
   border-color: rgba(0, 123, 255, 0.5);
 }
 
-/* Superadmin role badge - red color for visibility */
+/* Superadmin role badge in red for emphasis */
 .badge-superadmin {
   background-color: rgba(220, 53, 69, 0.15);
   color: #dc3545;
@@ -346,19 +345,19 @@ export default {
   border-color: rgba(220, 53, 69, 0.5);
 }
 
+/* Tagline Text */
 .tagline {
   font-size: 0.95rem;
   color: var(--wiki-text-muted);
   margin-top: 0.25rem;
 }
 
-/* ===============================
-   User Info Section
-   =============================== */
+/* User Information Section */
 .info-section {
   margin-top: 1rem;
 }
 
+/* Individual Info Item */
 .info-item {
   display: flex;
   align-items: center;
@@ -375,6 +374,7 @@ export default {
   border-color: var(--wiki-border);
 }
 
+/* Info Item Icon */
 .info-item i {
   font-size: 1.25rem;
   margin-right: 1rem;
@@ -382,6 +382,7 @@ export default {
   transition: color 0.2s ease;
 }
 
+/* Info Item Hover Effect */
 .info-item:hover {
   background-color: var(--wiki-hover-bg);
   border-color: var(--wiki-primary);
@@ -391,13 +392,14 @@ export default {
   color: var(--wiki-primary-hover);
 }
 
+/* Info Item Label */
 .info-item strong {
   color: var(--wiki-dark);
   font-size: 0.95rem;
   font-weight: 600;
 }
 
-/* Role text styling in info section */
+/* Role Text in Info Section */
 .role-text {
   font-weight: 600;
   padding: 0.2rem 0.5rem;
@@ -405,6 +407,7 @@ export default {
   display: inline-block;
 }
 
+/* User role text styling */
 .role-user {
   color: #007bff;
   background-color: rgba(0, 123, 255, 0.15);
@@ -416,6 +419,7 @@ export default {
   background-color: rgba(0, 123, 255, 0.2);
 }
 
+/* Superadmin role text styling */
 .role-superadmin {
   color: #dc3545;
   background-color: rgba(220, 53, 69, 0.15);
@@ -427,9 +431,7 @@ export default {
   background-color: rgba(220, 53, 69, 0.25);
 }
 
-/* ===============================
-   Alert Message - Professional
-   =============================== */
+/* Alert Message for Logged Out Users */
 .alert-message {
   background-color: rgba(153, 0, 0, 0.1);
   color: var(--wiki-danger);
@@ -451,14 +453,11 @@ export default {
   font-size: 1.1rem;
 }
 
-/* ===============================
-   Transitions - Subtle
-   =============================== */
+/* Fade and Scale Transition */
 .fade-scale-enter-active {
   transition: opacity 0.3s ease;
 }
 .fade-scale-enter-from {
   opacity: 0;
 }
-
 </style>
