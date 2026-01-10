@@ -95,10 +95,7 @@
               Points to be Awarded
             </label>
             <input type="number" class="form-control" v-model.number="simpleScore" min="0" :max="maxScore"
-              :placeholder="`Enter score (0-${maxScore})`" />
-            <small class="form-text text-muted">
-              Enter a score between 0 and {{ maxScore }} points.
-            </small>
+              placeholder="Enter score" />
           </div>
 
           <!-- Info message when submission is rejected -->

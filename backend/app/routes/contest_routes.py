@@ -1339,15 +1339,6 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
     # This check happens after fetching article information from MediaWiki API
     # article_word_count is actually the byte count (size) from MediaWiki API
     # min_byte_count is always required, so always validate
-    is_valid, error_message = contest.validate_byte_count(article_word_count)
-    if not is_valid:
-        return jsonify({"error": error_message}), 400
-
-    # Validate article reference count against contest requirements (if set)
-    if contest.min_reference_count > 0:
-        is_valid_refs, error_message_refs = contest.validate_reference_count(article_reference_count)
-        if not is_valid_refs:
-            return jsonify({"error": error_message_refs}), 400
 
     # --- Create Submission Record ---
     # Create submission with fetched information

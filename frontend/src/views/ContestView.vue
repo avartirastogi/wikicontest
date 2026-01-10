@@ -87,7 +87,6 @@
             <!-- Multi-Parameter Scoring Display -->
             <div v-if="contest.scoring_parameters?.enabled === true">
               <div class="scoring-meta">
-                <span class="tag tag-multi">Multi-Parameter</span>
                 <span class="max-points">Accepted points: {{ contest.scoring_parameters.max_score }}</span>
                 <span class="max-points">Rejected points: {{ contest.scoring_parameters.min_score }}</span>
               </div>
@@ -110,8 +109,6 @@
 
             <!-- Simple Accept/Reject Scoring Display -->
             <div v-else>
-              <div class="tag tag-simple">Simple Scoring</div>
-
               <div class="points-row">
                 <div class="point-item">
                   <span class="point-label">Accepted</span>
@@ -123,11 +120,6 @@
                   <span class="point-value">{{ contest.marks_setting_rejected }}</span>
                 </div>
               </div>
-            </div>
-
-            <div class="submissions-info">
-              <span>Submissions</span>
-              <strong>{{ submissions.length }}</strong>
             </div>
           </div>
         </div>

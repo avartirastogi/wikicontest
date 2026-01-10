@@ -305,36 +305,6 @@ class Contest(BaseModel):
         # Validation passed
         return True, None
 
-
-    def validate_reference_count(self, reference_count):
-        """
-        Validate if article reference count meets the contest's minimum requirement
-
-        Args:
-            reference_count: Article reference count to validate (can be None)
-
-        Returns:
-            tuple: (is_valid: bool, error_message: str or None)
-                  Returns (True, None) if valid, (False, error_message) if invalid
-        """
-        # Handle case where MediaWiki API failed to fetch reference count
-        if reference_count is None:
-            return (
-                False,
-                "Article reference count could not be determined. Please ensure the article has references and try again.",
-            )
-
-        # Only validate if minimum requirement is set (0 means no requirement)
-        if self.min_reference_count > 0 and reference_count < self.min_reference_count:
-            return (
-                False,
-                f"Article reference count ({reference_count}) is below the minimum required ({self.min_reference_count} references)",
-            )
-
-        # Validation passed
-        return True, None
-
-
     # ------------------------------------------------------------------------
     # CONTEST STATUS CHECKS
     # ------------------------------------------------------------------------
