@@ -21,6 +21,7 @@ from app.utils import (
     get_latest_revision_author,
     build_mediawiki_revisions_api_params,
     get_mediawiki_headers,
+    get_article_reference_count,
 )
 
 
@@ -1334,11 +1335,37 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                 pass
             article_expansion_bytes = None
 
+    # --- Fetch Reference Count ---
+    # Fetch reference count (footnotes + external links) using shared utility
+    # This counts both <ref> tags and external URLs from the latest revision
+    # This is done after fetching article info but before validation
+    try:
+        article_reference_count = get_article_reference_count(article_link)
+    except Exception as ref_error:  # pylint: disable=broad-exception-caught
+        # If reference count fetch fails, log but don't fail submission
+        # Validation will handle None case
+        try:
+            current_app.logger.warning(
+                f"Failed to fetch reference count: {str(ref_error)}"
+            )
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        article_reference_count = None
+
     # --- Validate Article Requirements ---
     # Validate article byte count against contest requirements
     # This check happens after fetching article information from MediaWiki API
     # article_word_count is actually the byte count (size) from MediaWiki API
     # min_byte_count is always required, so always validate
+    is_valid_byte_count, byte_count_error = contest.validate_byte_count(article_word_count)
+    if not is_valid_byte_count:
+        return jsonify({"error": byte_count_error}), 400
+
+    # Validate article reference count against contest requirements
+    # min_reference_count is optional (0 = no requirement), so only validate if > 0
+    is_valid_reference_count, reference_count_error = contest.validate_reference_count(article_reference_count)
+    if not is_valid_reference_count:
+        return jsonify({"error": reference_count_error}), 400
 
     # --- Create Submission Record ---
     # Create submission with fetched information

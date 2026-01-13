@@ -6,12 +6,17 @@
         <i class="fas fa-arrow-left me-2"></i>Back to Contests
       </button>
       <div class="d-flex gap-2">
-        <button v-if="contest" class="btn btn-primary text-white" @click="goToLeaderboard"
+        <button v-if="contest"
+class="btn btn-primary text-white"
+@click="goToLeaderboard"
           title="View Contest Leaderboard">
           <i class="fas fa-trophy me-2"></i>Leaderboard
         </button>
         <!-- Only contest creators and admins can delete -->
-        <button v-if="canDeleteContest" class="btn btn-danger" @click="handleDeleteContest" :disabled="deletingContest">
+        <button v-if="canDeleteContest"
+class="btn btn-danger"
+@click="handleDeleteContest"
+:disabled="deletingContest">
           <span v-if="deletingContest" class="spinner-border spinner-border-sm me-2"></span>
           <i v-else class="fas fa-trash me-2"></i>
           {{ deletingContest ? 'Deleting...' : 'Delete Contest' }}
@@ -183,7 +188,10 @@
           </p>
           <ul class="list-unstyled">
             <li v-for="(category, index) in contest.categories" :key="index" class="mb-2">
-              <a :href="category" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
+              <a :href="category"
+target="_blank"
+rel="noopener noreferrer"
+class="text-decoration-none">
                 <i class="fas fa-external-link-alt me-2"></i>{{ getCategoryName(category) }}
               </a>
             </li>
@@ -236,8 +244,11 @@
               {{ loadingSubmissions ? 'Loading...' : 'Refreshing...' }}
             </button>
             <!-- Refresh metadata fetches latest article data from MediaWiki -->
-            <button v-else class="btn btn-sm btn-outline-light" @click="refreshMetadata"
-              :disabled="submissions.length === 0" title="Refresh article metadata"
+            <button v-else
+class="btn btn-sm btn-outline-light"
+@click="refreshMetadata"
+              :disabled="submissions.length === 0"
+title="Refresh article metadata"
               style="color: white; border-color: white;">
               <i class="fas fa-database me-1"></i>Refresh Metadata
             </button>
@@ -265,8 +276,10 @@
                 <tr v-for="submission in submissions" :key="submission.id">
                   <!-- Article Title with Metadata -->
                   <td>
-                    <a href="#" @click.prevent="showArticlePreview(submission)"
-                      class="text-decoration-none article-title-link" :title="submission.article_link">
+                    <a href="#"
+@click.prevent="showArticlePreview(submission)"
+                      class="text-decoration-none article-title-link"
+:title="submission.article_link">
                       {{ submission.article_title }}
                       <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
                     </a>
@@ -278,14 +291,17 @@
                     </div>
                     <!-- Original article size -->
                     <div v-if="submission.article_word_count !== null &&
-                      submission.article_word_count !== undefined" class="text-muted small mt-1">
+                      submission.article_word_count !== undefined"
+class="text-muted small mt-1">
                       <i class="fas fa-clock me-1"></i>Original bytes:
                       {{ formatByteCountWithExact(submission.article_word_count) }}
                     </div>
                     <!-- Expansion bytes (can be negative for content removal) -->
                     <div v-if="submission.article_expansion_bytes !== null &&
-                      submission.article_expansion_bytes !== undefined" class="text-muted small mt-1">
-                      <i class="me-1" :class="submission.article_expansion_bytes > 0
+                      submission.article_expansion_bytes !== undefined"
+class="text-muted small mt-1">
+                      <i class="me-1"
+:class="submission.article_expansion_bytes > 0
                         ? 'fas fa-arrow-up'
                         : submission.article_expansion_bytes < 0
                           ? 'fas fa-arrow-down'
@@ -313,7 +329,8 @@
                       <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
                     </div>
                     <!-- Latest revision author may differ from original -->
-                    <div v-if="submission.latest_revision_author" class="mt-2 pt-2"
+                    <div v-if="submission.latest_revision_author"
+class="mt-2 pt-2"
                       style="border-top: 1px solid #dee2e6;">
                       <div>
                         <i class="fas fa-user me-1"></i>{{ submission.latest_revision_author }}
@@ -337,7 +354,8 @@
                   <td>{{ submission.score || 0 }}</td>
                   <td>{{ formatDate(submission.submitted_at) }}</td>
                   <td>
-                    <button @click="showArticlePreview(submission)" class="btn btn-sm btn-outline-primary"
+                    <button @click="showArticlePreview(submission)"
+class="btn btn-sm btn-outline-primary"
                       title="Preview Article">
                       <i class="fas fa-eye"></i>
                     </button>
@@ -362,7 +380,8 @@
 
         <!-- Submit article button for active contests -->
         <button v-if="contest?.status === 'current' && isAuthenticated && !canViewSubmissions"
-          class="btn btn-primary ms-auto" @click="handleSubmitArticle">
+          class="btn btn-primary ms-auto"
+@click="handleSubmitArticle">
           <i class="fas fa-paper-plane me-2"></i>Submit Article
         </button>
       </div>
@@ -370,13 +389,18 @@
   </div>
 
   <!-- Modals -->
-  <SubmitArticleModal v-if="submittingToContestId" :contest-id="submittingToContestId"
+  <SubmitArticleModal v-if="submittingToContestId"
+:contest-id="submittingToContestId"
     @submitted="handleArticleSubmitted" />
 
-  <ArticlePreviewModal v-if="!!currentSubmission" :can-review="canUserReview"
-    :article-url="currentSubmission.article_link" :article-title="currentSubmission.article_title"
-    :submission-id="currentSubmission.id" :submission="currentSubmission"
-    :contest-scoring-config="contest?.scoring_parameters" @reviewed="handleSubmissionReviewed" />
+  <ArticlePreviewModal v-if="!!currentSubmission"
+:can-review="canUserReview"
+    :article-url="currentSubmission.article_link"
+:article-title="currentSubmission.article_title"
+    :submission-id="currentSubmission.id"
+:submission="currentSubmission"
+    :contest-scoring-config="contest?.scoring_parameters"
+@reviewed="handleSubmissionReviewed" />
 
   <!-- Edit Contest Modal -->
   <div class="modal fade" id="editContestModal" tabindex="-1">
@@ -446,7 +470,9 @@
                 <small v-if="editForm.selectedOrganizers.length === 0" class="text-muted">
                   No organizers selected
                 </small>
-                <span v-for="username in editForm.selectedOrganizers" :key="username" class="badge bg-success me-2 mb-2"
+                <span v-for="username in editForm.selectedOrganizers"
+:key="username"
+class="badge bg-success me-2 mb-2"
                   style="font-size: 0.9rem; cursor: pointer;">
                   <i class="fas fa-user-tie me-1"></i>{{ username }}
                   <i class="fas fa-times ms-1" @click="removeOrganizer(username)"></i>
@@ -455,16 +481,22 @@
 
               <!-- Organizer Search Input with Autocomplete -->
               <div style="position: relative;">
-                <input type="text" class="form-control" v-model="organizerSearchQuery" @input="searchOrganizers"
-                  placeholder="Type username to search and add..." autocomplete="off" />
+                <input type="text"
+class="form-control"
+v-model="organizerSearchQuery"
+@input="searchOrganizers"
+                  placeholder="Type username to search and add..."
+autocomplete="off" />
 
                 <!-- Autocomplete Dropdown -->
                 <div v-if="organizerSearchResults.length > 0 && organizerSearchQuery.length >= 2"
                   class="organizer-autocomplete position-absolute w-100 border rounded-bottom"
                   style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div v-for="user in organizerSearchResults" :key="user.username"
+                  <div v-for="user in organizerSearchResults"
+:key="user.username"
                     class="p-2 border-bottom cursor-pointer"
-                    :class="{ 'bg-warning-subtle': isCurrentUser(user.username) }" style="cursor: pointer;"
+                    :class="{ 'bg-warning-subtle': isCurrentUser(user.username) }"
+style="cursor: pointer;"
                     @click="addOrganizer(user.username)">
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="d-flex align-items-center">
@@ -498,8 +530,10 @@
                 <small v-if="editForm.selectedJuryMembers.length === 0" class="text-muted">
                   No jury members selected
                 </small>
-                <span v-for="username in editForm.selectedJuryMembers" :key="username"
-                  class="badge bg-primary me-2 mb-2" style="font-size: 0.9rem; cursor: pointer;">
+                <span v-for="username in editForm.selectedJuryMembers"
+:key="username"
+                  class="badge bg-primary me-2 mb-2"
+style="font-size: 0.9rem; cursor: pointer;">
                   <i class="fas fa-gavel me-1"></i>{{ username }}
                   <i class="fas fa-times ms-1" @click="removeJuryMember(username)"></i>
                 </span>
@@ -507,15 +541,22 @@
 
               <!-- Jury Search Input with Autocomplete -->
               <div style="position: relative;">
-                <input type="text" class="form-control" v-model="jurySearchQuery" @input="searchJuryMembers"
-                  placeholder="Type username to search and add..." autocomplete="off" />
+                <input type="text"
+class="form-control"
+v-model="jurySearchQuery"
+@input="searchJuryMembers"
+                  placeholder="Type username to search and add..."
+autocomplete="off" />
 
                 <!-- Autocomplete Dropdown -->
                 <div v-if="jurySearchResults.length > 0 && jurySearchQuery.length >= 2"
                   class="jury-autocomplete position-absolute w-100 border rounded-bottom"
                   style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div v-for="user in jurySearchResults" :key="user.username" class="p-2 border-bottom cursor-pointer"
-                    :class="{ 'bg-warning-subtle': isCurrentUser(user.username) }" style="cursor: pointer;"
+                  <div v-for="user in jurySearchResults"
+:key="user.username"
+class="p-2 border-bottom cursor-pointer"
+                    :class="{ 'bg-warning-subtle': isCurrentUser(user.username) }"
+style="cursor: pointer;"
                     @click="addJuryMember(user.username)">
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="d-flex align-items-center">
@@ -567,7 +608,8 @@
               <h6>Scoring Parameters</h6>
 
               <!-- Dynamic parameter list -->
-              <div v-for="(param, index) in editForm.scoring_parameters.parameters" :key="index"
+              <div v-for="(param, index) in editForm.scoring_parameters.parameters"
+:key="index"
                 class="border rounded p-3 mb-2">
                 <div class="row">
                   <div class="col-md-4">
@@ -575,7 +617,10 @@
                   </div>
 
                   <div class="col-md-3">
-                    <input type="number" v-model.number="param.weight" placeholder="Weight %" class="form-control" />
+                    <input type="number"
+v-model.number="param.weight"
+placeholder="Weight %"
+class="form-control" />
                   </div>
 
                   <div class="col-md-4">
@@ -600,14 +645,21 @@
             <!-- Article Requirements -->
             <div class="mb-3">
               <label class="form-label">Minimum Byte Count *</label>
-              <input type="number" v-model.number="editForm.min_byte_count" class="form-control" min="0"
-                placeholder="e.g., 1000" required />
+              <input type="number"
+v-model.number="editForm.min_byte_count"
+class="form-control"
+min="0"
+                placeholder="e.g., 1000"
+required />
               <small class="form-text text-muted">Articles must have at least this many bytes</small>
             </div>
 
             <div class="mb-3">
               <label class="form-label">Minimum Reference Count</label>
-              <input type="number" v-model.number="editForm.min_reference_count" class="form-control" min="0"
+              <input type="number"
+v-model.number="editForm.min_reference_count"
+class="form-control"
+min="0"
                 placeholder="e.g., 5" />
               <small class="form-text text-muted">
                 Articles must have at least this many references. Set to 0 for no requirement.
@@ -625,12 +677,17 @@
               <!-- Dynamic category URL inputs -->
               <div v-for="(category, index) in editForm.categories" :key="index" class="mb-2">
                 <div class="input-group">
-                  <input type="url" class="form-control" v-model="editForm.categories[index]"
+                  <input type="url"
+class="form-control"
+v-model="editForm.categories[index]"
                     :placeholder="index === 0 ? 'https://en.wikipedia.org/wiki/Category:Example' : 'Add another category URL'"
                     required />
                   <!-- Allow removing categories except the first one -->
-                  <button v-if="editForm.categories.length > 1" type="button" class="btn btn-outline-danger"
-                    @click="removeCategory(index)" title="Remove category">
+                  <button v-if="editForm.categories.length > 1"
+type="button"
+class="btn btn-outline-danger"
+                    @click="removeCategory(index)"
+title="Remove category">
                     <i class="fas fa-times"></i>
                   </button>
                 </div>
@@ -1413,7 +1470,7 @@ export default {
           allowed_submission_type: editForm.allowed_submission_type,
           min_byte_count: Number(editForm.min_byte_count),
           categories: validCategories,
-          min_reference_count: Number(editForm.min_reference_count),
+          min_reference_count: Number(editForm.min_reference_count)
         }
 
         // Add scoring configuration based on mode
@@ -1548,7 +1605,7 @@ export default {
   padding-bottom: 1rem;
 }
 
-/* Main contest title styling with theme support */ 
+/* Main contest title styling with theme support */
 .contest-title {
   color: var(--wiki-dark);
   font-weight: 700;

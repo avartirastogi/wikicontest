@@ -14,25 +14,39 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="contestName" class="form-label">Contest Name *</label>
-                <input type="text" class="form-control" id="contestName" v-model="formData.name" required />
+                <input type="text"
+class="form-control"
+id="contestName"
+v-model="formData.name"
+required />
               </div>
               <div class="col-md-6 mb-3">
                 <label for="projectName" class="form-label">Project Name *</label>
-                <input type="text" class="form-control" id="projectName" v-model="formData.project_name" required />
+                <input type="text"
+class="form-control"
+id="projectName"
+v-model="formData.project_name"
+required />
               </div>
             </div>
 
             <!-- Contest description field -->
             <div class="mb-3">
               <label for="contestDescription" class="form-label">Description</label>
-              <textarea class="form-control" id="contestDescription" rows="3" v-model="formData.description"></textarea>
+              <textarea class="form-control"
+id="contestDescription"
+rows="3"
+v-model="formData.description"></textarea>
             </div>
 
             <!-- Contest rules - required field -->
             <div class="mb-3">
               <label for="contestRules" class="form-label">Contest Rules *</label>
-              <textarea class="form-control" id="contestRules" rows="4"
-                placeholder="Write rules about how articles must be submitted." v-model="formData.rules_text"
+              <textarea class="form-control"
+id="contestRules"
+rows="4"
+                placeholder="Write rules about how articles must be submitted."
+v-model="formData.rules_text"
                 required></textarea>
             </div>
 
@@ -50,11 +64,19 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="startDate" class="form-label">Start Date *</label>
-                <input type="date" class="form-control" id="startDate" v-model="formData.start_date" required />
+                <input type="date"
+class="form-control"
+id="startDate"
+v-model="formData.start_date"
+required />
               </div>
               <div class="col-md-6 mb-3">
                 <label for="endDate" class="form-label">End Date *</label>
-                <input type="date" class="form-control" id="endDate" v-model="formData.end_date" required />
+                <input type="date"
+class="form-control"
+id="endDate"
+v-model="formData.end_date"
+required />
               </div>
             </div>
 
@@ -69,7 +91,9 @@
                 <small v-if="selectedOrganizers.length === 0" class="organizer-placeholder-text">
                   No additional organizers added
                 </small>
-                <span v-for="username in selectedOrganizers" :key="username" class="badge bg-success me-2 mb-2"
+                <span v-for="username in selectedOrganizers"
+:key="username"
+class="badge bg-success me-2 mb-2"
                   style="font-size: 0.9rem; cursor: pointer;">
                   {{ username }}
                   <i class="fas fa-times ms-1" @click="removeOrganizer(username)"></i>
@@ -78,16 +102,23 @@
 
               <!-- Organizer search input with autocomplete dropdown -->
               <div style="position: relative;">
-                <input type="text" class="form-control" v-model="organizerSearchQuery" @input="searchOrganizers"
-                  placeholder="Type username to add additional organizers..." autocomplete="off" />
+                <input type="text"
+class="form-control"
+v-model="organizerSearchQuery"
+@input="searchOrganizers"
+                  placeholder="Type username to add additional organizers..."
+autocomplete="off" />
 
                 <!-- Autocomplete results dropdown -->
                 <div v-if="organizerSearchResults.length > 0 && organizerSearchQuery.length >= 2"
                   class="organizer-autocomplete position-absolute w-100 border rounded-bottom"
                   style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div v-for="user in organizerSearchResults" :key="user.username"
-                    class="p-2 border-bottom cursor-pointer" :class="{ 'bg-info-subtle': isCurrentUser(user.username) }"
-                    style="cursor: pointer;" @click="addOrganizer(user.username)">
+                  <div v-for="user in organizerSearchResults"
+:key="user.username"
+                    class="p-2 border-bottom cursor-pointer"
+:class="{ 'bg-info-subtle': isCurrentUser(user.username) }"
+                    style="cursor: pointer;"
+@click="addOrganizer(user.username)">
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="d-flex align-items-center">
                         <i class="fas fa-user-tie me-2 text-success"></i>
@@ -120,7 +151,9 @@
                 <small v-if="selectedJury.length === 0" class="jury-placeholder-text">
                   No jury members selected yet
                 </small>
-                <span v-for="username in selectedJury" :key="username" class="badge bg-primary me-2 mb-2"
+                <span v-for="username in selectedJury"
+:key="username"
+class="badge bg-primary me-2 mb-2"
                   style="font-size: 0.9rem; cursor: pointer;">
                   {{ username }}
                   <i class="fas fa-times ms-1" @click="removeJury(username)"></i>
@@ -129,15 +162,23 @@
 
               <!-- Jury search input with autocomplete dropdown -->
               <div style="position: relative;">
-                <input type="text" class="form-control" id="juryInput" v-model="jurySearchQuery" @input="searchJury"
-                  placeholder="Type username to search..." autocomplete="off" />
+                <input type="text"
+class="form-control"
+id="juryInput"
+v-model="jurySearchQuery"
+@input="searchJury"
+                  placeholder="Type username to search..."
+autocomplete="off" />
                 <!-- Autocomplete results with self-selection warning -->
                 <div v-if="jurySearchResults.length > 0 && jurySearchQuery.length >= 2"
                   class="jury-autocomplete position-absolute w-100 border rounded-bottom"
                   style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div v-for="user in jurySearchResults" :key="user.username" class="p-2 border-bottom cursor-pointer"
+                  <div v-for="user in jurySearchResults"
+:key="user.username"
+class="p-2 border-bottom cursor-pointer"
                     :class="{ 'bg-warning-subtle self-selection-warning': isCurrentUser(user.username) }"
-                    style="cursor: pointer;" @click="addJury(user.username)">
+                    style="cursor: pointer;"
+@click="addJury(user.username)">
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="d-flex align-items-center">
                         <i class="fas fa-user me-2 text-primary"></i>
@@ -158,8 +199,11 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="marksAccepted" class="form-label">Points for Accepted Submissions</label>
-                <input type="number" class="form-control" id="marksAccepted"
-                  v-model.number="formData.marks_setting_accepted" min="0" />
+                <input type="number"
+class="form-control"
+id="marksAccepted"
+                  v-model.number="formData.marks_setting_accepted"
+min="0" />
                 <small class="form-text text-muted">
                   Maximum points that can be awarded. Jury can assign points from 0 up to
                   this value for accepted submissions.
@@ -167,8 +211,11 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label for="marksRejected" class="form-label">Points for Rejected Submissions</label>
-                <input type="number" class="form-control" id="marksRejected"
-                  v-model.number="formData.marks_setting_rejected" min="0" />
+                <input type="number"
+class="form-control"
+id="marksRejected"
+                  v-model.number="formData.marks_setting_rejected"
+min="0" />
                 <small class="form-text text-muted">
                   Fixed points awarded automatically for rejected submissions (usually 0 or negative).
                 </small>
@@ -183,8 +230,10 @@
                 </h6>
                 <!-- Toggle between simple and multi-parameter scoring -->
                 <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="enableMultiParam"
-                    v-model="enableMultiParameterScoring">
+                  <input class="form-check-input"
+type="checkbox"
+id="enableMultiParam"
+                    v-model="enableMultiParameterScoring"/>
                   <label class="form-check-label" for="enableMultiParam">
                     Enable Multi-Parameter Scoring
                   </label>
@@ -198,7 +247,7 @@
                   <strong>Simple Scoring Mode:</strong> Jury will assign a single score (0-{{
                     formData.marks_setting_accepted }})
                   for accepted submissions.
-                  <br>
+                  <br/>
                   <i class="fas fa-info-circle me-2"></i>
                   <strong>Simple Scoring Mode:</strong> Jury will assign a single score (0-{{
                     formData.marks_setting_rejected }})
@@ -215,16 +264,24 @@
                   <!-- Maximum score for accepted submissions -->
                   <div class="mb-3">
                     <label class="form-label">Point of Acceptance</label>
-                    <input type="number" class="form-control" v-model.number="maxScore" min="1" max="100"
-                      placeholder="10">
+                    <input type="number"
+class="form-control"
+v-model.number="maxScore"
+min="1"
+max="100"
+                      placeholder="10"/>
                     <small class="text-muted">Final calculated score will be scaled to this value</small>
                   </div>
 
                   <!-- Minimum score for rejected submissions -->
                   <div class="mb-3">
                     <label class="form-label">Point of Rejection </label>
-                    <input type="number" class="form-control" v-model.number="minScore" min="1" max="100"
-                      placeholder="0">
+                    <input type="number"
+class="form-control"
+v-model.number="minScore"
+min="1"
+max="100"
+                      placeholder="0"/>
 
                   </div>
 
@@ -237,24 +294,36 @@
                         <div class="card-body">
                           <div class="row align-items-center">
                             <div class="col-md-3">
-                              <input type="text" class="form-control" v-model="param.name" placeholder="Parameter name"
-                                required>
+                              <input type="text"
+class="form-control"
+v-model="param.name"
+placeholder="Parameter name"
+                                required/>
                             </div>
                             <div class="col-md-3">
                               <div class="input-group">
-                                <input type="number" class="form-control" v-model.number="param.weight" min="0"
-                                  max="100" placeholder="Weight" required>
+                                <input type="number"
+class="form-control"
+v-model.number="param.weight"
+min="0"
+                                  max="100"
+placeholder="Weight"
+required/>
                                 <span class="input-group-text">%</span>
                               </div>
                             </div>
                             <div class="col-md-5">
-                              <input type="text" class="form-control" v-model="param.description"
-                                placeholder="Description (optional)">
+                              <input type="text"
+class="form-control"
+v-model="param.description"
+                                placeholder="Description (optional)"/>
                             </div>
                             <div class="col-md-1 text-end">
                               <!-- Remove parameter button (disabled if only one parameter) -->
-                              <button type="button" class="btn btn-sm btn-outline-danger"
-                                @click="removeParameter(index)" :disabled="scoringParameters.length <= 1">
+                              <button type="button"
+class="btn btn-sm btn-outline-danger"
+                                @click="removeParameter(index)"
+:disabled="scoringParameters.length <= 1">
                                 <i class="fas fa-times"></i>
                               </button>
                             </div>
@@ -294,8 +363,13 @@
               <label for="minByteCount" class="form-label">
                 Minimum Byte Count *
               </label>
-              <input type="number" class="form-control" id="minByteCount" v-model.number="formData.min_byte_count"
-                min="0" placeholder="e.g., 1000" required />
+              <input type="number"
+class="form-control"
+id="minByteCount"
+v-model.number="formData.min_byte_count"
+                min="0"
+placeholder="e.g., 1000"
+required />
               <small class="form-text text-muted">Articles must have at least this many bytes</small>
             </div>
 
@@ -304,8 +378,12 @@
               <label for="minReferenceCount" class="form-label">
                 Minimum Reference Count
               </label>
-              <input type="number" class="form-control" id="minReferenceCount"
-                v-model.number="formData.min_reference_count" min="0" placeholder="e.g., 5" />
+              <input type="number"
+class="form-control"
+id="minReferenceCount"
+                v-model.number="formData.min_reference_count"
+min="0"
+placeholder="e.g., 5" />
               <small class="form-text text-muted">
                 Articles must have at least this many references (external links). Leave as 0 for no requirement.
               </small>
@@ -321,12 +399,17 @@
               <!-- Dynamic list of category URL inputs -->
               <div v-for="(category, index) in formData.categories" :key="index" class="mb-2">
                 <div class="input-group">
-                  <input type="url" class="form-control" v-model="formData.categories[index]"
+                  <input type="url"
+class="form-control"
+v-model="formData.categories[index]"
                     :placeholder="index === 0 ? 'https://en.wikipedia.org/wiki/Category:Example' : 'Add another category URL'"
                     required />
                   <!-- Remove category button (hidden for first category) -->
-                  <button v-if="formData.categories.length > 1" type="button" class="btn btn-outline-danger"
-                    @click="removeCategory(index)" title="Remove category">
+                  <button v-if="formData.categories.length > 1"
+type="button"
+class="btn btn-outline-danger"
+                    @click="removeCategory(index)"
+title="Remove category">
                     <i class="fas fa-times"></i>
                   </button>
                 </div>
@@ -454,7 +537,7 @@ export default {
       allowed_submission_type: 'both',
       min_byte_count: 0,
       categories: [''],
-      min_reference_count: 0,
+      min_reference_count: 0
     })
 
     // Initialize default dates on component mount
@@ -718,7 +801,7 @@ export default {
 
       loading.value = true
       try {
-        let scoringParametersPayload = null;
+        let scoringParametersPayload = null
 
         // Build scoring parameters payload if multi-parameter scoring is enabled
         if (enableMultiParameterScoring.value) {
@@ -731,7 +814,7 @@ export default {
               weight: param.weight,
               description: param.description || ''
             }))
-          };
+          }
         }
 
         // Construct contest data payload with all form values
@@ -830,7 +913,7 @@ export default {
       weightTotalClass,
       addParameter,
       removeParameter,
-      loadDefaultParameters,
+      loadDefaultParameters
     }
   }
 }

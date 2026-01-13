@@ -24,7 +24,10 @@
             <i class="fas fa-exclamation-circle me-2"></i>
             {{ error }}
             <div class="mt-3">
-              <a :href="articleUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
+              <a :href="articleUrl"
+target="_blank"
+rel="noopener noreferrer"
+class="btn btn-sm btn-outline-primary">
                 <i class="fas fa-external-link-alt me-2"></i>Open Article in New Tab
               </a>
             </div>
@@ -54,8 +57,12 @@
 
           <!-- Iframe fallback for non-MediaWiki pages -->
           <div v-else class="article-preview-container">
-            <iframe :src="articleUrl" class="article-preview-iframe" frameborder="0" allowfullscreen
-              @load="handleIframeLoad" @error="handleIframeError"></iframe>
+            <iframe :src="articleUrl"
+class="article-preview-iframe"
+frameborder="0"
+allowfullscreen
+              @load="handleIframeLoad"
+@error="handleIframeError"></iframe>
           </div>
         </div>
         <div class="modal-footer">
@@ -69,14 +76,19 @@
           </div>
 
           <!-- Review button - disabled if already reviewed -->
-          <button class="btn btn-primary" v-if="canReviewSubmission" :disabled="isAlreadyReviewed"
+          <button class="btn btn-primary"
+v-if="canReviewSubmission"
+:disabled="isAlreadyReviewed"
             @click="openReviewModal">
             <i class="fas fa-gavel me-2"></i>
             {{ isAlreadyReviewed ? 'Already Reviewed' : 'Review Submission' }}
           </button>
 
           <!-- External link button to open article in new tab -->
-          <a :href="articleUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">
+          <a :href="articleUrl"
+target="_blank"
+rel="noopener noreferrer"
+class="btn btn-outline-primary">
             <i class="fas fa-external-link-alt me-2"></i>Open in New Tab
           </a>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -86,7 +98,8 @@
       </div>
     </div>
     <!-- Review submission modal component -->
-    <ReviewSubmissionModal :submission-id="submissionId" :contest-scoring-config="contestScoringConfig"
+    <ReviewSubmissionModal :submission-id="submissionId"
+:contest-scoring-config="contestScoringConfig"
       @reviewed="onReviewed" />
   </div>
 </template>

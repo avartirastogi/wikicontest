@@ -305,6 +305,42 @@ class Contest(BaseModel):
         # Validation passed
         return True, None
 
+    def validate_reference_count(self, reference_count):
+        """
+        Validate if article reference count meets the contest's minimum requirement.
+        
+        Reference count includes both footnotes (<ref> tags) and external links (URLs)
+        from the article's latest revision.
+
+        Args:
+            reference_count: Article reference count to validate (can be None)
+
+        Returns:
+            tuple: (is_valid: bool, error_message: str or None)
+                  Returns (True, None) if valid, (False, error_message) if invalid
+        """
+        # If no minimum requirement is set (min_reference_count = 0), always pass
+        if self.min_reference_count == 0:
+            return True, None
+
+        # Handle case where MediaWiki API failed to fetch reference count
+        if reference_count is None:
+            return (
+                False,
+                "Article reference count could not be determined. Please ensure the article exists and try again.",
+            )
+
+        # Validate against minimum requirement
+        if reference_count < self.min_reference_count:
+            return (
+                False,
+                f"Article reference count ({reference_count}) is below the "
+                f"minimum required ({self.min_reference_count} references)",
+            )
+
+        # Validation passed
+        return True, None
+
     # ------------------------------------------------------------------------
     # CONTEST STATUS CHECKS
     # ------------------------------------------------------------------------
@@ -544,11 +580,11 @@ class Contest(BaseModel):
         """
         if isinstance(organizers_list, list):
             # Remove duplicates and empty strings
-            unique_organizers = list(set([
+            unique_organizers = list({
                 username.strip()
                 for username in organizers_list
                 if username and username.strip()
-            ]))
+            })
 
             # Ensure creator is always in the organizers list
             if creator_username:

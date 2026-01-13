@@ -186,7 +186,7 @@
     />
 
     <!-- Jury Feedback Modal -->
-    <JuryFeedbackModal 
+    <JuryFeedbackModal
       :submission="selectedSubmission"
       :reviewer-name="reviewerName"
       :loading-reviewer="loadingReviewer"
@@ -217,7 +217,7 @@ export default {
     const loading = ref(true)
     const error = ref(null)
     const submittingToContestId = ref(null)
-    
+
     // Feedback modal state
     const selectedSubmission = ref(null)
     const reviewerName = ref('')
@@ -288,12 +288,12 @@ export default {
         reviewerName.value = 'Jury Member'
         return
       }
-      
+
       loadingReviewer.value = true
       try {
         // Use the new username endpoint to fetch reviewer name
         const userData = await api.get(`/user/${reviewerId}/username`)
-        
+
         if (userData && userData.username) {
           reviewerName.value = userData.username
         } else {

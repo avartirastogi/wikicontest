@@ -9,7 +9,7 @@
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        
+
         <!-- Modal Body -->
         <div class="modal-body">
           <form @submit.prevent="handleSubmit">
@@ -133,7 +133,7 @@ style="white-space: pre-wrap; word-wrap: break-word;">
             </div>
           </form>
         </div>
-        
+
         <!-- Modal Footer with Action Buttons -->
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -190,6 +190,11 @@ export default {
         label: 'Article byte count is within required range',
         checked: false,
         detail: null
+      },
+      {
+        label: 'Article reference count meets requirement',
+        checked: false,
+        detail: null
       }
     ])
 
@@ -197,16 +202,21 @@ export default {
     const submissionProgress = reactive({
       stage: 'idle', // 'idle', 'fetching', 'validating', 'submitting', 'success', 'error'
       articleByteCount: null,
-      contestByteRequirements: null
+      articleReferenceCount: null,
+      contestByteRequirements: null,
+      contestReferenceRequirements: null
     })
 
-    // Fetch contest details including byte count requirements
+    // Fetch contest details including byte count and reference count requirements
     const loadContest = async () => {
       try {
         const data = await api.get(`/contest/${props.contestId}`)
         contest.value = data
         submissionProgress.contestByteRequirements = {
           min: data.min_byte_count
+        }
+        submissionProgress.contestReferenceRequirements = {
+          min: data.min_reference_count || 0
         }
       } catch (err) {
         console.error('Error loading contest:', err)
@@ -236,6 +246,8 @@ export default {
           validationChecklist[0].detail = null
           validationChecklist[1].checked = false
           validationChecklist[1].detail = null
+          validationChecklist[2].checked = false
+          validationChecklist[2].detail = null
           return
         }
 
@@ -353,6 +365,8 @@ export default {
       validationChecklist[0].detail = null
       validationChecklist[1].checked = false
       validationChecklist[1].detail = null
+      validationChecklist[2].checked = false
+      validationChecklist[2].detail = null
 
       // Validate URL format
       if (!formData.article_link.trim()) {
@@ -389,13 +403,19 @@ export default {
         const articleByteCount = articleInfo.word_count || articleInfo.size || null
         submissionProgress.articleByteCount = articleByteCount
 
+        // Extract reference count from article info
+        const articleReferenceCount = articleInfo.reference_count || null
+        submissionProgress.articleReferenceCount = articleReferenceCount
+
         // Ensure contest is loaded before validating requirements
         if (!contest.value || !submissionProgress.contestByteRequirements) {
           await loadContest()
         }
 
-        const req = submissionProgress.contestByteRequirements
+        const byteReq = submissionProgress.contestByteRequirements
+        const refReq = submissionProgress.contestReferenceRequirements
 
+        // Validate byte count
         // Cannot validate if article byte count is unavailable
         if (articleByteCount === null) {
           validationChecklist[1].checked = false
@@ -404,24 +424,51 @@ export default {
         }
 
         // Validate byte count against contest requirements
-        if (req && req.min !== null && req.min !== undefined) {
+        if (byteReq && byteReq.min !== null && byteReq.min !== undefined) {
           // Check minimum byte count requirement
-          if (articleByteCount < req.min) {
+          if (articleByteCount < byteReq.min) {
             validationChecklist[1].checked = false
-            validationChecklist[1].detail = `Article byte count (${articleByteCount.toLocaleString()}) is below the minimum required (${req.min.toLocaleString()} bytes)`
+            validationChecklist[1].detail = `Article byte count (${articleByteCount.toLocaleString()}) is below the minimum required (${byteReq.min.toLocaleString()} bytes)`
             return false
           }
 
           // Byte count meets the requirement
           validationChecklist[1].checked = true
-          validationChecklist[1].detail = `${articleByteCount.toLocaleString()} bytes (Required: min: ${req.min.toLocaleString()})`
-          return true
+          validationChecklist[1].detail = `${articleByteCount.toLocaleString()} bytes (Required: min: ${byteReq.min.toLocaleString()})`
         } else {
           // Contest should always have min_byte_count
           validationChecklist[1].checked = false
           validationChecklist[1].detail = 'Contest byte count requirement not found'
           return false
         }
+
+        // Validate reference count (only if contest requires it)
+        if (refReq && refReq.min !== null && refReq.min !== undefined && refReq.min > 0) {
+          // Contest requires a minimum reference count
+          if (articleReferenceCount === null) {
+            validationChecklist[2].checked = false
+            validationChecklist[2].detail = 'Could not determine article reference count'
+            return false
+          }
+
+          // Check minimum reference count requirement
+          if (articleReferenceCount < refReq.min) {
+            validationChecklist[2].checked = false
+            validationChecklist[2].detail = `Article reference count (${articleReferenceCount}) is below the minimum required (${refReq.min} references)`
+            return false
+          }
+
+          // Reference count meets the requirement
+          validationChecklist[2].checked = true
+          validationChecklist[2].detail = `${articleReferenceCount} references (Required: min: ${refReq.min})`
+        } else {
+          // No reference count requirement (min_reference_count = 0 or not set)
+          validationChecklist[2].checked = true
+          validationChecklist[2].detail = 'No reference count requirement'
+        }
+
+        // All validations passed
+        return true
       } catch (err) {
         validationChecklist[1].checked = false
         if (showProgress) {

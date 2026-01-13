@@ -1,6 +1,10 @@
 <template>
   <!-- Modal for jury members to review and score submissions -->
-  <div class="modal fade" id="reviewSubmissionModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal fade"
+id="reviewSubmissionModal"
+tabindex="-1"
+data-bs-backdrop="static"
+data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-lg review-dialog">
       <div class="modal-content review-modal">
 
@@ -56,8 +60,12 @@
               </div>
 
               <!-- Slider input for parameter score (0-10) -->
-              <input type="range" class="form-range parameter-range" min="0" max="10" step="1"
-                v-model.number="parameterScores[param.name]">
+              <input type="range"
+class="form-range parameter-range"
+min="0"
+max="10"
+step="1"
+                v-model.number="parameterScores[param.name]"/>
 
               <!-- Optional parameter description -->
               <small v-if="param.description" class="text-muted d-block mt-1">
@@ -94,7 +102,11 @@
             <label class="form-label fw-semibold">
               Points to be Awarded
             </label>
-            <input type="number" class="form-control" v-model.number="simpleScore" min="0" :max="maxScore"
+            <input type="number"
+class="form-control"
+v-model.number="simpleScore"
+min="0"
+:max="maxScore"
               placeholder="Enter score" />
           </div>
 
@@ -110,7 +122,9 @@
               Overall Comment
               <span class="text-muted">(optional)</span>
             </label>
-            <textarea class="form-control" rows="4" v-model="overallComment"
+            <textarea class="form-control"
+rows="4"
+v-model="overallComment"
               placeholder="Provide overall feedback for the participant..."></textarea>
           </div>
         </div>
@@ -183,7 +197,7 @@ export default {
     const maxScore = computed(() => {
       return props.contestScoringConfig?.max_score || 100
     })
-    
+
     // Minimum possible score for this contest
     const minScore = computed(() => {
       return props.contestScoringConfig?.min_score || 0
@@ -247,7 +261,7 @@ export default {
         const csrfToken = getCookie('csrf_access_token')
 
         // Build base payload with status and comment
-        let payload = {
+        const payload = {
           status: status.value,
           comment: overallComment.value
         }

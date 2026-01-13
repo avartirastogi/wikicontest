@@ -787,7 +787,7 @@ export default {
           // If permission check didn't work, try a few more times
           if (!canDeleteContest.value) {
             console.log('⚠️ Delete permission false, retrying permission check...')
-            
+
             // Retry up to 3 times with 150ms delay between attempts
             for (let i = 0; i < 3; i++) {
               await new Promise(resolve => setTimeout(resolve, 150))
@@ -814,7 +814,7 @@ export default {
             console.error('❌ Delete permission still false after all attempts')
             console.error('Final user check:', finalUser)
             console.error('Contest creator:', newContest.created_by)
-            
+
             // Compare usernames case-insensitively for debugging
             if (finalUser) {
               console.error('User username:', finalUser.username)

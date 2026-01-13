@@ -1,6 +1,9 @@
 <template>
   <!-- Modal for displaying jury feedback on submissions -->
-  <div class="modal fade" id="juryFeedbackModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade"
+id="juryFeedbackModal"
+tabindex="-1"
+aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
         <!-- Modal header with Wikipedia blue background -->
@@ -26,8 +29,8 @@
                 <i class="fas fa-check-circle me-2"></i>Review Status
               </h6>
               <div class="feedback-content">
-                <span 
-                  class="status-badge" 
+                <span
+                  class="status-badge"
                   :class="getStatusClass(submission.status)"
                 >
                   {{ getStatusLabel(submission.status) }}
@@ -71,8 +74,8 @@
               </h6>
               <div class="feedback-content">
                 <div class="parameter-scores-grid">
-                  <div 
-                    v-for="(score, paramName) in submission.parameter_scores" 
+                  <div
+                    v-for="(score, paramName) in submission.parameter_scores"
                     :key="paramName"
                     class="parameter-score-item"
                   >
@@ -80,8 +83,8 @@
                     <div class="parameter-score">
                       <!-- Visual progress bar for parameter score -->
                       <div class="score-bar-container">
-                        <div 
-                          class="score-bar" 
+                        <div
+                          class="score-bar"
                           :style="{ width: (score * 10) + '%' }"
                         ></div>
                       </div>

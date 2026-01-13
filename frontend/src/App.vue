@@ -8,7 +8,10 @@
           WikiContest
         </router-link>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler"
+type="button"
+data-bs-toggle="collapse"
+data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -33,7 +36,9 @@
           <ul class="navbar-nav">
             <!-- Theme Toggle Button - Always visible -->
             <li class="nav-item me-2">
-              <button class="btn btn-outline-secondary theme-toggle" type="button" @click="toggleTheme"
+              <button class="btn btn-outline-secondary theme-toggle"
+type="button"
+@click="toggleTheme"
                 :title="theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'">
                 <i :class="theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'"></i>
               </button>
@@ -41,8 +46,10 @@
             <!-- Show login button when not authenticated -->
             <template v-if="!isAuthenticated">
               <li class="nav-item">
-                <a :href="`${getApiBaseUrl()}/user/oauth/login`" class="btn btn-login-brand"
-                  style="text-decoration: none; display: inline-block;" title="Log in using Wikimedia OAuth 1.0a">
+                <a :href="`${getApiBaseUrl()}/user/oauth/login`"
+class="btn btn-login-brand"
+                  style="text-decoration: none; display: inline-block;"
+title="Log in using Wikimedia OAuth 1.0a">
                   <i class="fab fa-wikipedia-w me-2"></i>Log in
                 </a>
               </li>
@@ -51,7 +58,9 @@
             <template v-else>
               <li class="nav-item">
                 <div class="dropdown">
-                  <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown"
+                  <button class="btn btn-outline-secondary dropdown-toggle"
+type="button"
+id="userDropdown"
                     data-bs-toggle="dropdown">
                     <i class="fas fa-user me-1"></i>{{ currentUser?.username || 'User' }}
                   </button>

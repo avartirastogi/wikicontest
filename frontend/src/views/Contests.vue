@@ -187,12 +187,12 @@ export default {
     // Combine creator and organizers array into single list
     const getOrganizers = (contest) => {
       const organizers = []
-      
+
       // Add creator first
       if (contest.created_by) {
         organizers.push(contest.created_by)
       }
-      
+
       // Add additional organizers, excluding duplicates
       if (contest.organizers && Array.isArray(contest.organizers)) {
         contest.organizers.forEach(org => {
@@ -201,16 +201,16 @@ export default {
           }
         })
       }
-      
+
       return organizers
     }
 
     // Extract initials from username for avatar display
     const getInitials = (username) => {
       if (!username) return '?'
-      
+
       const parts = username.trim().split(/\s+/)
-      
+
       if (parts.length >= 2) {
         // Multiple words: use first letter of first two words
         return (parts[0][0] + parts[1][0]).toUpperCase()
@@ -223,13 +223,13 @@ export default {
     // Generate consistent color for avatar based on username hash
     const getAvatarColor = (username) => {
       if (!username) return '#6c757d'
-      
+
       // Simple hash function for consistent color generation
       let hash = 0
       for (let i = 0; i < username.length; i++) {
         hash = username.charCodeAt(i) + ((hash << 5) - hash)
       }
-      
+
       // Convert to HSL for better color variety
       const hue = hash % 360
       return `hsl(${hue}, 65%, 50%)`
