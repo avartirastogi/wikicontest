@@ -37,6 +37,9 @@ __all__ = [
     "get_article_wikitext",
     "prepend_template_to_article",
     "get_csrf_token",
+    "extract_category_name_from_url",
+    "check_article_has_category",
+    "append_categories_to_article",
 ]
 
 
@@ -891,3 +894,285 @@ def get_article_reference_count(article_url):
             # Logging itself failed, silently continue
             pass
         return None
+
+
+# ---------------------------------------------------------------------------
+# Category utilities for article category attachment
+# ---------------------------------------------------------------------------
+
+def extract_category_name_from_url(category_url: str) -> Optional[str]:
+    """
+    Extract the category name from a Wiki category URL.
+
+    Supports URLs like:
+    - https://en.wikipedia.org/wiki/Category:Contest2025
+    - https://en.wikipedia.org/w/index.php?title=Category:Contest2025
+
+    Args:
+        category_url: Full URL to a Wiki category page.
+
+    Returns:
+        Category name without 'Category:' prefix (e.g., 'Contest2025'),
+        or None if extraction fails.
+    """
+    page_title = extract_page_title_from_url(category_url)
+    if not page_title:
+        return None
+
+    # Check if it's in the Category namespace
+    # Handle different language prefixes (Category:, Kategorie:, Categoría:, etc.)
+    category_prefixes = [
+        "Category:", "category:",
+        "Kategorie:",  # German
+        "Categoría:",  # Spanish
+        "Catégorie:",  # French
+        "Kategoria:",  # Polish
+        "Категория:",  # Russian
+        "分类:",  # Chinese
+    ]
+
+    for prefix in category_prefixes:
+        if page_title.startswith(prefix):
+            return page_title[len(prefix):]
+
+    # If no prefix found, return None (not a category page)
+    return None
+
+
+def check_article_has_category(article_url: str, category_name: str) -> Dict[str, Any]:
+    """
+    Check if an article has the specified category.
+
+    Searches the article wikitext for [[Category:CategoryName]] pattern.
+    Handles variations in spacing and formatting.
+
+    Args:
+        article_url: Full URL to the wiki article.
+        category_name: Category name without 'Category:' prefix.
+
+    Returns:
+        Dict with:
+        - 'has_category': bool indicating if category is present
+        - 'error': error message if check failed, None otherwise
+    """
+    result = {
+        'has_category': False,
+        'error': None,
+    }
+
+    # Fetch article wikitext
+    wikitext = get_article_wikitext(article_url)
+    if wikitext is None:
+        result['error'] = 'Failed to fetch article content'
+        return result
+
+    # Normalize category name for comparison
+    # Handle spaces vs underscores
+    category_variations = [
+        category_name,
+        category_name.replace(' ', '_'),
+        category_name.replace('_', ' '),
+    ]
+
+    # Build category patterns to search for
+    # Categories can appear as [[Category:Name]] or [[Category:Name|sortkey]]
+    category_patterns = []
+    for variation in category_variations:
+        # Exact match: [[Category:Name]]
+        category_patterns.append(f"[[Category:{variation}]]")
+        # With sortkey: [[Category:Name|...]]
+        category_patterns.append(f"[[Category:{variation}|")
+        # Case-insensitive variations
+        category_patterns.append(f"[[category:{variation.lower()}]]")
+        category_patterns.append(f"[[category:{variation.lower()}|")
+
+    # Search for any of the patterns in the wikitext
+    for pattern in category_patterns:
+        if pattern in wikitext:
+            result['has_category'] = True
+            return result
+
+    # Category not found
+    return result
+
+
+def append_categories_to_article(
+    article_url: str,
+    category_names: List[str],
+    oauth_token: str,
+    oauth_token_secret: str,
+    consumer_key: str,
+    consumer_secret: str,
+    edit_summary: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Append categories to the end of a Wikipedia article.
+
+    Uses the MediaWiki API's 'appendtext' parameter to safely add categories
+    at the end of the page without risking edit conflicts.
+    The edit is marked as a bot edit if the user has bot rights.
+
+    Args:
+        article_url: Full URL to the wiki article
+        category_names: List of category names without 'Category:' prefix
+        oauth_token: User's OAuth access token
+        oauth_token_secret: User's OAuth access token secret
+        consumer_key: Application's OAuth consumer key
+        consumer_secret: Application's OAuth consumer secret
+        edit_summary: Optional edit summary (defaults to auto-generated)
+
+    Returns:
+        Dict with:
+        - 'success': bool indicating if edit succeeded
+        - 'error': error message if failed, None if succeeded
+        - 'categories_added': list of category names that were added
+        - 'categories_skipped': list of category names that already existed
+        - 'new_revid': new revision ID if succeeded
+        - 'response': raw API response for debugging
+
+    Note:
+        The edit is marked as a bot edit using the 'bot' parameter.
+        This requires the user account to have the 'bot' user right on the wiki.
+        If the user doesn't have bot rights, the API will ignore the bot parameter
+        and the edit will be made as a regular edit.
+    """
+    result = {
+        'success': False,
+        'error': None,
+        'categories_added': [],
+        'categories_skipped': [],
+        'new_revid': None,
+        'response': None,
+    }
+
+    # Validate input
+    if not category_names:
+        result['error'] = 'No categories provided'
+        return result
+
+    try:
+        from requests_oauthlib import OAuth1
+    except ImportError:
+        result['error'] = 'OAuth library not installed (requests-oauthlib required)'
+        return result
+
+    # Extract page title and build API URL
+    page_title = extract_page_title_from_url(article_url)
+    if not page_title:
+        result['error'] = 'Could not extract page title from URL'
+        return result
+
+    url_obj = urlparse(article_url)
+    base_url = f"{url_obj.scheme}://{url_obj.netloc}"
+    api_url = f"{base_url}/w/api.php"
+
+    # Check which categories already exist
+    categories_to_add = []
+    for category_name in category_names:
+        category_check = check_article_has_category(article_url, category_name)
+        if category_check.get('error'):
+            # If check failed, we'll try to add it anyway (better to try than skip)
+            categories_to_add.append(category_name)
+        elif not category_check.get('has_category'):
+            # Category doesn't exist, add it
+            categories_to_add.append(category_name)
+        else:
+            # Category already exists, skip it
+            result['categories_skipped'].append(category_name)
+
+    # If all categories already exist, return success with skipped list
+    if not categories_to_add:
+        result['success'] = True
+        return result
+
+    # Create OAuth1 auth object
+    # signature_type='auth_header' ensures OAuth signature is in Authorization header
+    auth = OAuth1(
+        consumer_key,
+        client_secret=consumer_secret,
+        resource_owner_key=oauth_token,
+        resource_owner_secret=oauth_token_secret,
+        signature_type='auth_header'  # Use Authorization header for OAuth
+    )
+
+    # Get CSRF token
+    csrf_token = get_csrf_token(
+        api_url, oauth_token, oauth_token_secret, consumer_key, consumer_secret
+    )
+    if not csrf_token:
+        result['error'] = 'Failed to obtain CSRF token. Check OAuth permissions.'
+        return result
+
+    # Build the category text to append
+    # Format: \n[[Category:Name1]]\n[[Category:Name2]]\n
+    # Each category on its own line at the end of the article
+    category_lines = []
+    for category_name in categories_to_add:
+        category_lines.append(f"[[Category:{category_name}]]")
+    
+    category_text = "\n" + "\n".join(category_lines) + "\n"
+
+    # Prepare edit summary
+    if not edit_summary:
+        if len(categories_to_add) == 1:
+            edit_summary = f"Adding [[Category:{categories_to_add[0]}]] contest category (via WikiContest submission)"
+        else:
+            category_list = ", ".join([f"[[Category:{name}]]" for name in categories_to_add])
+            edit_summary = f"Adding contest categories: {category_list} (via WikiContest submission)"
+
+    # Prepare the edit request
+    # Note: The 'bot' parameter marks the edit as a bot edit
+    # This requires the user account to have the 'bot' user right on the wiki
+    # If the user doesn't have bot rights, the API will ignore this parameter
+    edit_params = {
+        "action": "edit",
+        "title": page_title,
+        "appendtext": category_text,  # Add to end of page
+        "summary": edit_summary,
+        "token": csrf_token,
+        "bot": "1",  # Mark edit as bot edit (requires bot user right)
+        "format": "json",
+        "formatversion": "2"  # Use modern format version
+    }
+
+    headers = get_mediawiki_headers()
+
+    try:
+        response = requests.post(api_url, data=edit_params, auth=auth, headers=headers, timeout=30)
+    except requests.RequestException as e:
+        result['error'] = f'Network error during edit: {str(e)}'
+        return result
+
+    if response.status_code != 200:
+        result['error'] = f'HTTP error during edit: {response.status_code}'
+        # Log response for debugging
+        import logging
+        logging.error(f"Category edit API HTTP {response.status_code}: {response.text[:500]}")
+        return result
+
+    try:
+        data = response.json()
+    except ValueError:
+        result['error'] = 'Failed to parse API response'
+        return result
+
+    result['response'] = data
+
+    # Check for success
+    if 'edit' in data:
+        edit_result = data['edit'].get('result', '')
+        if edit_result == 'Success':
+            result['success'] = True
+            result['new_revid'] = data['edit'].get('newrevid')
+            result['categories_added'] = categories_to_add
+            return result
+        else:
+            result['error'] = f"Edit failed: {edit_result}"
+            return result
+    elif 'error' in data:
+        error_info = data['error']
+        result['error'] = f"API error: {error_info.get('code', 'unknown')} - {error_info.get('info', 'Unknown error')}"
+        return result
+    else:
+        result['error'] = 'Unknown API response format'
+        return result
