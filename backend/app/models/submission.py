@@ -74,6 +74,13 @@ class Submission(BaseModel):
     # True if template was automatically added to the article during submission
     template_added = db.Column(db.Boolean, nullable=True, default=False)
 
+    # Category enforcement tracking
+    # JSON array of category names that were automatically added to the article
+    categories_added = db.Column(db.Text, nullable=True)
+    
+    # Error message if category attachment failed
+    category_error = db.Column(db.Text, nullable=True)
+
     # Submission status and scoring
     # pending | accepted | rejected | auto_rejected
     status = db.Column(db.String(20), nullable=False, default="pending")
@@ -165,6 +172,8 @@ class Submission(BaseModel):
         article_size_at_start=None,
         article_expansion_bytes=None,
         template_added=False,
+        categories_added=None,
+        category_error=None,
     ):
         """
         Initialize a new Submission instance
@@ -182,6 +191,8 @@ class Submission(BaseModel):
             article_size_at_start: Article size in bytes at contest start (optional)
             article_expansion_bytes: Bytes added between contest start and submission time (optional)
             template_added: Whether template was automatically added to article (optional)
+            categories_added: List of category names that were automatically added (optional, stored as JSON)
+            category_error: Error message if category attachment failed (optional)
         """
         # Set required fields
         self.user_id = user_id
@@ -199,6 +210,18 @@ class Submission(BaseModel):
         self.article_size_at_start = article_size_at_start
         self.article_expansion_bytes = article_expansion_bytes
         self.template_added = template_added
+        
+        # Set category tracking
+        # Store categories_added as JSON string if it's a list, otherwise store as-is
+        if categories_added is not None:
+            if isinstance(categories_added, list):
+                self.categories_added = json.dumps(categories_added)
+            else:
+                self.categories_added = categories_added
+        else:
+            self.categories_added = None
+        self.category_error = category_error
+        
         self.reviewed_by = None
         self.reviewed_at = None
         self.review_comment = None
@@ -237,6 +260,27 @@ class Submission(BaseModel):
             bool: True if submission is rejected, False otherwise
         """
         return self.status == "rejected"
+
+
+    # ------------------------------------------------------------------------
+    # CATEGORIES ADDED MANAGEMENT
+    # ------------------------------------------------------------------------
+
+    def get_categories_added(self):
+        """
+        Get categories_added as list.
+
+        Returns:
+            list or None: List of category names that were added, or None if empty
+        """
+        if not self.categories_added:
+            return None
+        try:
+            # Parse JSON string back to list
+            return json.loads(self.categories_added)
+        except json.JSONDecodeError:
+            # Return empty list if JSON is corrupted
+            return []
 
 
     # ------------------------------------------------------------------------
@@ -490,6 +534,8 @@ class Submission(BaseModel):
             "article_size_at_start": self.article_size_at_start,
             "article_expansion_bytes": self.article_expansion_bytes,
             "template_added": self.template_added,
+            "categories_added": self.get_categories_added(),
+            "category_error": self.category_error,
             "reviewed_by": self.reviewed_by,
             "reviewed_at": (
                 self.reviewed_at.isoformat() + "Z" if self.reviewed_at else None
