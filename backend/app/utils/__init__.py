@@ -41,6 +41,16 @@ __all__ = [
 
 
 # ---------------------------------------------------------------------------
+# MediaWiki API Configuration
+# ---------------------------------------------------------------------------
+
+# Timeout for MediaWiki API requests (in seconds)
+# Increased from 10 to 30 seconds to handle slow API responses
+# MediaWiki API can sometimes be slow, especially for large articles or during high traffic
+MEDIAWIKI_API_TIMEOUT = 30
+
+
+# ---------------------------------------------------------------------------
 # Access control helpers
 # ---------------------------------------------------------------------------
 
@@ -313,7 +323,7 @@ def validate_template_link(template_url: str) -> Dict[str, Any]:
     }
 
     try:
-        response = requests.get(api_url, params=params, headers=get_mediawiki_headers(), timeout=10)
+        response = requests.get(api_url, params=params, headers=get_mediawiki_headers(), timeout=MEDIAWIKI_API_TIMEOUT)
     except requests.RequestException as e:
         result['error'] = f'Failed to verify template: network error ({str(e)})'
         return result
@@ -531,7 +541,7 @@ def get_article_size_at_timestamp(article_url: str, when: datetime) -> Optional[
     }
 
     try:
-        response = requests.get(api_url, params=params, headers=get_mediawiki_headers(), timeout=10)
+        response = requests.get(api_url, params=params, headers=get_mediawiki_headers(), timeout=MEDIAWIKI_API_TIMEOUT)
     except requests.RequestException:
         # Network error. Caller will handle `None` gracefully.
         return None
@@ -593,36 +603,62 @@ def get_csrf_token(
         # requests-oauthlib not installed
         return None
 
+    # Create OAuth1 signature helper
+    # signature_type='auth_header' puts OAuth credentials in Authorization header (required)
     auth = OAuth1(
         consumer_key,
         client_secret=consumer_secret,
         resource_owner_key=oauth_token,
-        resource_owner_secret=oauth_token_secret
+        resource_owner_secret=oauth_token_secret,
+        signature_type='auth_header'  # Use Authorization header for OAuth
     )
 
     params = {
         "action": "query",
         "meta": "tokens",
         "type": "csrf",
-        "format": "json"
+        "format": "json",
+        "formatversion": "2"  # Use modern format version
     }
 
+    headers = get_mediawiki_headers()
+
     try:
-        response = requests.get(api_url, params=params, auth=auth, timeout=15)
-    except requests.RequestException:
+        response = requests.get(api_url, params=params, auth=auth, headers=headers, timeout=15)
+    except requests.RequestException as e:
+        # Log the error for debugging
+        import logging
+        logging.error(f"CSRF token request failed: {str(e)}")
         return None
 
     if response.status_code != 200:
+        # Log the status code and response for debugging
+        import logging
+        logging.error(f"CSRF token HTTP {response.status_code}: {response.text[:500]}")
         return None
 
     try:
         data = response.json()
-    except ValueError:
+    except ValueError as e:
+        import logging
+        logging.error(f"CSRF token JSON parse error: {str(e)}, response: {response.text[:500]}")
+        return None
+
+    # Check for API errors
+    if 'error' in data:
+        import logging
+        error_info = data['error']
+        logging.error(
+            f"CSRF token API error: {error_info.get('code', 'unknown')} - "
+            f"{error_info.get('info', 'Unknown error')}"
+        )
         return None
 
     try:
         return data['query']['tokens']['csrftoken']
-    except KeyError:
+    except KeyError as e:
+        import logging
+        logging.error(f"CSRF token not found in response: {str(e)}, data: {data}")
         return None
 
 
@@ -640,6 +676,7 @@ def prepend_template_to_article(
 
     Uses the MediaWiki API's 'prependtext' parameter to safely add content
     at the beginning of the page without risking edit conflicts.
+    The edit is marked as a bot edit if the user has bot rights.
 
     Args:
         article_url: Full URL to the wiki article
@@ -656,6 +693,12 @@ def prepend_template_to_article(
         - 'error': error message if failed, None if succeeded
         - 'new_revid': new revision ID if succeeded
         - 'response': raw API response for debugging
+
+    Note:
+        The edit is marked as a bot edit using the 'bot' parameter.
+        This requires the user account to have the 'bot' user right on the wiki.
+        If the user doesn't have bot rights, the API will ignore the bot parameter
+        and the edit will be made as a regular edit.
     """
     result = {
         'success': False,
@@ -681,11 +724,13 @@ def prepend_template_to_article(
     api_url = f"{base_url}/w/api.php"
 
     # Create OAuth1 auth object
+    # signature_type='auth_header' ensures OAuth signature is in Authorization header
     auth = OAuth1(
         consumer_key,
         client_secret=consumer_secret,
         resource_owner_key=oauth_token,
-        resource_owner_secret=oauth_token_secret
+        resource_owner_secret=oauth_token_secret,
+        signature_type='auth_header'  # Use Authorization header for OAuth
     )
 
     # Get CSRF token
@@ -705,23 +750,33 @@ def prepend_template_to_article(
         edit_summary = f"Adding {{{{{template_name}}}}} contest template (via WikiContest)"
 
     # Prepare the edit request
+    # Note: The 'bot' parameter marks the edit as a bot edit
+    # This requires the user account to have the 'bot' user right on the wiki
+    # If the user doesn't have bot rights, the API will ignore this parameter
     edit_params = {
         "action": "edit",
         "title": page_title,
         "prependtext": template_text,  # Add to beginning of page
         "summary": edit_summary,
         "token": csrf_token,
+        "bot": "1",  # Mark edit as bot edit (requires bot user right)
         "format": "json",
+        "formatversion": "2"  # Use modern format version
     }
 
+    headers = get_mediawiki_headers()
+
     try:
-        response = requests.post(api_url, data=edit_params, auth=auth, timeout=30)
+        response = requests.post(api_url, data=edit_params, auth=auth, headers=headers, timeout=30)
     except requests.RequestException as e:
         result['error'] = f'Network error during edit: {str(e)}'
         return result
 
     if response.status_code != 200:
         result['error'] = f'HTTP error during edit: {response.status_code}'
+        # Log response for debugging
+        import logging
+        logging.error(f"Edit API HTTP {response.status_code}: {response.text[:500]}")
         return result
 
     try:
