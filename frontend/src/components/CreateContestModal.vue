@@ -752,6 +752,13 @@ export default {
           };
         }
 
+        // Prepare template link: trim if provided, otherwise set to null
+        let templateLinkValue = null
+        if (formData.template_link && typeof formData.template_link === 'string') {
+          const trimmed = formData.template_link.trim()
+          templateLinkValue = trimmed.length > 0 ? trimmed : null
+        }
+
         // Construct contest data payload with all form values
         const contestData = {
           ...formData,
@@ -765,7 +772,7 @@ export default {
           // Categories: filter out empty strings and trim
           categories: formData.categories.filter(cat => cat && cat.trim()).map(cat => cat.trim()),
           // Template link (optional): trim or set to null if empty
-          template_link: formData.template_link && formData.template_link.trim() ? formData.template_link.trim() : null,
+          template_link: templateLinkValue,
           scoring_parameters: scoringParametersPayload,
           min_reference_count: formData.min_reference_count || 0
         }
