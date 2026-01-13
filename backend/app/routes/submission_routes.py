@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 from datetime import datetime
 
 import requests
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from sqlalchemy.orm import joinedload
 
 from app.database import db
@@ -19,7 +19,8 @@ from app.utils import (
     extract_page_title_from_url,
     get_latest_revision_author,
     build_mediawiki_revisions_api_params,
-    get_mediawiki_headers
+    get_mediawiki_headers,
+    MEDIAWIKI_API_TIMEOUT
 )
 
 # Create blueprint
@@ -312,7 +313,7 @@ def refresh_metadata(contest_id):
             # Get headers using shared utility function
             headers = get_mediawiki_headers()
 
-            response = requests.get(api_url, params=api_params, headers=headers, timeout=10)
+            response = requests.get(api_url, params=api_params, headers=headers, timeout=MEDIAWIKI_API_TIMEOUT)
 
             if response.status_code != 200:
                 return None
@@ -530,8 +531,8 @@ def review_submission(submission_id):
         db.session.rollback()
         # Log the error for debugging
         import traceback
-        print(f"Error updating submission status: {str(e)}")
-        print(traceback.format_exc())
+        current_app.logger.error(f"Error updating submission status: {str(e)}")
+        current_app.logger.error(traceback.format_exc())
         return jsonify({"error": "Internal server error"}), 500
 
     return jsonify({
