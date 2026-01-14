@@ -48,11 +48,16 @@ class Config:
     # -------------------------------------------------------------------------
 
     # Database connection string
-    # Falls back to local MySQL instance if DATABASE_URL not provided
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL',
-        'mysql+pymysql://root:password@localhost/wikicontest'
-    )
+    # For development: uses SQLite (no password needed)
+    # For production: DATABASE_URL must be set in environment
+    # CRITICAL: No default password - use SQLite for development or require DATABASE_URL
+    database_url = os.getenv('DATABASE_URL')
+    if not database_url:
+        # Development fallback: use SQLite (no password, easier setup)
+        database_url = 'sqlite:///wikicontest_dev.db'
+        print("WARNING: DATABASE_URL not set. Using SQLite for development.")
+        print("Set DATABASE_URL in environment for production!")
+    SQLALCHEMY_DATABASE_URI = database_url
 
     # SQLAlchemy settings
     # Disable modification tracking to reduce memory overhead

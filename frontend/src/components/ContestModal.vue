@@ -45,7 +45,10 @@
               Contest Template
             </h6>
             <p class="mb-1">
-              <a :href="contest.template_link" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
+              <a :href="contest.template_link"
+target="_blank"
+rel="noopener noreferrer"
+class="text-decoration-none">
                 {{ contest.template_link }}
                 <i class="fas fa-external-link-alt ms-1" style="font-size: 0.8em;"></i>
               </a>

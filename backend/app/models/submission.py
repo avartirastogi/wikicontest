@@ -77,7 +77,6 @@ class Submission(BaseModel):
     # Category enforcement tracking
     # JSON array of category names that were automatically added to the article
     categories_added = db.Column(db.Text, nullable=True)
-    
     # Error message if category attachment failed
     category_error = db.Column(db.Text, nullable=True)
 
@@ -210,7 +209,6 @@ class Submission(BaseModel):
         self.article_size_at_start = article_size_at_start
         self.article_expansion_bytes = article_expansion_bytes
         self.template_added = template_added
-        
         # Set category tracking
         # Store categories_added as JSON string if it's a list, otherwise store as-is
         if categories_added is not None:
@@ -221,7 +219,6 @@ class Submission(BaseModel):
         else:
             self.categories_added = None
         self.category_error = category_error
-        
         self.reviewed_by = None
         self.reviewed_at = None
         self.review_comment = None

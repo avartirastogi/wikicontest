@@ -100,7 +100,8 @@ class="btn btn-outline-primary">
     <!-- Review submission modal component -->
     <ReviewSubmissionModal :submission-id="submissionId"
       :contest-scoring-config="contestScoringConfig"
-      @reviewed="onReviewed" @deleted="onDeleted" />
+      @reviewed="onReviewed"
+@deleted="onDeleted" />
   </div>
 </template>
 

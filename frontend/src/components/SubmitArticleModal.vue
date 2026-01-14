@@ -23,8 +23,11 @@
             <!-- Template Enforcement Info (if contest has template) -->
             <div v-if="contest && contest.template_link" class="alert alert-warning mb-3">
               <i class="fas fa-file-code me-2"></i>
-              <strong>Contest Template:</strong> This contest requires the 
-              <a :href="contest.template_link" target="_blank" rel="noopener noreferrer" class="alert-link">
+              <strong>Contest Template:</strong> This contest requires the
+              <a :href="contest.template_link"
+target="_blank"
+rel="noopener noreferrer"
+class="alert-link">
                 contest template
                 <i class="fas fa-external-link-alt ms-1" style="font-size: 0.8em;"></i>
               </a>
@@ -42,7 +45,10 @@
               <strong>Contest Categories:</strong> This contest requires articles to belong to the following categories:
               <ul class="mb-0 mt-2">
                 <li v-for="(categoryUrl, index) in contest.categories" :key="index">
-                  <a :href="categoryUrl" target="_blank" rel="noopener noreferrer" class="alert-link">
+                  <a :href="categoryUrl"
+target="_blank"
+rel="noopener noreferrer"
+class="alert-link">
                     {{ categoryUrl }}
                     <i class="fas fa-external-link-alt ms-1" style="font-size: 0.8em;"></i>
                   </a>
@@ -249,8 +255,11 @@ export default {
         submissionProgress.contestByteRequirements = {
           min: data.min_byte_count
         }
+        // Ensure min_reference_count is properly converted to number
+        // Handle null, undefined, or string values
+        const minRefCount = data.min_reference_count != null ? Number(data.min_reference_count) : 0
         submissionProgress.contestReferenceRequirements = {
-          min: data.min_reference_count || 0
+          min: isNaN(minRefCount) ? 0 : minRefCount
         }
       } catch (err) {
         console.error('Error loading contest:', err)
@@ -442,7 +451,12 @@ export default {
         submissionProgress.articleReferenceCount = articleReferenceCount
 
         // Ensure contest is loaded before validating requirements
-        if (!contest.value || !submissionProgress.contestByteRequirements) {
+        // Check both byte and reference requirements to ensure all data is loaded
+        if (
+          !contest.value ||
+          !submissionProgress.contestByteRequirements ||
+          !submissionProgress.contestReferenceRequirements
+        ) {
           await loadContest()
         }
 
@@ -477,24 +491,32 @@ export default {
         }
 
         // Validate reference count (only if contest requires it)
-        if (refReq && refReq.min !== null && refReq.min !== undefined && refReq.min > 0) {
+        // Check if refReq exists and has a valid min value > 0
+        const minRefRequired = refReq && refReq.min != null && Number(refReq.min) > 0
+        if (minRefRequired) {
           // Contest requires a minimum reference count
-          if (articleReferenceCount === null) {
+          // Convert to number to ensure proper comparison
+          const minRefCount = Number(refReq.min)
+
+          if (articleReferenceCount === null || articleReferenceCount === undefined) {
             validationChecklist[2].checked = false
             validationChecklist[2].detail = 'Could not determine article reference count'
             return false
           }
 
+          // Convert article reference count to number for comparison
+          const articleRefCountNum = Number(articleReferenceCount)
+
           // Check minimum reference count requirement
-          if (articleReferenceCount < refReq.min) {
+          if (isNaN(articleRefCountNum) || articleRefCountNum < minRefCount) {
             validationChecklist[2].checked = false
-            validationChecklist[2].detail = `Article reference count (${articleReferenceCount}) is below the minimum required (${refReq.min} references)`
+            validationChecklist[2].detail = `Article reference count (${articleRefCountNum}) is below the minimum required (${minRefCount} references)`
             return false
           }
 
           // Reference count meets the requirement
           validationChecklist[2].checked = true
-          validationChecklist[2].detail = `${articleReferenceCount} references (Required: min: ${refReq.min})`
+          validationChecklist[2].detail = `${articleRefCountNum} references (Required: min: ${minRefCount})`
         } else {
           // No reference count requirement (min_reference_count = 0 or not set)
           validationChecklist[2].checked = true

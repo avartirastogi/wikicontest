@@ -16,6 +16,7 @@ Architecture:
 Author: WikiContest Development Team
 Version: 1.0.0
 """
+# pylint: disable=too-many-lines
 
 # Standard library imports
 import os
@@ -25,7 +26,7 @@ from urllib.parse import urlparse, parse_qs, unquote
 # Third-party imports
 from flask import Flask, request, jsonify, send_from_directory, current_app
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt_identity
+from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt_identity, jwt_required
 from flask_jwt_extended.exceptions import JWTDecodeError, NoAuthorizationError
 from dotenv import load_dotenv
 import requests
@@ -80,8 +81,23 @@ def create_app():
 
     # Secret keys for session management and JWT signing
     # These should be different in production and stored securely
-    flask_app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'rohank10')
-    flask_app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'rohank10')
+    # CRITICAL: Require environment variables - no insecure defaults
+    secret_key = os.getenv('SECRET_KEY')
+    jwt_secret_key = os.getenv('JWT_SECRET_KEY')
+    # For development only: generate temporary secrets if not set (with warning)
+    # In production, these MUST be set via environment variables
+    if not secret_key or not jwt_secret_key:
+        import secrets
+        if not secret_key:
+            secret_key = secrets.token_urlsafe(48)
+            print("⚠️  WARNING: SECRET_KEY not set in environment. Generated temporary key.")
+            print("   Set SECRET_KEY in environment for production!")
+        if not jwt_secret_key:
+            jwt_secret_key = secrets.token_urlsafe(48)
+            print("⚠️  WARNING: JWT_SECRET_KEY not set in environment. Generated temporary key.")
+            print("   Set JWT_SECRET_KEY in environment for production!")
+    flask_app.config['SECRET_KEY'] = secret_key
+    flask_app.config['JWT_SECRET_KEY'] = jwt_secret_key
 
     # --- Session Configuration for OAuth Flow ---
     # Sessions need to persist across redirects to external OAuth providers
@@ -263,7 +279,6 @@ def check_cookie():
             current_app.logger.info(log_msg)
             # Also print to console for immediate visibility
             print(f'🔐 [COOKIE CHECK] {log_msg}')
-            
             # Special check: If username is Adityakumar0545, verify role is superadmin
             if db_username == 'Adityakumar0545':
                 print(f'⚠️ [SPECIAL CHECK] User Adityakumar0545 - Role from DB: {db_role}')
@@ -324,7 +339,6 @@ def check_cookie():
             current_app.logger.info(log_msg)
             # Also print to console for immediate visibility
             print(f'🔐 [FINAL RESPONSE] {log_msg}')
-            
             # Special check for Adityakumar0545
             if response_data.get("username") == 'Adityakumar0545':
                 print(f'⚠️ [SPECIAL CHECK] Adityakumar0545 - Role in response: {response_data.get("role")}')
@@ -354,11 +368,13 @@ def check_cookie():
 
 
 @app.route('/api/debug/user-role/<username>', methods=['GET'])
+@jwt_required()
 def debug_user_role(username):
     """
     Debug endpoint to check user role directly from database by username.
     This helps verify what role is actually stored in the database.
-    No authentication required for debugging purposes.
+    SECURITY: Requires authentication and admin role to prevent information disclosure.
+    Only admins can access this debug endpoint.
 
     Args:
         username: Username to check
@@ -366,9 +382,21 @@ def debug_user_role(username):
     Returns:
         JSON with user information including role from database
     """
+    # Verify user is authenticated and is admin
+    try:
+        user_id = get_jwt_identity()
+        if not user_id:
+            return jsonify({'error': 'Authentication required'}), 401
+        # Query current user to check role
+        current_user = User.query.get(int(user_id))
+        if not current_user or not current_user.is_admin():
+            return jsonify({'error': 'Admin access required'}), 403
+    except (ValueError, AttributeError, SQLAlchemyError, TypeError):
+        # Catch specific exceptions that might occur during authentication
+        # Fail securely by returning authentication error
+        return jsonify({'error': 'Authentication required'}), 401
     try:
         print(f'🔍 [DEBUG] Checking role for username: {username}')
-        
         # Query directly from database using raw SQL
         result = db.session.execute(
             sql_text('SELECT id, username, email, role FROM users WHERE username = :username'),
@@ -973,9 +1001,13 @@ def internal_error(_error):
 if __name__ == '__main__':
     # This file can be run directly, but main.py is the recommended entry point.
     # Database migrations are handled by Alembic - run 'alembic upgrade head' before starting.
-    # Debug mode is enabled for development (disable in production)
+    # Debug mode is controlled by environment variable (FLASK_DEBUG) for security
+    # Default to False for production safety
+    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    if debug_mode:
+        print("⚠️  WARNING: Debug mode is enabled. Disable in production!")
     app.run(
-        debug=True,        # Enable debug mode for development
+        debug=debug_mode,  # Controlled by FLASK_DEBUG environment variable
         host='0.0.0.0',    # Allow connections from any IP
         port=5000          # Default Flask development port
     )

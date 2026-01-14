@@ -505,8 +505,12 @@ class="badge bg-success me-2 mb-2"
 
               <!-- Organizer search input with autocomplete dropdown -->
               <div style="position: relative;">
-                <input type="text" class="form-control" v-model="organizerSearchQuery" @input="searchOrganizers"
-                  placeholder="Type username to add additional organizers..." autocomplete="off" />
+                <input type="text"
+class="form-control"
+v-model="organizerSearchQuery"
+@input="searchOrganizers"
+                  placeholder="Type username to add additional organizers..."
+autocomplete="off" />
 
                 <!-- Autocomplete results dropdown -->
                 <div v-if="organizerSearchResults.length > 0 && organizerSearchQuery.length >= 2"
@@ -596,8 +600,11 @@ style="cursor: pointer;"
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="editMarksAccepted" class="form-label">Points for Accepted Submissions</label>
-                <input type="number" class="form-control" id="editMarksAccepted"
-                  v-model.number="editForm.marks_setting_accepted" min="0" />
+                <input type="number"
+class="form-control"
+id="editMarksAccepted"
+                  v-model.number="editForm.marks_setting_accepted"
+min="0" />
                 <small class="form-text text-muted">
                   Maximum points that can be awarded. Jury can assign points from 0 up to
                   this value for accepted submissions.
@@ -605,8 +612,11 @@ style="cursor: pointer;"
               </div>
               <div class="col-md-6 mb-3">
                 <label for="editMarksRejected" class="form-label">Points for Rejected Submissions</label>
-                <input type="number" class="form-control" id="editMarksRejected"
-                  v-model.number="editForm.marks_setting_rejected" min="0" />
+                <input type="number"
+class="form-control"
+id="editMarksRejected"
+                  v-model.number="editForm.marks_setting_rejected"
+min="0" />
                 <small class="form-text text-muted">
                   Fixed points awarded automatically for rejected submissions (usually 0 or negative).
                 </small>
@@ -621,8 +631,10 @@ style="cursor: pointer;"
                 </h6>
                 <!-- Toggle between simple and multi-parameter scoring -->
                 <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="editEnableMultiParam"
-                    v-model="enableMultiParameterScoring">
+                  <input class="form-check-input"
+type="checkbox"
+id="editEnableMultiParam"
+                    v-model="enableMultiParameterScoring"/>
                   <label class="form-check-label" for="editEnableMultiParam">
                     Enable Multi-Parameter Scoring
                   </label>
@@ -636,7 +648,7 @@ style="cursor: pointer;"
                   <strong>Simple Scoring Mode:</strong> Jury will assign a single score (0-{{
                     editForm.marks_setting_accepted }})
                   for accepted submissions.
-                  <br>
+                  <br/>
                   <i class="fas fa-info-circle me-2"></i>
                   <strong>Simple Scoring Mode:</strong> Jury will assign a single score (0-{{
                     editForm.marks_setting_rejected }})
@@ -653,16 +665,24 @@ style="cursor: pointer;"
                   <!-- Maximum score for accepted submissions -->
                   <div class="mb-3">
                     <label class="form-label">Point of Acceptance</label>
-                    <input type="number" class="form-control" v-model.number="maxScore" min="1" max="100"
-                      placeholder="10">
+                    <input type="number"
+class="form-control"
+v-model.number="maxScore"
+min="1"
+max="100"
+                      placeholder="10"/>
                     <small class="text-muted">Final calculated score will be scaled to this value</small>
                   </div>
 
                   <!-- Minimum score for rejected submissions -->
                   <div class="mb-3">
                     <label class="form-label">Point of Rejection </label>
-                    <input type="number" class="form-control" v-model.number="minScore" min="1" max="100"
-                      placeholder="0">
+                    <input type="number"
+class="form-control"
+v-model.number="minScore"
+min="1"
+max="100"
+                      placeholder="0"/>
 
                   </div>
 
@@ -675,24 +695,36 @@ style="cursor: pointer;"
                         <div class="card-body">
                           <div class="row align-items-center">
                             <div class="col-md-3">
-                              <input type="text" class="form-control" v-model="param.name" placeholder="Parameter name"
-                                required>
+                              <input type="text"
+class="form-control"
+v-model="param.name"
+placeholder="Parameter name"
+                                required/>
                             </div>
                             <div class="col-md-3">
                               <div class="input-group">
-                                <input type="number" class="form-control" v-model.number="param.weight" min="0"
-                                  max="100" placeholder="Weight" required>
+                                <input type="number"
+class="form-control"
+v-model.number="param.weight"
+min="0"
+                                  max="100"
+placeholder="Weight"
+required/>
                                 <span class="input-group-text">%</span>
                               </div>
                             </div>
                             <div class="col-md-5">
-                              <input type="text" class="form-control" v-model="param.description"
-                                placeholder="Description (optional)">
+                              <input type="text"
+class="form-control"
+v-model="param.description"
+                                placeholder="Description (optional)"/>
                             </div>
                             <div class="col-md-1 text-end">
                               <!-- Remove parameter button (disabled if only one parameter) -->
-                              <button type="button" class="btn btn-sm btn-outline-danger"
-                                @click="removeParameter(index)" :disabled="scoringParameters.length <= 1">
+                              <button type="button"
+class="btn btn-sm btn-outline-danger"
+                                @click="removeParameter(index)"
+:disabled="scoringParameters.length <= 1">
                                 <i class="fas fa-times"></i>
                               </button>
                             </div>

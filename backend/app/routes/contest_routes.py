@@ -689,6 +689,7 @@ def parse_date_or_none(date_str):
 
 @contest_bp.route("/<int:contest_id>", methods=["PUT"])
 @require_auth
+@handle_errors
 def update_contest(contest_id):
     user = request.current_user
     try:

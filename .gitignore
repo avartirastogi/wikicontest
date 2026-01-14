@@ -164,6 +164,9 @@ wikicontest.db
 config.ini
 secrets.json
 .secrets
+*.toml
+toolforge_config.toml
+backend/toolforge/toolforge_config.toml
 
 # =============================================================================
 # LOGS & TEMPORARY FILES

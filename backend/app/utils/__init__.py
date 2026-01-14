@@ -12,6 +12,7 @@ The focus here is small, well‑documented functions:
 All functions are intentionally simple and safe.
 They catch network / parsing errors and return `None` instead of crashing.
 """
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -271,7 +272,7 @@ def extract_template_name_from_url(template_url: str) -> Optional[str]:
     return None
 
 
-def validate_template_link(template_url: str) -> Dict[str, Any]:
+def validate_template_link(template_url: str) -> Dict[str, Any]:  # pylint: disable=too-many-return-statements
     """
     Validate a template link by checking:
     1. URL is valid and well-formed
@@ -337,8 +338,8 @@ def validate_template_link(template_url: str) -> Dict[str, Any]:
 
     try:
         response = requests.get(api_url, params=params, headers=get_mediawiki_headers(), timeout=MEDIAWIKI_API_TIMEOUT)
-    except requests.RequestException as e:
-        result['error'] = f'Failed to verify template: network error ({str(e)})'
+    except requests.RequestException as error:
+        result['error'] = f'Failed to verify template: network error ({str(error)})'
         return result
 
     if response.status_code != 200:
@@ -372,7 +373,7 @@ def validate_template_link(template_url: str) -> Dict[str, Any]:
     return result
 
 
-def get_article_wikitext(article_url: str) -> Optional[str]:
+def get_article_wikitext(article_url: str) -> Optional[str]:  # pylint: disable=too-many-return-statements
     """
     Fetch the wikitext content of an article.
 
@@ -474,7 +475,7 @@ def check_article_has_template(article_url: str, template_name: str) -> Dict[str
 
     # Remove HTML comments that might appear before the template
     # Pattern: <!-- ... --> (can span multiple lines)
-    import re
+    # Note: re is already imported at module level
     # Remove single-line and multi-line HTML comments
     normalized_content = re.sub(r'<!--.*?-->', '', normalized_content, flags=re.DOTALL)
     # Strip whitespace again after removing comments
@@ -667,23 +668,23 @@ def get_csrf_token(
 
     try:
         response = requests.get(api_url, params=params, auth=auth, headers=headers, timeout=15)
-    except requests.RequestException as e:
+    except requests.RequestException as error:
         # Log the error for debugging
         import logging
-        logging.error(f"CSRF token request failed: {str(e)}")
+        logging.error("CSRF token request failed: %s", str(error))
         return None
 
     if response.status_code != 200:
         # Log the status code and response for debugging
         import logging
-        logging.error(f"CSRF token HTTP {response.status_code}: {response.text[:500]}")
+        logging.error("CSRF token HTTP %s: %s", response.status_code, response.text[:500])
         return None
 
     try:
         data = response.json()
-    except ValueError as e:
+    except ValueError as error:
         import logging
-        logging.error(f"CSRF token JSON parse error: {str(e)}, response: {response.text[:500]}")
+        logging.error("CSRF token JSON parse error: %s, response: %s", str(error), response.text[:500])
         return None
 
     # Check for API errors
@@ -691,20 +692,21 @@ def get_csrf_token(
         import logging
         error_info = data['error']
         logging.error(
-            f"CSRF token API error: {error_info.get('code', 'unknown')} - "
-            f"{error_info.get('info', 'Unknown error')}"
+            "CSRF token API error: %s - %s",
+            error_info.get('code', 'unknown'),
+            error_info.get('info', 'Unknown error')
         )
         return None
 
     try:
         return data['query']['tokens']['csrftoken']
-    except KeyError as e:
+    except KeyError as error:
         import logging
-        logging.error(f"CSRF token not found in response: {str(e)}, data: {data}")
+        logging.error("CSRF token not found in response: %s, data: %s", str(error), data)
         return None
 
 
-def prepend_template_to_article(
+def prepend_template_to_article(  # pylint: disable=too-many-return-statements
     article_url: str,
     template_name: str,
     oauth_token: str,
@@ -810,15 +812,15 @@ def prepend_template_to_article(
 
     try:
         response = requests.post(api_url, data=edit_params, auth=auth, headers=headers, timeout=30)
-    except requests.RequestException as e:
-        result['error'] = f'Network error during edit: {str(e)}'
+    except requests.RequestException as error:
+        result['error'] = f'Network error during edit: {str(error)}'
         return result
 
     if response.status_code != 200:
         result['error'] = f'HTTP error during edit: {response.status_code}'
         # Log response for debugging
         import logging
-        logging.error(f"Edit API HTTP {response.status_code}: {response.text[:500]}")
+        logging.error("Edit API HTTP %s: %s", response.status_code, response.text[:500])
         return result
 
     try:
@@ -836,16 +838,14 @@ def prepend_template_to_article(
             result['success'] = True
             result['new_revid'] = data['edit'].get('newrevid')
             return result
-        else:
-            result['error'] = f"Edit failed: {edit_result}"
-            return result
-    elif 'error' in data:
+        result['error'] = f"Edit failed: {edit_result}"
+        return result
+    if 'error' in data:
         error_info = data['error']
         result['error'] = f"API error: {error_info.get('code', 'unknown')} - {error_info.get('info', 'Unknown error')}"
         return result
-    else:
-        result['error'] = 'Unknown API response format'
-        return result
+    result['error'] = 'Unknown API response format'
+    return result
 
 
 def _count_footnotes_from_content(article_content: str) -> int:
@@ -1159,7 +1159,7 @@ def check_article_has_category(article_url: str, category_name: str) -> Dict[str
     return result
 
 
-def append_categories_to_article(
+def append_categories_to_article(  # pylint: disable=too-many-return-statements
     article_url: str,
     category_names: List[str],
     oauth_token: str,
@@ -1272,7 +1272,6 @@ def append_categories_to_article(
     category_lines = []
     for category_name in categories_to_add:
         category_lines.append(f"[[Category:{category_name}]]")
-    
     category_text = "\n" + "\n".join(category_lines) + "\n"
 
     # Prepare edit summary
@@ -1302,15 +1301,15 @@ def append_categories_to_article(
 
     try:
         response = requests.post(api_url, data=edit_params, auth=auth, headers=headers, timeout=30)
-    except requests.RequestException as e:
-        result['error'] = f'Network error during edit: {str(e)}'
+    except requests.RequestException as error:
+        result['error'] = f'Network error during edit: {str(error)}'
         return result
 
     if response.status_code != 200:
         result['error'] = f'HTTP error during edit: {response.status_code}'
         # Log response for debugging
         import logging
-        logging.error(f"Category edit API HTTP {response.status_code}: {response.text[:500]}")
+        logging.error("Category edit API HTTP %s: %s", response.status_code, response.text[:500])
         return result
 
     try:
@@ -1329,13 +1328,11 @@ def append_categories_to_article(
             result['new_revid'] = data['edit'].get('newrevid')
             result['categories_added'] = categories_to_add
             return result
-        else:
-            result['error'] = f"Edit failed: {edit_result}"
-            return result
-    elif 'error' in data:
+        result['error'] = f"Edit failed: {edit_result}"
+        return result
+    if 'error' in data:
         error_info = data['error']
         result['error'] = f"API error: {error_info.get('code', 'unknown')} - {error_info.get('info', 'Unknown error')}"
         return result
-    else:
-        result['error'] = 'Unknown API response format'
-        return result
+    result['error'] = 'Unknown API response format'
+    return result
