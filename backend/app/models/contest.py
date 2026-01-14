@@ -729,6 +729,7 @@ class Contest(BaseModel):
             'marks_setting_rejected': self.marks_setting_rejected,
             'allowed_submission_type': self.allowed_submission_type,
             'min_byte_count': self.min_byte_count,
+            'min_reference_count': self.min_reference_count,  # Minimum reference count requirement
             'categories': self.get_categories(),
             'jury_members': self.get_jury_members(),
             'template_link': self.template_link,  # Template link for contest (optional)

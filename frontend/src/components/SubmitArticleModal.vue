@@ -1,6 +1,6 @@
 <template>
   <div class="modal fade" id="submitArticleModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-fullscreen">
       <div class="modal-content">
         <!-- Modal Header -->
         <div class="modal-header">
