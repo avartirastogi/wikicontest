@@ -45,6 +45,7 @@ contest_bp = Blueprint("contest", __name__)
 # HELPER FUNCTIONS
 # ------------------------------------------------------------------------
 
+
 def validate_date_string(date_str):
     """
     Validate date string format (YYYY-MM-DD)
@@ -90,6 +91,7 @@ def parse_date_or_none(date_str):
 # ------------------------------------------------------------------------
 # CONTEST RETRIEVAL ROUTES
 # ------------------------------------------------------------------------
+
 
 @contest_bp.route("/", methods=["GET"])
 @require_auth
@@ -350,6 +352,7 @@ def get_contest_leaderboard_detailed(contest_id):
 # CONTEST CREATION ROUTE
 # ------------------------------------------------------------------------
 
+
 @contest_bp.route("/", methods=["POST"])
 @require_auth
 @handle_errors
@@ -484,9 +487,15 @@ def create_contest():
     try:
         min_reference_count = int(min_reference_count)
         if min_reference_count < 0:
-            return jsonify({"error": "Minimum reference count must be non-negative"}), 400
+            return (
+                jsonify({"error": "Minimum reference count must be non-negative"}),
+                400,
+            )
     except (ValueError, TypeError):
-        return jsonify({"error": "Minimum reference count must be a valid integer"}), 400
+        return (
+            jsonify({"error": "Minimum reference count must be a valid integer"}),
+            400,
+        )
 
     # -----------------------------------------------------------------------
     # Validate Categories (Required)
@@ -511,17 +520,16 @@ def create_contest():
                 400,
             )
 
-    # -----------------------------------------------------------------------
-    # Validate Scoring Parameters (Multi-Parameter Scoring)
-    # -----------------------------------------------------------------------
-
     scoring_parameters = data.get("scoring_parameters")
+
     if scoring_parameters:
         if not isinstance(scoring_parameters, dict):
             return jsonify({"error": "Scoring parameters must be an object"}), 400
 
         # Validate multi-parameter scoring structure
         if scoring_parameters.get("enabled"):
+            current_app.logger.info(f"[SCORING CREATE] Multi-parameter enabled")
+
             if "parameters" not in scoring_parameters:
                 return (
                     jsonify(
@@ -562,6 +570,9 @@ def create_contest():
                     jsonify({"error": f"Weights must sum to 100, got {total_weight}"}),
                     400,
                 )
+    else:
+        #  If no scoring_parameters provided, set to None (will use simple scoring)
+        scoring_parameters = None
 
     # -----------------------------------------------------------------------
     # Create Contest
@@ -569,22 +580,27 @@ def create_contest():
 
     # Parse template_link (optional)
     # If provided, validate that it points to a valid Wiki template page
-    template_link = data.get('template_link')
+    template_link = data.get("template_link")
     if template_link:
         template_link = template_link.strip()
         if template_link:  # Non-empty after strip
             validation_result = validate_template_link(template_link)
-            if not validation_result['valid']:
-                return jsonify({
-                    'error': f"Invalid template link: {validation_result['error']}"
-                }), 400
+            if not validation_result["valid"]:
+                return (
+                    jsonify(
+                        {
+                            "error": f"Invalid template link: {validation_result['error']}"
+                        }
+                    ),
+                    400,
+                )
         else:
             template_link = None  # Empty string becomes None
 
     # Create contest
     try:
         # Parse additional organizers (creator is automatically added)
-        additional_organizers = data.get('organizers', [])
+        additional_organizers = data.get("organizers", [])
         if not isinstance(additional_organizers, list):
             additional_organizers = []
 
@@ -610,8 +626,9 @@ def create_contest():
         )
 
         # Save to database
+        saved_params = contest.get_scoring_parameters()
+        current_app.logger.info(f"[SCORING CREATE] Saved to DB: {saved_params}")
         contest.save()
-
         return (
             jsonify(
                 {"message": "Contest created successfully", "contestId": contest.id}
@@ -668,6 +685,7 @@ def delete_contest(contest_id):
 # UTILITY FUNCTIONS
 # ------------------------------------------------------------------------
 
+
 def parse_date_or_none(date_str):
     """Parse a date string and return date or None when invalid."""
     if not date_str:
@@ -686,6 +704,7 @@ def parse_date_or_none(date_str):
 # ------------------------------------------------------------------------
 # CONTEST UPDATE ENDPOINT
 # ------------------------------------------------------------------------
+
 
 @contest_bp.route("/<int:contest_id>", methods=["PUT"])
 @require_auth
@@ -800,12 +819,17 @@ def update_contest(contest_id):
                 min_reference_count = int(min_reference_count_value)
                 if min_reference_count < 0:
                     return (
-                        jsonify({"error": "Minimum reference count must be non-negative"}),
+                        jsonify(
+                            {"error": "Minimum reference count must be non-negative"}
+                        ),
                         400,
                     )
                 contest.min_reference_count = min_reference_count
             except (TypeError, ValueError):
-                return jsonify({"error": "min_reference_count must be a valid integer"}), 400
+                return (
+                    jsonify({"error": "min_reference_count must be a valid integer"}),
+                    400,
+                )
 
         # --- Categories ---
         if "categories" in data:
@@ -840,16 +864,21 @@ def update_contest(contest_id):
             contest.set_categories(categories_value)
 
         # --- Template link ---
-        if 'template_link' in data:
-            template_link_value = data.get('template_link')
+        if "template_link" in data:
+            template_link_value = data.get("template_link")
             if template_link_value:
                 template_link_value = template_link_value.strip()
                 if template_link_value:  # Non-empty after strip
                     validation_result = validate_template_link(template_link_value)
-                    if not validation_result['valid']:
-                        return jsonify({
-                            'error': f"Invalid template link: {validation_result['error']}"
-                        }), 400
+                    if not validation_result["valid"]:
+                        return (
+                            jsonify(
+                                {
+                                    "error": f"Invalid template link: {validation_result['error']}"
+                                }
+                            ),
+                            400,
+                        )
                     contest.template_link = template_link_value
                 else:
                     contest.template_link = None  # Empty string clears the field
@@ -880,9 +909,15 @@ def update_contest(contest_id):
                 # Validate multi-parameter structure if enabled
                 if sp.get("enabled"):
                     params = sp.get("parameters")
-                    if "parameters" not in sp or not isinstance(params, list) or len(params) == 0:
+                    if (
+                        "parameters" not in sp
+                        or not isinstance(params, list)
+                        or len(params) == 0
+                    ):
                         return (
-                            jsonify({"error": "At least one scoring parameter is required"}),
+                            jsonify(
+                                {"error": "At least one scoring parameter is required"}
+                            ),
                             400,
                         )
 
@@ -890,11 +925,16 @@ def update_contest(contest_id):
                     # Validate each parameter has required fields and valid weights
                     for param in params:
                         if not isinstance(param, dict):
-                            return jsonify({"error": "Each parameter must be an object"}), 400
+                            return (
+                                jsonify({"error": "Each parameter must be an object"}),
+                                400,
+                            )
                         if "name" not in param or "weight" not in param:
                             return (
                                 jsonify(
-                                    {"error": 'Each parameter must have "name" and "weight"'}
+                                    {
+                                        "error": 'Each parameter must have "name" and "weight"'
+                                    }
                                 ),
                                 400,
                             )
@@ -904,12 +944,19 @@ def update_contest(contest_id):
                                 return jsonify({"error": f"Weight must be 0-100"}), 400
                             total_weight += weight
                         except (ValueError, TypeError):
-                            return jsonify({"error": "Weight must be a valid integer"}), 400
+                            return (
+                                jsonify({"error": "Weight must be a valid integer"}),
+                                400,
+                            )
 
                     # Ensure weights sum to exactly 100%
                     if total_weight != 100:
                         return (
-                            jsonify({"error": f"Weights must sum to 100, got {total_weight}"}),
+                            jsonify(
+                                {
+                                    "error": f"Weights must sum to 100, got {total_weight}"
+                                }
+                            ),
                             400,
                         )
                 # Persist validated scoring params (model will JSON-encode)
@@ -929,7 +976,7 @@ def update_contest(contest_id):
                 elif isinstance(organizers_payload, str):
                     # Comma-separated string provided
                     organizers_list = [
-                        u.strip() for u in organizers_payload.split(',') if u.strip()
+                        u.strip() for u in organizers_payload.split(",") if u.strip()
                     ]
                     contest.set_organizers(organizers_list, contest.created_by)
 
@@ -952,6 +999,7 @@ def update_contest(contest_id):
 # ------------------------------------------------------------------------
 # CONTEST SUBMISSION ENDPOINT
 # ------------------------------------------------------------------------
+
 
 @contest_bp.route("/<int:contest_id>/submit", methods=["POST"])
 @require_auth
@@ -1048,7 +1096,12 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             # Make request to MediaWiki API using shared headers
             # Use increased timeout to handle slow API responses
             headers = get_mediawiki_headers()
-            response = requests.get(api_url, params=api_params, headers=headers, timeout=MEDIAWIKI_API_TIMEOUT)
+            response = requests.get(
+                api_url,
+                params=api_params,
+                headers=headers,
+                timeout=MEDIAWIKI_API_TIMEOUT,
+            )
 
             if response.status_code == 200:
                 api_data = response.json()
@@ -1162,7 +1215,10 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                         "redirects": "true",
                                     }
                                     rev_response = requests.get(
-                                        api_url, params=rev_api_params, headers=headers, timeout=MEDIAWIKI_API_TIMEOUT
+                                        api_url,
+                                        params=rev_api_params,
+                                        headers=headers,
+                                        timeout=MEDIAWIKI_API_TIMEOUT,
                                     )
                                     if rev_response.status_code == 200:
                                         rev_data = rev_response.json()
@@ -1295,21 +1351,26 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
         # This could be due to slow API response, network issues, or high server load
         try:
             current_app.logger.warning(
-                f'MediaWiki API request timed out after {MEDIAWIKI_API_TIMEOUT} seconds: {str(timeout_error)}'
+                f"MediaWiki API request timed out after {MEDIAWIKI_API_TIMEOUT} seconds: {str(timeout_error)}"
             )
         except Exception:  # pylint: disable=broad-exception-caught
             # Logging failure shouldn't break the flow
             pass
-        
+
         # Return a clear error message to the user
         # We can't create a submission without article information (byte count is required)
-        return jsonify({
-            'error': (
-                f'Request to MediaWiki API timed out after {MEDIAWIKI_API_TIMEOUT} seconds. '
-                'The server may be slow or experiencing high traffic. Please try again in a moment.'
-            )
-        }), 504  # 504 Gateway Timeout is the appropriate status code
-    
+        return (
+            jsonify(
+                {
+                    "error": (
+                        f"Request to MediaWiki API timed out after {MEDIAWIKI_API_TIMEOUT} seconds. "
+                        "The server may be slow or experiencing high traffic. Please try again in a moment."
+                    )
+                }
+            ),
+            504,
+        )  # 504 Gateway Timeout is the appropriate status code
+
     except Exception as error:  # pylint: disable=broad-exception-caught
         # If MediaWiki API fetch fails for other reasons, we'll still create the submission
         # but with limited information
@@ -1401,13 +1462,17 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
     # This check happens after fetching article information from MediaWiki API
     # article_word_count is actually the byte count (size) from MediaWiki API
     # min_byte_count is always required, so always validate
-    is_valid_byte_count, byte_count_error = contest.validate_byte_count(article_word_count)
+    is_valid_byte_count, byte_count_error = contest.validate_byte_count(
+        article_word_count
+    )
     if not is_valid_byte_count:
         return jsonify({"error": byte_count_error}), 400
 
     # Validate article reference count against contest requirements
     # min_reference_count is optional (0 = no requirement), so only validate if > 0
-    is_valid_reference_count, reference_count_error = contest.validate_reference_count(article_reference_count)
+    is_valid_reference_count, reference_count_error = contest.validate_reference_count(
+        article_reference_count
+    )
     if not is_valid_reference_count:
         return jsonify({"error": reference_count_error}), 400
 
@@ -1424,7 +1489,7 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                 f"user_id={user.id}, has_oauth_token={bool(user.oauth_token)}, "
                 f"has_oauth_secret={bool(user.oauth_token_secret)}"
             )
-            
+
             # Extract template name from the contest's template link
             template_name = extract_template_name_from_url(contest.template_link)
             current_app.logger.info(f"Extracted template name: {template_name}")
@@ -1433,7 +1498,7 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                 # Check if article already has the template at the beginning
                 template_check = check_article_has_template(article_link, template_name)
 
-                if template_check.get('error'):
+                if template_check.get("error"):
                     # Log warning but don't fail submission
                     try:
                         current_app.logger.warning(
@@ -1441,25 +1506,30 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                         )
                     except Exception:  # pylint: disable=broad-exception-caught
                         pass
-                elif not template_check.get('has_template'):
+                elif not template_check.get("has_template"):
                     # Template not present, attempt to add it
-                    current_app.logger.info(f"Template not found in article. Attempting to add...")
-                    
+                    current_app.logger.info(
+                        f"Template not found in article. Attempting to add..."
+                    )
+
                     # Check if user has OAuth tokens
                     if user.oauth_token and user.oauth_token_secret:
-                        current_app.logger.info(f"User has OAuth tokens. Proceeding with edit...")
+                        current_app.logger.info(
+                            f"User has OAuth tokens. Proceeding with edit..."
+                        )
                         # Get OAuth consumer credentials from config
-                        consumer_key = current_app.config.get('CONSUMER_KEY')
-                        consumer_secret = current_app.config.get('CONSUMER_SECRET')
+                        consumer_key = current_app.config.get("CONSUMER_KEY")
+                        consumer_secret = current_app.config.get("CONSUMER_SECRET")
 
                         if consumer_key and consumer_secret:
                             # Log the target wiki for debugging OAuth issues
                             from urllib.parse import urlparse
+
                             article_domain = urlparse(article_link).netloc
                             current_app.logger.info(
                                 f"Attempting OAuth edit on wiki: {article_domain}"
                             )
-                            
+
                             # Attempt to prepend template to article
                             edit_result = prepend_template_to_article(
                                 article_url=article_link,
@@ -1468,47 +1538,58 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                 oauth_token_secret=user.oauth_token_secret,
                                 consumer_key=consumer_key,
                                 consumer_secret=consumer_secret,
-                                edit_summary=f"Adding {{{{{template_name}}}}} contest template (via WikiContest submission)"
+                                edit_summary=f"Adding {{{{{template_name}}}}} contest template (via WikiContest submission)",
                             )
 
-                            if edit_result.get('success'):
+                            if edit_result.get("success"):
                                 template_added = True
                                 try:
                                     current_app.logger.info(
                                         f"Successfully added template {{{{{template_name}}}}} to {article_link}"
                                     )
-                                except Exception:  # pylint: disable=broad-exception-caught
+                                except (
+                                    Exception
+                                ):  # pylint: disable=broad-exception-caught
                                     pass
                             else:
-                                template_error = edit_result.get('error', 'Unknown error')
+                                template_error = edit_result.get(
+                                    "error", "Unknown error"
+                                )
                                 try:
                                     current_app.logger.warning(
                                         f"Failed to add template to {article_link}: {template_error}"
                                     )
-                                    
+
                                     # Provide helpful error messages for common OAuth issues
-                                    if 'readapidenied' in template_error.lower():
+                                    if "readapidenied" in template_error.lower():
                                         current_app.logger.error(
                                             f"OAuth permission error: The OAuth consumer does not have read/edit "
                                             f"permissions on this wiki. Ensure the OAuth consumer is registered on "
                                             f"the target wiki (not just meta.wikimedia.org) with 'Edit existing pages' grant."
                                         )
-                                    elif 'mwoauth-invalid-authorization' in template_error.lower():
+                                    elif (
+                                        "mwoauth-invalid-authorization"
+                                        in template_error.lower()
+                                    ):
                                         current_app.logger.error(
                                             f"OAuth authentication error: Invalid OAuth signature. Verify CONSUMER_KEY "
                                             f"and CONSUMER_SECRET match the registered OAuth consumer."
                                         )
-                                except Exception:  # pylint: disable=broad-exception-caught
+                                except (
+                                    Exception
+                                ):  # pylint: disable=broad-exception-caught
                                     pass
                         else:
-                            template_error = 'OAuth consumer credentials not configured'
+                            template_error = "OAuth consumer credentials not configured"
                             current_app.logger.warning(
                                 f"OAuth consumer credentials not configured: "
                                 f"CONSUMER_KEY={bool(consumer_key)}, "
                                 f"CONSUMER_SECRET={bool(consumer_secret)}"
                             )
                     else:
-                        template_error = 'User does not have OAuth tokens for Wikipedia editing'
+                        template_error = (
+                            "User does not have OAuth tokens for Wikipedia editing"
+                        )
                         current_app.logger.warning(
                             f"User {user.id} does not have OAuth tokens: "
                             f"oauth_token={user.oauth_token}, oauth_token_secret={user.oauth_token_secret}"
@@ -1522,7 +1603,9 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                     except Exception:  # pylint: disable=broad-exception-caught
                         pass
             else:
-                template_error = 'Could not extract template name from contest template link'
+                template_error = (
+                    "Could not extract template name from contest template link"
+                )
         except Exception as template_err:  # pylint: disable=broad-exception-caught
             template_error = str(template_err)
             try:
@@ -1547,24 +1630,30 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                 f"user_id={user.id}, has_oauth_token={bool(user.oauth_token)}, "
                 f"has_oauth_secret={bool(user.oauth_token_secret)}"
             )
-            
+
             # Extract category names from URLs
             category_names = []
             for category_url in contest_categories:
                 category_name = extract_category_name_from_url(category_url)
                 if category_name:
                     category_names.append(category_name)
-                    current_app.logger.info(f"Extracted category name: {category_name} from {category_url}")
+                    current_app.logger.info(
+                        f"Extracted category name: {category_name} from {category_url}"
+                    )
                 else:
-                    current_app.logger.warning(f"Could not extract category name from URL: {category_url}")
+                    current_app.logger.warning(
+                        f"Could not extract category name from URL: {category_url}"
+                    )
 
             if category_names:
                 # Check which categories the article already has
                 categories_to_add = []
                 for category_name in category_names:
-                    category_check = check_article_has_category(article_link, category_name)
-                    
-                    if category_check.get('error'):
+                    category_check = check_article_has_category(
+                        article_link, category_name
+                    )
+
+                    if category_check.get("error"):
                         # Log warning but continue - we'll try to add it anyway
                         try:
                             current_app.logger.warning(
@@ -1574,10 +1663,12 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                             pass
                         # Add to list anyway - better to try than skip
                         categories_to_add.append(category_name)
-                    elif not category_check.get('has_category'):
+                    elif not category_check.get("has_category"):
                         # Category not present, add it to the list
                         categories_to_add.append(category_name)
-                        current_app.logger.info(f"Category {category_name} not found in article. Will add...")
+                        current_app.logger.info(
+                            f"Category {category_name} not found in article. Will add..."
+                        )
                     else:
                         # Category already present
                         try:
@@ -1589,23 +1680,28 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
 
                 # If there are categories to add, attempt to add them
                 if categories_to_add:
-                    current_app.logger.info(f"Attempting to add {len(categories_to_add)} categories to article...")
-                    
+                    current_app.logger.info(
+                        f"Attempting to add {len(categories_to_add)} categories to article..."
+                    )
+
                     # Check if user has OAuth tokens
                     if user.oauth_token and user.oauth_token_secret:
-                        current_app.logger.info(f"User has OAuth tokens. Proceeding with category edit...")
+                        current_app.logger.info(
+                            f"User has OAuth tokens. Proceeding with category edit..."
+                        )
                         # Get OAuth consumer credentials from config
-                        consumer_key = current_app.config.get('CONSUMER_KEY')
-                        consumer_secret = current_app.config.get('CONSUMER_SECRET')
+                        consumer_key = current_app.config.get("CONSUMER_KEY")
+                        consumer_secret = current_app.config.get("CONSUMER_SECRET")
 
                         if consumer_key and consumer_secret:
                             # Log the target wiki for debugging OAuth issues
                             from urllib.parse import urlparse
+
                             article_domain = urlparse(article_link).netloc
                             current_app.logger.info(
                                 f"Attempting OAuth edit on wiki: {article_domain} for categories"
                             )
-                            
+
                             # Attempt to append categories to article
                             # This is a separate MediaWiki API request from template attachment
                             edit_result = append_categories_to_article(
@@ -1615,12 +1711,16 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                 oauth_token_secret=user.oauth_token_secret,
                                 consumer_key=consumer_key,
                                 consumer_secret=consumer_secret,
-                                edit_summary=f"Adding contest categories (via WikiContest submission)"
+                                edit_summary=f"Adding contest categories (via WikiContest submission)",
                             )
 
-                            if edit_result.get('success'):
-                                categories_added = edit_result.get('categories_added', [])
-                                categories_skipped = edit_result.get('categories_skipped', [])
+                            if edit_result.get("success"):
+                                categories_added = edit_result.get(
+                                    "categories_added", []
+                                )
+                                categories_skipped = edit_result.get(
+                                    "categories_skipped", []
+                                )
                                 try:
                                     current_app.logger.info(
                                         f"Successfully added categories {categories_added} to {article_link}"
@@ -1629,38 +1729,49 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                                         current_app.logger.info(
                                             f"Categories {categories_skipped} were already present and skipped"
                                         )
-                                except Exception:  # pylint: disable=broad-exception-caught
+                                except (
+                                    Exception
+                                ):  # pylint: disable=broad-exception-caught
                                     pass
                             else:
-                                category_error = edit_result.get('error', 'Unknown error')
+                                category_error = edit_result.get(
+                                    "error", "Unknown error"
+                                )
                                 try:
                                     current_app.logger.warning(
                                         f"Failed to add categories to {article_link}: {category_error}"
                                     )
-                                    
+
                                     # Provide helpful error messages for common OAuth issues
-                                    if 'readapidenied' in category_error.lower():
+                                    if "readapidenied" in category_error.lower():
                                         current_app.logger.error(
                                             f"OAuth permission error: The OAuth consumer does not have read/edit "
                                             f"permissions on this wiki. Ensure the OAuth consumer is registered on "
                                             f"the target wiki (not just meta.wikimedia.org) with 'Edit existing pages' grant."
                                         )
-                                    elif 'mwoauth-invalid-authorization' in category_error.lower():
+                                    elif (
+                                        "mwoauth-invalid-authorization"
+                                        in category_error.lower()
+                                    ):
                                         current_app.logger.error(
                                             f"OAuth authentication error: Invalid OAuth signature. Verify CONSUMER_KEY "
                                             f"and CONSUMER_SECRET match the registered OAuth consumer."
                                         )
-                                except Exception:  # pylint: disable=broad-exception-caught
+                                except (
+                                    Exception
+                                ):  # pylint: disable=broad-exception-caught
                                     pass
                         else:
-                            category_error = 'OAuth consumer credentials not configured'
+                            category_error = "OAuth consumer credentials not configured"
                             current_app.logger.warning(
                                 f"OAuth consumer credentials not configured: "
                                 f"CONSUMER_KEY={bool(consumer_key)}, "
                                 f"CONSUMER_SECRET={bool(consumer_secret)}"
                             )
                     else:
-                        category_error = 'User does not have OAuth tokens for Wikipedia editing'
+                        category_error = (
+                            "User does not have OAuth tokens for Wikipedia editing"
+                        )
                         current_app.logger.warning(
                             f"User {user.id} does not have OAuth tokens: "
                             f"oauth_token={user.oauth_token}, oauth_token_secret={user.oauth_token_secret}"
@@ -1674,7 +1785,9 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
                     except Exception:  # pylint: disable=broad-exception-caught
                         pass
             else:
-                category_error = 'Could not extract category names from contest category URLs'
+                category_error = (
+                    "Could not extract category names from contest category URLs"
+                )
                 current_app.logger.warning(
                     f"Could not extract any category names from contest categories: {contest_categories}"
                 )
@@ -1704,7 +1817,7 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             article_expansion_bytes=article_expansion_bytes,
             template_added=template_added,
             categories_added=categories_added,
-            category_error=category_error
+            category_error=category_error,
         )
 
         submission.save()
@@ -1720,20 +1833,25 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             # Logging failure shouldn't break the flow
             pass
 
-        return jsonify({
-            'message': 'Submission created successfully',
-            'submissionId': submission.id,
-            'contest_id': contest_id,
-            'article_title': article_title,
-            'article_author': article_author,
-            'article_word_count': article_word_count,
-            'article_created_at': article_created_at,
-            'article_expansion_bytes': article_expansion_bytes,
-            'template_added': template_added,
-            'template_error': template_error,
-            'categories_added': categories_added,
-            'category_error': category_error
-        }), 201
+        return (
+            jsonify(
+                {
+                    "message": "Submission created successfully",
+                    "submissionId": submission.id,
+                    "contest_id": contest_id,
+                    "article_title": article_title,
+                    "article_author": article_author,
+                    "article_word_count": article_word_count,
+                    "article_created_at": article_created_at,
+                    "article_expansion_bytes": article_expansion_bytes,
+                    "template_added": template_added,
+                    "template_error": template_error,
+                    "categories_added": categories_added,
+                    "category_error": category_error,
+                }
+            ),
+            201,
+        )
 
     except IntegrityError as e:
         # Handle database integrity errors (e.g., duplicate submissions)
@@ -1795,6 +1913,7 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
 # GET CONTEST SUBMISSIONS
 # ------------------------------------------------------------------------
 
+
 @contest_bp.route("/<int:contest_id>/submissions", methods=["GET"])
 @require_auth
 @handle_errors
@@ -1843,7 +1962,8 @@ def get_contest_submissions(contest_id):
 # ORGANIZER MANAGEMENT ENDPOINTS
 # ------------------------------------------------------------------------
 
-@contest_bp.route('/<int:contest_id>/organizers', methods=['GET'])
+
+@contest_bp.route("/<int:contest_id>/organizers", methods=["GET"])
 @require_auth
 @handle_errors
 def get_contest_organizers(contest_id):
@@ -1863,26 +1983,31 @@ def get_contest_organizers(contest_id):
     # Get contest
     contest = Contest.query.get(contest_id)
     if not contest:
-        return jsonify({'error': 'Contest not found'}), 404
+        return jsonify({"error": "Contest not found"}), 404
 
     # Check permissions - must be organizer or admin
     if not (user.is_admin() or user.is_contest_organizer(contest)):
-        return jsonify({'error': 'Access denied'}), 403
+        return jsonify({"error": "Access denied"}), 403
 
     # Get organizers list
     organizers = contest.get_organizers()
 
-    return jsonify({
-        'contest_id': contest_id,
-        'organizers': organizers,
-        'creator': contest.created_by
-    }), 200
+    return (
+        jsonify(
+            {
+                "contest_id": contest_id,
+                "organizers": organizers,
+                "creator": contest.created_by,
+            }
+        ),
+        200,
+    )
 
 
-@contest_bp.route('/<int:contest_id>/organizers', methods=['POST'])
+@contest_bp.route("/<int:contest_id>/organizers", methods=["POST"])
 @require_auth
 @handle_errors
-@validate_json_data(['username'])
+@validate_json_data(["username"])
 def add_contest_organizer(contest_id):
     """
     Add a new organizer to a contest
@@ -1904,31 +2029,33 @@ def add_contest_organizer(contest_id):
     # Get contest
     contest = Contest.query.get(contest_id)
     if not contest:
-        return jsonify({'error': 'Contest not found'}), 404
+        return jsonify({"error": "Contest not found"}), 404
 
     # Check permissions - must be creator or admin
     if not (user.is_admin() or user.is_contest_organizer(contest)):
-        return jsonify({
-            'error': 'Only the contest creator or admins can add organizers'
-        }), 403
+        return (
+            jsonify({"error": "Only the contest creator or admins can add organizers"}),
+            403,
+        )
 
     # Get username to add
-    username_to_add = data['username'].strip()
+    username_to_add = data["username"].strip()
 
     if not username_to_add:
-        return jsonify({'error': 'Username is required'}), 400
+        return jsonify({"error": "Username is required"}), 400
 
     # Validate user exists in the system
     from app.models.user import User
+
     organizer_user = User.query.filter_by(username=username_to_add).first()
     if not organizer_user:
-        return jsonify({'error': f'User "{username_to_add}" not found'}), 404
+        return jsonify({"error": f'User "{username_to_add}" not found'}), 404
 
     # Add organizer using model method
     success, error_message = contest.add_organizer(username_to_add)
 
     if not success:
-        return jsonify({'error': error_message}), 400
+        return jsonify({"error": error_message}), 400
 
     # Save changes to database
     contest.save()
@@ -1936,13 +2063,13 @@ def add_contest_organizer(contest_id):
     # Get updated organizers list
     organizers = contest.get_organizers()
 
-    return jsonify({
-        'message': 'Organizer added successfully',
-        'organizers': organizers
-    }), 201
+    return (
+        jsonify({"message": "Organizer added successfully", "organizers": organizers}),
+        201,
+    )
 
 
-@contest_bp.route('/<int:contest_id>/organizers/<username>', methods=['DELETE'])
+@contest_bp.route("/<int:contest_id>/organizers/<username>", methods=["DELETE"])
 @require_auth
 @handle_errors
 def remove_contest_organizer(contest_id, username):
@@ -1964,19 +2091,22 @@ def remove_contest_organizer(contest_id, username):
     # Get contest
     contest = Contest.query.get(contest_id)
     if not contest:
-        return jsonify({'error': 'Contest not found'}), 404
+        return jsonify({"error": "Contest not found"}), 404
 
     # Check permissions - must be creator or admin
     if not (user.is_admin() or user.is_contest_organizer(contest)):
-        return jsonify({
-            'error': 'Only the contest creator or admins can remove organizers'
-        }), 403
+        return (
+            jsonify(
+                {"error": "Only the contest creator or admins can remove organizers"}
+            ),
+            403,
+        )
 
     # Remove organizer using model method
     success, error_message = contest.remove_organizer(username)
 
     if not success:
-        return jsonify({'error': error_message}), 400
+        return jsonify({"error": error_message}), 400
 
     # Save changes to database
     contest.save()
@@ -1984,7 +2114,9 @@ def remove_contest_organizer(contest_id, username):
     # Get updated organizers list
     organizers = contest.get_organizers()
 
-    return jsonify({
-        'message': 'Organizer removed successfully',
-        'organizers': organizers
-    }), 200
+    return (
+        jsonify(
+            {"message": "Organizer removed successfully", "organizers": organizers}
+        ),
+        200,
+    )

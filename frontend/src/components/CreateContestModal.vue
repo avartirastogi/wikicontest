@@ -14,39 +14,25 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="contestName" class="form-label">Contest Name *</label>
-                <input type="text"
-class="form-control"
-id="contestName"
-v-model="formData.name"
-required />
+                <input type="text" class="form-control" id="contestName" v-model="formData.name" required />
               </div>
               <div class="col-md-6 mb-3">
                 <label for="projectName" class="form-label">Project Name *</label>
-                <input type="text"
-class="form-control"
-id="projectName"
-v-model="formData.project_name"
-required />
+                <input type="text" class="form-control" id="projectName" v-model="formData.project_name" required />
               </div>
             </div>
 
             <!-- Contest description field -->
             <div class="mb-3">
               <label for="contestDescription" class="form-label">Description</label>
-              <textarea class="form-control"
-id="contestDescription"
-rows="3"
-v-model="formData.description"></textarea>
+              <textarea class="form-control" id="contestDescription" rows="3" v-model="formData.description"></textarea>
             </div>
 
             <!-- Contest rules - required field -->
             <div class="mb-3">
               <label for="contestRules" class="form-label">Contest Rules *</label>
-              <textarea class="form-control"
-id="contestRules"
-rows="4"
-                placeholder="Write rules about how articles must be submitted."
-v-model="formData.rules_text"
+              <textarea class="form-control" id="contestRules" rows="4"
+                placeholder="Write rules about how articles must be submitted." v-model="formData.rules_text"
                 required></textarea>
             </div>
 
@@ -64,36 +50,174 @@ v-model="formData.rules_text"
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="startDate" class="form-label">Start Date *</label>
-                <input type="date"
-class="form-control"
-id="startDate"
-v-model="formData.start_date"
-required />
+                <input type="date" class="form-control" id="startDate" v-model="formData.start_date" required />
               </div>
               <div class="col-md-6 mb-3">
                 <label for="endDate" class="form-label">End Date *</label>
-                <input type="date"
-class="form-control"
-id="endDate"
-v-model="formData.end_date"
-required />
+                <input type="date" class="form-control" id="endDate" v-model="formData.end_date" required />
+              </div>
+            </div>
+
+            <!--  FIXED SCORING SECTION - Radio buttons with complete conditional content -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <p class="mb-0">
+                  <i class="fas fa-chart-line me-2"></i> Scoring System Configuration
+                </p>
+                <p class="text-muted mb-0 mt-2" style="font-size: 0.8rem;">
+                  Choose how submissions will be scored. You can select only ONE scoring method for this contest.
+                </p>
+              </div>
+
+              <div class="card-body">
+                <!-- Radio Button Selection -->
+                <div class="row mb-4">
+                  <!-- Simple Scoring Option -->
+                  <div class="col-md-6">
+                    <label :class="{ 'active': !enableMultiParameterScoring }">
+                      <input type="radio" name="scoringMode" :value="false" v-model="enableMultiParameterScoring" />
+                        <h6>Simple Scoring</h6>
+                    </label>
+                  </div>
+
+                  <!-- Multi-Parameter Scoring Option -->
+                  <div class="col-md-6">
+                    <label :class="{ 'active': enableMultiParameterScoring }">
+                      <input type="radio" name="scoringMode" :value="true" v-model="enableMultiParameterScoring" />
+                      <div >
+                        <h6>Multi-Parameter Scoring</h6>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!--  SIMPLE SCORING CONTENT - Shown when enableMultiParameterScoring is FALSE -->
+                <div v-if="!enableMultiParameterScoring">
+                  <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Simple Scoring Enabled:</strong> Jury will assign a single score for each submission.
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label for="marksAccepted" class="form-label">Points for Accepted Submissions *</label>
+                      <input type="number" class="form-control" id="marksAccepted"
+                        v-model.number="formData.marks_setting_accepted" min="0" required />
+                      <small class="form-text text-muted">
+                        Maximum points that can be awarded. Jury can assign points from 0 up to this value for accepted
+                        submissions.
+                      </small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="marksRejected" class="form-label">Points for Rejected Submissions *</label>
+                      <input type="number" class="form-control" id="marksRejected"
+                        v-model.number="formData.marks_setting_rejected" min="0" required />
+                      <small class="form-text text-muted">
+                        Fixed points awarded automatically for rejected submissions (usually 0 or negative).
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                <!--  MULTI-PARAMETER SCORING CONTENT - Shown when enableMultiParameterScoring is TRUE -->
+                <div v-else>
+                  <div class="alert alert-primary">
+                    <i class="fas fa-star me-2"></i>
+                    <strong>Multi-Parameter Scoring Enabled:</strong> Jury will score submissions on multiple parameters
+                    with weighted calculation.
+                  </div>
+
+                  <!-- Maximum and Minimum score settings -->
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Maximum Score (Accepted Submissions) *</label>
+                      <input type="number" class="form-control" v-model.number="maxScore" min="1" max="100"
+                        placeholder="0" required />
+                      <small class="text-muted">Final calculated score will be scaled to this value</small>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label">Minimum Score (Rejected Submissions) *</label>
+                      <input type="number" class="form-control" v-model.number="minScore" min="0" max="100"
+                        placeholder="0" required />
+                      <small class="text-muted">Score for rejected submissions</small>
+                    </div>
+                  </div>
+
+                  <!-- Scoring Parameters -->
+                  <div class="mb-3">
+                    <label class="form-label">
+                      <strong>Scoring Parameters</strong>
+                      <span class="badge bg-secondary ms-2">Weights must total 100%</span>
+                    </label>
+
+                    <div class="parameters-list">
+                      <!-- Each parameter -->
+                      <div v-for="(param, index) in scoringParameters" :key="index">
+
+                        <div class="row align-items-center">
+                          <div class="col-md-3">
+                            <input type="text" class="form-control" v-model="param.name" placeholder="Parameter name"
+                              required />
+                          </div>
+                          <div class="col-md-3">
+                            <div class="input-group">
+                              <input type="number" class="form-control" v-model.number="param.weight" min="0" max="100"
+                                placeholder="Weight" required />
+                              <span class="input-group-text">%</span>
+                            </div>
+                          </div>
+                          <div class="col-md-5">
+                            <input type="text" class="form-control" v-model="param.description"
+                              placeholder="Description (optional)" />
+                          </div>
+                          <div class="col-md-1 text-end">
+                            <button type="button" class="btn btn-sm btn-outline-danger" @click="removeParameter(index)"
+                              :disabled="scoringParameters.length <= 1">
+                              <i class="fas fa-times"></i>
+                            </button>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" @click="addParameter">
+                      <i class="fas fa-plus me-1"></i>Add Parameter
+                    </button>
+
+                    <!-- Weight validation -->
+                    <div class="mt-3 p-3 rounded" :class="weightTotalClass">
+                      <strong>Total Weight: {{ totalWeight }}%</strong>
+                      <span v-if="totalWeight !== 100" class="ms-2 text-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Must equal 100%
+                      </span>
+                      <span v-else class="ms-2 text-success">
+                        <i class="fas fa-check-circle"></i>
+                        Valid
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Reset to default parameters -->
+                  <button type="button" class="btn btn-sm btn-outline-secondary" @click="loadDefaultParameters">
+                    <i class="fas fa-redo me-1"></i>Load Default Parameters
+                  </button>
+                </div>
               </div>
             </div>
 
             <!-- Organizers section with autocomplete search -->
             <div class="mb-3">
-              <label class="form-label">
-                Organizers
-              </label>
+              <label class="form-label">Organizers</label>
 
               <!-- Display selected organizers as removable badges -->
               <div class="mb-2 p-2 border rounded bg-light organizer-selection-box" style="min-height: 40px;">
                 <small v-if="selectedOrganizers.length === 0" class="organizer-placeholder-text">
                   No additional organizers added
                 </small>
-                <span v-for="username in selectedOrganizers"
-:key="username"
-class="badge bg-success me-2 mb-2"
+                <span v-for="username in selectedOrganizers" :key="username" class="badge bg-success me-2 mb-2"
                   style="font-size: 0.9rem; cursor: pointer;">
                   {{ username }}
                   <i class="fas fa-times ms-1" @click="removeOrganizer(username)"></i>
@@ -102,29 +226,21 @@ class="badge bg-success me-2 mb-2"
 
               <!-- Organizer search input with autocomplete dropdown -->
               <div style="position: relative;">
-                <input type="text"
-class="form-control"
-v-model="organizerSearchQuery"
-@input="searchOrganizers"
-                  placeholder="Type username to add additional organizers..."
-autocomplete="off" />
+                <input type="text" class="form-control" v-model="organizerSearchQuery" @input="searchOrganizers"
+                  placeholder="Type username to add additional organizers..." autocomplete="off" />
 
                 <!-- Autocomplete results dropdown -->
                 <div v-if="organizerSearchResults.length > 0 && organizerSearchQuery.length >= 2"
                   class="organizer-autocomplete position-absolute w-100 border rounded-bottom"
                   style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div v-for="user in organizerSearchResults"
-:key="user.username"
-                    class="p-2 border-bottom cursor-pointer"
-:class="{ 'bg-info-subtle': isCurrentUser(user.username) }"
-                    style="cursor: pointer;"
-@click="addOrganizer(user.username)">
+                  <div v-for="user in organizerSearchResults" :key="user.username"
+                    class="p-2 border-bottom cursor-pointer" :class="{ 'bg-info-subtle': isCurrentUser(user.username) }"
+                    style="cursor: pointer;" @click="addOrganizer(user.username)">
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="d-flex align-items-center">
                         <i class="fas fa-user-tie me-2 text-success"></i>
                         <strong>{{ user.username }}</strong>
                       </div>
-                      <!-- Show info badge if user tries to select themselves -->
                       <div v-if="isCurrentUser(user.username)" class="badge bg-info">
                         You (already added as creator)
                       </div>
@@ -151,9 +267,7 @@ autocomplete="off" />
                 <small v-if="selectedJury.length === 0" class="jury-placeholder-text">
                   No jury members selected yet
                 </small>
-                <span v-for="username in selectedJury"
-:key="username"
-class="badge bg-primary me-2 mb-2"
+                <span v-for="username in selectedJury" :key="username" class="badge bg-primary me-2 mb-2"
                   style="font-size: 0.9rem; cursor: pointer;">
                   {{ username }}
                   <i class="fas fa-times ms-1" @click="removeJury(username)"></i>
@@ -162,29 +276,20 @@ class="badge bg-primary me-2 mb-2"
 
               <!-- Jury search input with autocomplete dropdown -->
               <div style="position: relative;">
-                <input type="text"
-class="form-control"
-id="juryInput"
-v-model="jurySearchQuery"
-@input="searchJury"
-                  placeholder="Type username to search..."
-autocomplete="off" />
+                <input type="text" class="form-control" id="juryInput" v-model="jurySearchQuery" @input="searchJury"
+                  placeholder="Type username to search..." autocomplete="off" />
                 <!-- Autocomplete results with self-selection warning -->
                 <div v-if="jurySearchResults.length > 0 && jurySearchQuery.length >= 2"
                   class="jury-autocomplete position-absolute w-100 border rounded-bottom"
                   style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div v-for="user in jurySearchResults"
-:key="user.username"
-class="p-2 border-bottom cursor-pointer"
+                  <div v-for="user in jurySearchResults" :key="user.username" class="p-2 border-bottom cursor-pointer"
                     :class="{ 'bg-warning-subtle self-selection-warning': isCurrentUser(user.username) }"
-                    style="cursor: pointer;"
-@click="addJury(user.username)">
+                    style="cursor: pointer;" @click="addJury(user.username)">
                     <div class="d-flex align-items-center justify-content-between">
                       <div class="d-flex align-items-center">
                         <i class="fas fa-user me-2 text-primary"></i>
                         <strong>{{ user.username }}</strong>
                       </div>
-                      <!-- Enhanced warning badge for self-selection -->
                       <div v-if="isCurrentUser(user.username)" class="self-warning-badge">
                         <i class="fas fa-exclamation-triangle me-1"></i>
                         <strong>This is you - Not Recommended</strong>
@@ -195,195 +300,19 @@ class="p-2 border-bottom cursor-pointer"
               </div>
             </div>
 
-            <!-- Scoring settings: points for accepted and rejected submissions -->
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="marksAccepted" class="form-label">Points for Accepted Submissions</label>
-                <input type="number"
-class="form-control"
-id="marksAccepted"
-                  v-model.number="formData.marks_setting_accepted"
-min="0" />
-                <small class="form-text text-muted">
-                  Maximum points that can be awarded. Jury can assign points from 0 up to
-                  this value for accepted submissions.
-                </small>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="marksRejected" class="form-label">Points for Rejected Submissions</label>
-                <input type="number"
-class="form-control"
-id="marksRejected"
-                  v-model.number="formData.marks_setting_rejected"
-min="0" />
-                <small class="form-text text-muted">
-                  Fixed points awarded automatically for rejected submissions (usually 0 or negative).
-                </small>
-              </div>
-            </div>
-
-            <!-- Advanced scoring system with multiple weighted parameters -->
-            <div class="card mb-4 scoring-section">
-              <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">
-                  <i class="fas fa-chart-line me-2"></i> Scoring System
-                </h6>
-                <!-- Toggle between simple and multi-parameter scoring -->
-                <div class="form-check form-switch">
-                  <input class="form-check-input"
-type="checkbox"
-id="enableMultiParam"
-                    v-model="enableMultiParameterScoring"/>
-                  <label class="form-check-label" for="enableMultiParam">
-                    Enable Multi-Parameter Scoring
-                  </label>
-                </div>
-              </div>
-
-              <div class="card-body">
-                <!-- Simple scoring mode: single score per submission -->
-                <div v-if="!enableMultiParameterScoring" class="alert alert-info">
-                  <i class="fas fa-info-circle me-2"></i>
-                  <strong>Simple Scoring Mode:</strong> Jury will assign a single score (0-{{
-                    formData.marks_setting_accepted }})
-                  for accepted submissions.
-                  <br/>
-                  <i class="fas fa-info-circle me-2"></i>
-                  <strong>Simple Scoring Mode:</strong> Jury will assign a single score (0-{{
-                    formData.marks_setting_rejected }})
-                  for rejected submissions.
-                </div>
-                <!-- Multi-parameter scoring mode: weighted calculation -->
-                <div v-else>
-                  <div class="alert alert-success">
-                    <i class="fas fa-star me-2"></i>
-                    <strong>Multi-Parameter Scoring Enabled:</strong> Jury will score submissions on multiple parameters
-                    with weighted calculation.
-                  </div>
-
-                  <!-- Maximum score for accepted submissions -->
-                  <div class="mb-3">
-                    <label class="form-label">Point of Acceptance</label>
-                    <input type="number"
-class="form-control"
-v-model.number="maxScore"
-min="1"
-max="100"
-                      placeholder="10"/>
-                    <small class="text-muted">Final calculated score will be scaled to this value</small>
-                  </div>
-
-                  <!-- Minimum score for rejected submissions -->
-                  <div class="mb-3">
-                    <label class="form-label">Point of Rejection </label>
-                    <input type="number"
-class="form-control"
-v-model.number="minScore"
-min="1"
-max="100"
-                      placeholder="0"/>
-
-                  </div>
-
-                  <!-- Define scoring parameters with weights -->
-                  <div class="mb-3">
-                    <label class="form-label">Scoring Parameters</label>
-                    <div class="parameters-list">
-                      <!-- Each parameter has name, weight, and description -->
-                      <div v-for="(param, index) in scoringParameters" :key="index" class="parameter-item card mb-2">
-                        <div class="card-body">
-                          <div class="row align-items-center">
-                            <div class="col-md-3">
-                              <input type="text"
-class="form-control"
-v-model="param.name"
-placeholder="Parameter name"
-                                required/>
-                            </div>
-                            <div class="col-md-3">
-                              <div class="input-group">
-                                <input type="number"
-class="form-control"
-v-model.number="param.weight"
-min="0"
-                                  max="100"
-placeholder="Weight"
-required/>
-                                <span class="input-group-text">%</span>
-                              </div>
-                            </div>
-                            <div class="col-md-5">
-                              <input type="text"
-class="form-control"
-v-model="param.description"
-                                placeholder="Description (optional)"/>
-                            </div>
-                            <div class="col-md-1 text-end">
-                              <!-- Remove parameter button (disabled if only one parameter) -->
-                              <button type="button"
-class="btn btn-sm btn-outline-danger"
-                                @click="removeParameter(index)"
-:disabled="scoringParameters.length <= 1">
-                                <i class="fas fa-times"></i>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" @click="addParameter">
-                      <i class="fas fa-plus me-1"></i>Add Parameter
-                    </button>
-
-                    <!-- Weight validation: must sum to 100% -->
-                    <div class="mt-3 p-3 rounded" :class="weightTotalClass">
-                      <strong>Total Weight: {{ totalWeight }}%</strong>
-                      <span v-if="totalWeight !== 100" class="ms-2 text-danger">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        Must equal 100%
-                      </span>
-                      <span v-else class="ms-2 text-success">
-                        <i class="fas fa-check-circle"></i>
-                        Valid
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Reset to default parameters -->
-                  <button type="button" class="btn btn-sm btn-outline-secondary" @click="loadDefaultParameters">
-                    <i class="fas fa-redo me-1"></i>Load Default Parameters
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <!-- Article size requirement in bytes -->
             <div class="mb-3">
-              <label for="minByteCount" class="form-label">
-                Minimum Byte Count *
-              </label>
-              <input type="number"
-class="form-control"
-id="minByteCount"
-v-model.number="formData.min_byte_count"
-                min="0"
-placeholder="e.g., 1000"
-required />
+              <label for="minByteCount" class="form-label">Minimum Byte Count *</label>
+              <input type="number" class="form-control" id="minByteCount" v-model.number="formData.min_byte_count"
+                min="0" placeholder="e.g., 1000" required />
               <small class="form-text text-muted">Articles must have at least this many bytes</small>
             </div>
 
             <!-- Minimum reference/citation requirement -->
             <div class="mb-3">
-              <label for="minReferenceCount" class="form-label">
-                Minimum Reference Count
-              </label>
-              <input type="number"
-class="form-control"
-id="minReferenceCount"
-                v-model.number="formData.min_reference_count"
-min="0"
-placeholder="e.g., 5" />
+              <label for="minReferenceCount" class="form-label">Minimum Reference Count</label>
+              <input type="number" class="form-control" id="minReferenceCount"
+                v-model.number="formData.min_reference_count" min="0" placeholder="e.g., 5" />
               <small class="form-text text-muted">
                 Articles must have at least this many references (external links). Leave as 0 for no requirement.
               </small>
@@ -396,20 +325,13 @@ placeholder="e.g., 5" />
                 <span class="text-muted">(MediaWiki category pages)</span>
               </label>
 
-              <!-- Dynamic list of category URL inputs -->
               <div v-for="(category, index) in formData.categories" :key="index" class="mb-2">
                 <div class="input-group">
-                  <input type="url"
-class="form-control"
-v-model="formData.categories[index]"
+                  <input type="url" class="form-control" v-model="formData.categories[index]"
                     :placeholder="index === 0 ? 'https://en.wikipedia.org/wiki/Category:Example' : 'Add another category URL'"
                     required />
-                  <!-- Remove category button (hidden for first category) -->
-                  <button v-if="formData.categories.length > 1"
-type="button"
-class="btn btn-outline-danger"
-                    @click="removeCategory(index)"
-title="Remove category">
+                  <button v-if="formData.categories.length > 1" type="button" class="btn btn-outline-danger"
+                    @click="removeCategory(index)" title="Remove category">
                     <i class="fas fa-times"></i>
                   </button>
                 </div>
@@ -430,11 +352,8 @@ title="Remove category">
                 Contest Template Link
                 <span class="badge bg-secondary ms-1">Optional</span>
               </label>
-              <input type="url"
-                     class="form-control"
-                     id="templateLink"
-                     v-model="formData.template_link"
-                     placeholder="https://en.wikipedia.org/wiki/Template:YourContestTemplate" />
+              <input type="url" class="form-control" id="templateLink" v-model="formData.template_link"
+                placeholder="https://en.wikipedia.org/wiki/Template:YourContestTemplate" />
               <small class="form-text text-muted d-block mt-2">
                 <i class="fas fa-info-circle me-1"></i>
                 If set, this template will be automatically added to submitted articles that don't already have it.
@@ -444,14 +363,11 @@ title="Remove category">
 
           </form>
         </div>
+
         <!-- Modal footer with action buttons -->
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            Cancel
-          </button>
-          <button type="submit" class="btn btn-primary" @click="handleSubmit">
-            Create Contest
-          </button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" @click="handleSubmit">Create Contest</button>
         </div>
       </div>
     </div>
@@ -526,6 +442,26 @@ export default {
       ]
     }
 
+    // Watch for scoring mode changes
+    watch(enableMultiParameterScoring, (newValue) => {
+      console.log(`[SCORING] Mode changed to: ${newValue ? 'Multi-Parameter' : 'Simple'}`)
+
+      if (!newValue) {
+        // Switching to simple - ensure simple scoring values are set
+        if (!formData.marks_setting_accepted) {
+          formData.marks_setting_accepted = 10
+        }
+        if (!formData.marks_setting_rejected && formData.marks_setting_rejected !== 0) {
+          formData.marks_setting_rejected = 0
+        }
+      } else {
+        // Switching to multi - ensure parameters are initialized
+        if (scoringParameters.value.length === 0) {
+          loadDefaultParameters()
+        }
+      }
+    })
+
     // Reactive computed property for current user from multiple sources
     const currentUser = computed(() => {
       // Check store.state.currentUser first (direct reactive state access - most reliable)
@@ -573,7 +509,6 @@ export default {
       let retries = 0
       const maxRetries = 3
       while (!currentUser.value && retries < maxRetries) {
-        console.log(` [MODAL] Loading user (attempt ${retries + 1}/${maxRetries})...`)
         await store.checkAuth()
         // Wait a bit for reactive state to update
         await new Promise(resolve => setTimeout(resolve, 200))
@@ -598,7 +533,7 @@ export default {
             await new Promise(resolve => setTimeout(resolve, 200))
           }
           if (currentUser.value) {
-            console.log(' [MODAL] User loaded after modal shown:', currentUser.value.username)
+            console.log('[MODAL] User loaded after modal shown:', currentUser.value.username)
           }
         })
       }
@@ -607,14 +542,14 @@ export default {
     // Watch for user changes to log and check self-selection
     watch(currentUser, (newUser, oldUser) => {
       if (newUser) {
-        console.log(' [MODAL] User loaded/changed:', {
+        console.log('[MODAL] User loaded/changed:', {
           username: newUser.username,
           oldUser: oldUser?.username,
           selectedJury: selectedJury.value
         })
         // If user just loaded and we have selected jury, check for self-selection
         if (selectedJury.value.length > 0 && !oldUser) {
-          console.log(' [MODAL] User loaded with jury selected, checking for self-selection...')
+          console.log('[MODAL] User loaded with jury selected, checking for self-selection...')
         }
       }
     }, { immediate: true })
@@ -759,7 +694,7 @@ export default {
 
     // Validate and submit contest creation form
     const handleSubmit = async () => {
-      // Validation
+      // Basic validation
       if (!formData.name.trim()) {
         showAlert('Contest name is required', 'warning')
         return
@@ -832,28 +767,62 @@ export default {
         }
       }
 
-      // Validate multi-parameter scoring weights
-      if (enableMultiParameterScoring.value && totalWeight.value !== 100) {
-        showAlert('Parameter weights must sum to 100%', 'warning')
-        return
+      // Scoring-specific validation
+      if (enableMultiParameterScoring.value) {
+        if (totalWeight.value !== 100) {
+          showAlert(
+            'Multi-Parameter Scoring requires weights to sum to 100%. ' +
+            `Current total: ${totalWeight.value}%`,
+            'warning'
+          )
+          return
+        }
+
+        // Validate all parameters have names
+        const invalidParams = scoringParameters.value.filter(p => !p.name.trim())
+        if (invalidParams.length > 0) {
+          showAlert('All scoring parameters must have names', 'warning')
+          return
+        }
+      } else {
+        // Simple scoring validation
+        if (formData.marks_setting_accepted < 0) {
+          showAlert('Points for accepted submissions must be non-negative', 'warning')
+          return
+        }
       }
 
       loading.value = true
       try {
+        // Build scoring parameters payload
         let scoringParametersPayload = null
 
-        // Build scoring parameters payload if multi-parameter scoring is enabled
+        console.log('[CREATE] enableMultiParameterScoring:', enableMultiParameterScoring.value)
+        console.log('[CREATE] scoringParameters:', scoringParameters.value)
+        console.log('[CREATE] totalWeight:', totalWeight.value)
+
         if (enableMultiParameterScoring.value) {
           scoringParametersPayload = {
             enabled: true,
-            max_score: maxScore.value,
-            min_score: minScore.value,
+            max_score: Number(maxScore.value),
+            min_score: Number(minScore.value),
             parameters: scoringParameters.value.map(param => ({
-              name: param.name,
-              weight: param.weight,
-              description: param.description || ''
+              name: String(param.name || ''),
+              weight: Number(param.weight || 0),
+              description: String(param.description || '')
             }))
           }
+
+          console.log('[CREATE] Built scoring payload:', JSON.stringify(scoringParametersPayload, null, 2))
+        } else {
+          scoringParametersPayload = {
+            enabled: false,
+            max_score: Number(formData.marks_setting_accepted),
+            min_score: Number(formData.marks_setting_rejected),
+            parameters: []
+          }
+
+          console.log('[CREATE] Simple scoring payload:', scoringParametersPayload)
         }
 
         // Prepare template link: trim if provided, otherwise set to null
@@ -886,6 +855,7 @@ export default {
         if (result.success) {
           showAlert('Contest created successfully!', 'success')
           emit('created')
+          await new Promise(resolve => setTimeout(resolve, 100))
           // Close modal programmatically
           const modalElement = document.getElementById('createContestModal')
           const modal = bootstrap.Modal.getInstance(modalElement)
@@ -967,6 +937,7 @@ export default {
   }
 }
 </script>
+
 
 <style scoped>
 /* Modal header with Wikipedia primary color */
