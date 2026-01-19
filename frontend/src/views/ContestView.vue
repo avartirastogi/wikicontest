@@ -385,10 +385,14 @@
     :submission-id="currentSubmission.id" :submission="currentSubmission"
     :contest-scoring-config="contest?.scoring_parameters" @reviewed="handleSubmissionReviewed"
     @deleted="handleSubmissionDeleted" />
-  <!-- Edit Contest Modal -->
+
+  <!-- ========================================================================== -->
+  <!-- REFACTORED EDIT CONTEST MODAL - CLEAR UX FOR SCORING MODE LOCK -->
+  <!-- ========================================================================== -->
   <div class="modal fade" id="editContestModal" tabindex="-1">
     <div class="modal-dialog modal-fullscreen">
       <div class="modal-content">
+        <!-- Modal Header -->
         <div class="modal-header">
           <h5 class="modal-title">
             <i class="fas fa-edit me-2"></i>Edit Contest
@@ -396,57 +400,65 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
+        <!-- Modal Body -->
         <div class="modal-body">
           <form @submit.prevent="saveContestEdits">
 
-            <div class="mb-3">
-              <label class="form-label">Contest Name</label>
-              <input v-model="editForm.name" class="form-control" required />
-            </div>
+            <!-- Basic Information Section -->
+            <div class="edit-section">
+              <h6 class="section-title">
+                <i class="fas fa-info-circle me-2"></i>Basic Information
+              </h6>
 
-            <div class="mb-3">
-              <label class="form-label">Project Name</label>
-              <input v-model="editForm.project_name" class="form-control" required />
-            </div>
-
-            <div class="mb-3">
-              <label for="editContestDescription" class="form-label">Description</label>
-              <textarea class="form-control" id="editContestDescription" rows="3"
-                v-model="editForm.description"></textarea>
-            </div>
-            <div class="mb-3">
-              <label for="editContestRules" class="form-label">Contest Rules *</label>
-              <textarea class="form-control" id="editContestRules" rows="4"
-                placeholder="Write rules about how articles must be submitted." v-model="editForm.rules"
-                required></textarea>
-            </div>
-
-            <div class="mb-3">
-              <label for="editAllowedType" class="form-label">Allowed Submission Type</label>
-              <select id="editAllowedType" class="form-control" v-model="editForm.allowed_submission_type">
-                <option value="new">New Article Only</option>
-                <option value="expansion">Improved Article Only</option>
-                <option value="both">Both(New Article + Improved Article)</option>
-              </select>
-            </div>
-
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="editStartDate" class="form-label">Start Date *</label>
-                <input type="date" class="form-control" id="editStartDate" v-model="editForm.start_date" required />
+              <div class="mb-3">
+                <label class="form-label">Contest Name *</label>
+                <input v-model="editForm.name" class="form-control" required />
               </div>
-              <div class="col-md-6 mb-3">
-                <label for="editEndDate" class="form-label">End Date *</label>
-                <input type="date" class="form-control" id="editEndDate" v-model="editForm.end_date" required />
+
+              <div class="mb-3">
+                <label class="form-label">Project Name *</label>
+                <input v-model="editForm.project_name" class="form-control" required />
+              </div>
+
+              <div class="mb-3">
+                <label for="editContestDescription" class="form-label">Description</label>
+                <textarea class="form-control" id="editContestDescription" rows="3"
+                  v-model="editForm.description"></textarea>
+              </div>
+
+              <div class="mb-3">
+                <label for="editContestRules" class="form-label">Contest Rules *</label>
+                <textarea class="form-control" id="editContestRules" rows="4"
+                  placeholder="Write rules about how articles must be submitted." v-model="editForm.rules"
+                  required></textarea>
+              </div>
+
+              <div class="mb-3">
+                <label for="editAllowedType" class="form-label">Allowed Submission Type *</label>
+                <select id="editAllowedType" class="form-control" v-model="editForm.allowed_submission_type">
+                  <option value="new">New Article Only</option>
+                  <option value="expansion">Improved Article Only</option>
+                  <option value="both">Both (New Article + Improved Article)</option>
+                </select>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="editStartDate" class="form-label">Start Date *</label>
+                  <input type="date" class="form-control" id="editStartDate" v-model="editForm.start_date" required />
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="editEndDate" class="form-label">End Date *</label>
+                  <input type="date" class="form-control" id="editEndDate" v-model="editForm.end_date" required />
+                </div>
               </div>
             </div>
 
-            <!-- Organizers section with autocomplete search -->
-            <div class="mb-3">
-              <label class="form-label">
-                Organizers
-              </label>
+            <!-- Organizers Section -->
+            <div class="edit-section">
+              <h6 class="section-title">
+                <i class="fas fa-user-tie me-2"></i>Organizers
+              </h6>
 
               <!-- Display selected organizers as removable badges -->
               <div class="mb-2 p-2 border rounded bg-light organizer-selection-box" style="min-height: 40px;">
@@ -493,11 +505,11 @@
               </small>
             </div>
 
-            <div class="mb-3">
-              <label for="editJuryInput" class="form-label">
-                Jury Members *
-                <span class="badge bg-info">Type to search users</span>
-              </label>
+            <!-- Jury Members Section -->
+            <div class="edit-section">
+              <h6 class="section-title">
+                <i class="fas fa-gavel me-2"></i>Jury Members
+              </h6>
 
               <!-- Selected Jury Members Display -->
               <div class="mb-2 p-2 border rounded bg-light jury-selection-box" style="min-height: 40px;">
@@ -536,110 +548,127 @@
                   </div>
                 </div>
               </div>
+
+              <small class="form-text text-muted mt-1">
+                <i class="fas fa-info-circle me-1"></i>
+                Jury members will review and score submissions. It's recommended to select other users.
+              </small>
             </div>
 
-            <!-- Scoring settings: points for accepted and rejected submissions -->
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="editMarksAccepted" class="form-label">Points for Accepted Submissions</label>
-                <input type="number" class="form-control" id="editMarksAccepted"
-                  v-model.number="editForm.marks_setting_accepted" min="0" />
-                <small class="form-text text-muted">
-                  Maximum points that can be awarded. Jury can assign points from 0 up to
-                  this value for accepted submissions.
-                </small>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="editMarksRejected" class="form-label">Points for Rejected Submissions</label>
-                <input type="number" class="form-control" id="editMarksRejected"
-                  v-model.number="editForm.marks_setting_rejected" min="0" />
-                <small class="form-text text-muted">
-                  Fixed points awarded automatically for rejected submissions (usually 0 or negative).
-                </small>
-              </div>
-            </div>
+            <!-- ====================================================================== -->
+            <!-- SCORING SYSTEM SECTION - REDESIGNED FOR CLARITY -->
+            <!-- ====================================================================== -->
+            <div class="edit-section scoring-section-edit">
+              <h6 class="section-title">
+                <i class="fas fa-chart-line me-2"></i>Scoring System
+              </h6>
 
-            <!-- Advanced scoring system with multiple weighted parameters -->
-            <div class="card mb-4 scoring-section">
-              <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">
-                  <i class="fas fa-chart-line me-2"></i> Scoring System
-                </h6>
-                <!-- Toggle between simple and multi-parameter scoring -->
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="editEnableMultiParam"
-                    v-model="enableMultiParameterScoring" />
-                  <label class="form-check-label" for="editEnableMultiParam">
-                    Enable Multi-Parameter Scoring
-                  </label>
+              <!-- Lock Status Banner -->
+              <div class="scoring-lock-status mb-3">
+                <!-- LOCKED STATE -->
+                <div v-if="scoringModeLocked" class="lock-banner locked">
+                  <div class="lock-banner-icon">
+                    <i class="fas fa-lock"></i>
+                  </div>
+                  <div class="lock-banner-content">
+                    <div class="lock-banner-title">
+                      <strong>Scoring Mode is Locked</strong>
+                    </div>
+                    <div class="lock-banner-text">
+                      This contest has <strong>{{ reviewedSubmissionsCount }}</strong>
+                      reviewed {{ reviewedSubmissionsCount === 1 ? 'submission' : 'submissions' }}.
+                      The scoring mode cannot be changed to ensure fairness.
+                    </div>
+                  </div>
+                </div>
+
+                <!-- UNLOCKED STATE -->
+                <div v-else class="lock-banner unlocked">
+                  <div class="lock-banner-icon">
+                    <i class="fas fa-unlock-alt"></i>
+                  </div>
+                  <div class="lock-banner-content">
+                    <div class="scoring-mode-badge">
+                      <span v-if="contestScoringMode === 'multi_parameter'" class="badge-mode multi">
+                        <i class="fas fa-star me-2"></i>Multi-Parameter Scoring
+                      </span>
+                      <span v-else class="badge-mode simple">
+                        <i class="fas fa-calculator me-2"></i>Simple Scoring
+                      </span>
+                    </div>
+                    <div class="lock-banner-title">
+                      <strong>Scoring Mode is Editable:</strong>No submissions have been reviewed yet. You can change the scoring mode if needed.
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div class="card-body">
-                <!-- Simple scoring mode: single score per submission -->
-                <div v-if="!enableMultiParameterScoring" class="alert alert-info">
+              <!-- LOCKED MODE: Show What Can Be Edited -->
+              <div v-if="scoringModeLocked" class="locked-edit-info">
+                <div class="alert alert-info mb-3">
                   <i class="fas fa-info-circle me-2"></i>
-                  <strong>Simple Scoring Mode:</strong> Jury will assign a single score (0-{{
-                    editForm.marks_setting_accepted }})
-                  for accepted submissions.
-                  <br />
-                  <i class="fas fa-info-circle me-2"></i>
-                  <strong>Simple Scoring Mode:</strong> Jury will assign a single score (0-{{
-                    editForm.marks_setting_rejected }})
-                  for rejected submissions.
+                  <strong>What you can edit:</strong>
+                  <ul class="mb-0 mt-2">
+                    <li v-if="contestScoringMode === 'multi_parameter'">
+                      Maximum and minimum score values
+                    </li>
+                    <li v-if="contestScoringMode === 'multi_parameter'">
+                      Parameter weights (must still sum to 100%)
+                    </li>
+                    <li v-if="contestScoringMode === 'multi_parameter'">
+                      Parameter names and descriptions
+                    </li>
+                    <li v-if="contestScoringMode === 'simple'">
+                      Points for accepted and rejected submissions
+                    </li>
+                  </ul>
                 </div>
-                <!-- Multi-parameter scoring mode: weighted calculation -->
-                <div v-else>
-                  <div class="alert alert-success">
-                    <i class="fas fa-star me-2"></i>
-                    <strong>Multi-Parameter Scoring Enabled:</strong> Jury will score submissions on multiple parameters
-                    with weighted calculation.
+                <!-- Multi-Parameter Locked Editing -->
+                <div v-if="contestScoringMode === 'multi_parameter'">
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Maximum Score (Accepted) *</label>
+                      <input type="number" class="form-control" v-model.number="maxScore" min="1" max="1000" required />
+                      <small class="text-muted">Final score scaled to this value</small>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Minimum Score (Rejected) *</label>
+                      <input type="number" class="form-control" v-model.number="minScore" min="0" max="1000" required />
+                      <small class="text-muted">Score for rejected submissions</small>
+                    </div>
                   </div>
 
-                  <!-- Maximum score for accepted submissions -->
+                  <!-- Parameters List -->
                   <div class="mb-3">
-                    <label class="form-label">Point of Acceptance</label>
-                    <input type="number" class="form-control" v-model.number="maxScore" min="1" max="100"
-                      placeholder="10" />
-                    <small class="text-muted">Final calculated score will be scaled to this value</small>
-                  </div>
-
-                  <!-- Minimum score for rejected submissions -->
-                  <div class="mb-3">
-                    <label class="form-label">Point of Rejection </label>
-                    <input type="number" class="form-control" v-model.number="minScore" min="1" max="100"
-                      placeholder="0" />
-
-                  </div>
-
-                  <!-- Define scoring parameters with weights -->
-                  <div class="mb-3">
-                    <label class="form-label">Scoring Parameters</label>
+                    <label class="form-label fw-bold">Scoring Parameters *</label>
                     <div class="parameters-list">
-                      <!-- Each parameter has name, weight, and description -->
                       <div v-for="(param, index) in scoringParameters" :key="index" class="parameter-item card mb-2">
-                        <div class="card-body">
+                        <div class="card-body p-3">
                           <div class="row align-items-center">
                             <div class="col-md-3">
-                              <input type="text" class="form-control" v-model="param.name" placeholder="Parameter name"
+                              <label class="small text-muted mb-1">Parameter Name</label>
+                              <input type="text" class="form-control" v-model="param.name" placeholder="e.g., Quality"
                                 required />
                             </div>
                             <div class="col-md-3">
+                              <label class="small text-muted mb-1">Weight (%)</label>
                               <div class="input-group">
                                 <input type="number" class="form-control" v-model.number="param.weight" min="0"
-                                  max="100" placeholder="Weight" required />
+                                  max="100" placeholder="0-100" required />
                                 <span class="input-group-text">%</span>
                               </div>
                             </div>
                             <div class="col-md-5">
+                              <label class="small text-muted mb-1">Description (Optional)</label>
                               <input type="text" class="form-control" v-model="param.description"
-                                placeholder="Description (optional)" />
+                                placeholder="Brief description" />
                             </div>
                             <div class="col-md-1 text-end">
-                              <!-- Remove parameter button (disabled if only one parameter) -->
+                              <label class="small text-muted mb-1 d-block">&nbsp;</label>
                               <button type="button" class="btn btn-sm btn-outline-danger"
-                                @click="removeParameter(index)" :disabled="scoringParameters.length <= 1">
-                                <i class="fas fa-times"></i>
+                                @click="removeParameter(index)" :disabled="scoringParameters.length <= 1"
+                                title="Remove parameter">
+                                <i class="fas fa-trash"></i>
                               </button>
                             </div>
                           </div>
@@ -651,21 +680,154 @@
                       <i class="fas fa-plus me-1"></i>Add Parameter
                     </button>
 
-                    <!-- Weight validation: must sum to 100% -->
+                    <!-- Weight Validation -->
                     <div class="mt-3 p-3 rounded" :class="weightTotalClass">
-                      <strong>Total Weight: {{ totalWeight }}%</strong>
-                      <span v-if="totalWeight !== 100" class="ms-2 text-danger">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        Must equal 100%
-                      </span>
-                      <span v-else class="ms-2 text-success">
-                        <i class="fas fa-check-circle"></i>
-                        Valid
-                      </span>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <strong>Total Weight: {{ totalWeight }}%</strong>
+                        <span v-if="totalWeight !== 100" class="text-danger">
+                          <i class="fas fa-exclamation-triangle me-1"></i>
+                          Must equal 100%
+                        </span>
+                        <span v-else class="text-success">
+                          <i class="fas fa-check-circle me-1"></i>
+                          Valid
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <!-- Reset to default parameters -->
+                  <button type="button" class="btn btn-sm btn-outline-secondary" @click="loadDefaultParameters">
+                    <i class="fas fa-redo me-1"></i>Reset to Default Parameters
+                  </button>
+                </div>
+
+                <!-- Simple Scoring Locked Editing -->
+                <div v-else>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Points for Accepted Submissions *</label>
+                      <input type="number" class="form-control" v-model.number="editForm.marks_setting_accepted" min="0"
+                        required />
+                      <small class="text-muted">Maximum points for accepted submissions</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Points for Rejected Submissions *</label>
+                      <input type="number" class="form-control" v-model.number="editForm.marks_setting_rejected" min="0"
+                        required />
+                      <small class="text-muted">Points for rejected submissions</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- UNLOCKED MODE: Allow Switching -->
+              <div v-else class="unlocked-edit-mode">
+                <!-- Toggle Switch -->
+                <div class="scoring-mode-toggle mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="editEnableMultiParam"
+                      v-model="enableMultiParameterScoring" />
+                    <label class="form-check-label fw-bold" for="editEnableMultiParam">
+                      Enable Multi-Parameter Scoring
+                    </label>
+                  </div>
+                  <small class="text-muted mt-1 d-block">
+                    <i class="fas fa-lightbulb me-1"></i>
+                    Multi-parameter scoring allows jury to rate submissions on multiple criteria with weighted scores.
+                  </small>
+                </div>
+
+                <!-- Simple Scoring Form -->
+                <div v-if="!enableMultiParameterScoring" class="simple-scoring-form">
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Points for Accepted Submissions *</label>
+                      <input type="number" class="form-control" v-model.number="editForm.marks_setting_accepted" min="0"
+                        required />
+                      <small class="text-muted">Maximum points that can be awarded</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Points for Rejected Submissions *</label>
+                      <input type="number" class="form-control" v-model.number="editForm.marks_setting_rejected" min="0"
+                        required />
+                      <small class="text-muted">Points for rejected submissions (usually 0)</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Multi-Parameter Scoring Form -->
+                <div v-else class="multi-param-scoring-form">
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Maximum Score (Accepted) *</label>
+                      <input type="number" class="form-control" v-model.number="maxScore" min="1" max="1000" required />
+                      <small class="text-muted">Final weighted score scaled to this maximum</small>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Minimum Score (Rejected) *</label>
+                      <input type="number" class="form-control" v-model.number="minScore" min="0" max="1000" required />
+                      <small class="text-muted">Fixed score for rejected submissions</small>
+                    </div>
+                  </div>
+
+                  <!-- Parameters List (same as locked mode) -->
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Scoring Parameters *</label>
+                    <div class="parameters-list">
+                      <div v-for="(param, index) in scoringParameters" :key="index" class="parameter-item card mb-2">
+                        <div class="card-body p-3">
+                          <div class="row align-items-center">
+                            <div class="col-md-3">
+                              <label class="small text-muted mb-1">Parameter Name</label>
+                              <input type="text" class="form-control" v-model="param.name" placeholder="e.g., Quality"
+                                required />
+                            </div>
+                            <div class="col-md-3">
+                              <label class="small text-muted mb-1">Weight (%)</label>
+                              <div class="input-group">
+                                <input type="number" class="form-control" v-model.number="param.weight" min="0"
+                                  max="100" placeholder="0-100" required />
+                                <span class="input-group-text">%</span>
+                              </div>
+                            </div>
+                            <div class="col-md-5">
+                              <label class="small text-muted mb-1">Description (Optional)</label>
+                              <input type="text" class="form-control" v-model="param.description"
+                                placeholder="Brief description" />
+                            </div>
+                            <div class="col-md-1 text-end">
+                              <label class="small text-muted mb-1 d-block">&nbsp;</label>
+                              <button type="button" class="btn btn-sm btn-outline-danger"
+                                @click="removeParameter(index)" :disabled="scoringParameters.length <= 1"
+                                title="Remove parameter">
+                                <i class="fas fa-trash"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" @click="addParameter">
+                      <i class="fas fa-plus me-1"></i>Add Parameter
+                    </button>
+
+                    <!-- Weight Validation -->
+                    <div class="mt-3 p-3 rounded" :class="weightTotalClass">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <strong>Total Weight: {{ totalWeight }}%</strong>
+                        <span v-if="totalWeight !== 100" class="text-danger">
+                          <i class="fas fa-exclamation-triangle me-1"></i>
+                          Must equal 100%
+                        </span>
+                        <span v-else class="text-success">
+                          <i class="fas fa-check-circle me-1"></i>
+                          Valid
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
                   <button type="button" class="btn btn-sm btn-outline-secondary" @click="loadDefaultParameters">
                     <i class="fas fa-redo me-1"></i>Load Default Parameters
                   </button>
@@ -673,76 +835,85 @@
               </div>
             </div>
 
-            <!-- Article Requirements -->
-            <div class="mb-3">
-              <label class="form-label">Minimum Byte Count *</label>
-              <input type="number" v-model.number="editForm.min_byte_count" class="form-control" min="0"
-                placeholder="e.g., 1000" required />
-              <small class="form-text text-muted">Articles must have at least this many bytes</small>
-            </div>
+            <!-- Article Requirements Section -->
+            <div class="edit-section">
+              <h6 class="section-title">
+                <i class="fas fa-file-alt me-2"></i>Article Requirements
+              </h6>
 
-            <div class="mb-3">
-              <label class="form-label">Minimum Reference Count</label>
-              <input type="number" v-model.number="editForm.min_reference_count" class="form-control" min="0"
-                placeholder="e.g., 5" />
-              <small class="form-text text-muted">
-                Articles must have at least this many references. Set to 0 for no requirement.
-              </small>
-            </div>
-
-
-            <!-- Continuing from edit form - Category URLs section -->
-            <div class="mb-3">
-              <label class="form-label">
-                Category URLs *
-                <span class="text-muted">(MediaWiki category pages)</span>
-              </label>
-
-              <!-- Dynamic category URL inputs -->
-              <div v-for="(category, index) in editForm.categories" :key="index" class="mb-2">
-                <div class="input-group">
-                  <input type="url" class="form-control" v-model="editForm.categories[index]"
-                    :placeholder="index === 0 ? 'https://en.wikipedia.org/wiki/Category:Example' : 'Add another category URL'"
-                    required />
-                  <!-- Allow removing categories except the first one -->
-                  <button v-if="editForm.categories.length > 1" type="button" class="btn btn-outline-danger"
-                    @click="removeCategory(index)" title="Remove category">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
+              <div class="mb-3">
+                <label class="form-label">Minimum Byte Count *</label>
+                <input type="number" v-model.number="editForm.min_byte_count" class="form-control" min="0"
+                  placeholder="e.g., 1000" required />
+                <small class="form-text text-muted">Articles must have at least this many bytes</small>
               </div>
 
-              <button type="button" class="btn btn-outline-primary btn-sm" @click="addCategory">
-                <i class="fas fa-plus me-1"></i>Add Category
-              </button>
+              <div class="mb-3">
+                <label class="form-label">Minimum Reference Count</label>
+                <input type="number" v-model.number="editForm.min_reference_count" class="form-control" min="0"
+                  placeholder="e.g., 5" />
+                <small class="form-text text-muted">
+                  Articles must have at least this many references. Set to 0 for no requirement.
+                </small>
+              </div>
 
-              <small class="form-text text-muted d-block mt-2">
-                At least one MediaWiki category URL is required. Articles must belong to these categories.
-              </small>
-            </div>
+              <!-- Category URLs -->
+              <div class="mb-3">
+                <label class="form-label">
+                  Category URLs *
+                  <span class="text-muted">(MediaWiki category pages)</span>
+                </label>
 
-            <!-- Template Link (Optional) -->
-            <div class="mb-3">
-              <label for="editTemplateLink" class="form-label">
-                Contest Template Link
-                <span class="badge bg-secondary ms-1">Optional</span>
-              </label>
-              <input type="url" class="form-control" id="editTemplateLink" v-model="editForm.template_link"
-                placeholder="https://en.wikipedia.org/wiki/Template:YourContestTemplate" />
-              <small class="form-text text-muted d-block mt-2">
-                <i class="fas fa-info-circle me-1"></i>
-                If set, this template will be automatically added to submitted articles that don't already have it.
-                The URL must point to a Wiki Template namespace page (e.g., Template:Editathon2025).
-              </small>
+                <!-- Dynamic category URL inputs -->
+                <div v-for="(category, index) in editForm.categories" :key="index" class="mb-2">
+                  <div class="input-group">
+                    <input type="url" class="form-control" v-model="editForm.categories[index]"
+                      :placeholder="index === 0 ? 'https://en.wikipedia.org/wiki/Category:Example' : 'Add another category URL'"
+                      required />
+                    <!-- Allow removing categories except the first one -->
+                    <button v-if="editForm.categories.length > 1" type="button" class="btn btn-outline-danger"
+                      @click="removeCategory(index)" title="Remove category">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" @click="addCategory">
+                  <i class="fas fa-plus me-1"></i>Add Category
+                </button>
+
+                <small class="form-text text-muted d-block mt-2">
+                  At least one MediaWiki category URL is required. Articles must belong to these categories.
+                </small>
+              </div>
+
+              <!-- Template Link (Optional) -->
+              <div class="mb-3">
+                <label for="editTemplateLink" class="form-label">
+                  Contest Template Link
+                  <span class="badge bg-secondary ms-1">Optional</span>
+                </label>
+                <input type="url" class="form-control" id="editTemplateLink" v-model="editForm.template_link"
+                  placeholder="https://en.wikipedia.org/wiki/Template:YourContestTemplate" />
+                <small class="form-text text-muted d-block mt-2">
+                  <i class="fas fa-info-circle me-1"></i>
+                  If set, this template will be automatically added to submitted articles that don't already have it.
+                </small>
+              </div>
             </div>
 
           </form>
         </div>
+
+        <!-- Modal Footer -->
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>Cancel
+          </button>
           <button type="button" class="btn btn-primary" @click="saveContestEdits" :disabled="savingContest">
             <span v-if="savingContest" class="spinner-border spinner-border-sm me-2"></span>
-            Save Changes
+            <i v-else class="fas fa-save me-2"></i>
+            {{ savingContest ? 'Saving...' : 'Save Changes' }}
           </button>
         </div>
       </div>
@@ -804,6 +975,9 @@ export default {
       { name: 'Neutrality', weight: 20, description: 'Unbiased writing' },
       { name: 'Formatting', weight: 10, description: 'Presentation & formatting' }
     ])
+    const contestScoringMode = ref('simple')
+    const scoringModeLocked = ref(false)
+    const reviewedSubmissionsCount = ref(0)
 
     // Calculate total weight of all parameters
     const totalWeight = computed(() => {
@@ -1395,12 +1569,8 @@ export default {
         jurySearchResults.value = []
         return
       }
-
-      if (jurySearchTimeout) {
-        clearTimeout(jurySearchTimeout)
-      }
-
-      // Debounce to avoid excessive API calls
+      if (jurySearchTimeout) { clearTimeout(jurySearchTimeout) }
+      // Debounce to avoid excessive API calls 
       jurySearchTimeout = setTimeout(async () => {
         try {
           const response = await api.get(`/user/search?q=${encodeURIComponent(query)}&limit=10`)
@@ -1414,6 +1584,7 @@ export default {
         }
       }, 300)
     }
+
 
     // Add jury member with self-selection warning
     const addJuryMember = (username) => {
@@ -1456,11 +1627,9 @@ export default {
         organizerSearchResults.value = []
         return
       }
-
       if (organizerSearchTimeout) {
         clearTimeout(organizerSearchTimeout)
       }
-
       organizerSearchTimeout = setTimeout(async () => {
         try {
           const response = await api.get(`/user/search?q=${encodeURIComponent(query)}&limit=10`)
@@ -1511,11 +1680,8 @@ export default {
       }
     }
 
-    // Populate edit form with contest data
     const openEditModal = () => {
       if (!contest.value) return
-
-      // Basic fields
       editForm.name = contest.value.name
       editForm.project_name = contest.value.project_name || ''
       editForm.description = contest.value.description || ''
@@ -1526,78 +1692,81 @@ export default {
       editForm.min_byte_count = Number(contest.value.min_byte_count ?? 0)
       editForm.min_reference_count = Number(contest.value.min_reference_count ?? 0)
 
-      // Jury members
       if (Array.isArray(contest.value.jury_members)) {
         editForm.selectedJuryMembers = [...contest.value.jury_members]
       } else {
         editForm.selectedJuryMembers = []
       }
 
-      // Organizers
       if (Array.isArray(contest.value.organizers)) {
         editForm.selectedOrganizers = [...contest.value.organizers]
       } else {
         editForm.selectedOrganizers = []
       }
 
-      // Categories
+
       if (Array.isArray(contest.value.categories) && contest.value.categories.length > 0) {
         editForm.categories = [...contest.value.categories]
       } else {
         editForm.categories = ['']
       }
 
-      // Template link
       editForm.template_link = contest.value.template_link || ''
 
-      //  CRITICAL FIX: Properly load scoring configuration
-      console.log('[EDIT MODAL] Loading scoring config:', contest.value.scoring_parameters)
+      // Count reviewed submissions (accepted or rejected)
+      const reviewedSubmissions = submissions.value.filter(
+        s => s.status === 'accepted' || s.status === 'rejected'
+      )
+      reviewedSubmissionsCount.value = reviewedSubmissions.length
+      scoringModeLocked.value = reviewedSubmissions.length > 0
 
+      // This determines what the contest is CURRENTLY using
       if (contest.value.scoring_parameters?.enabled === true) {
-        // Multi-parameter scoring mode
-        console.log('[EDIT MODAL] Enabling multi-parameter scoring')
+        contestScoringMode.value = 'multi_parameter'
+        console.log('[EDIT MODAL] Current scoring mode: MULTI-PARAMETER')
+      } else {
+        contestScoringMode.value = 'simple'
+        console.log('[EDIT MODAL] Current scoring mode: SIMPLE')
+      }
 
-        editForm.scoring_mode = 'multi'
+      if (contestScoringMode.value === 'multi_parameter') {
+        // Contest is using multi-parameter scoring
         enableMultiParameterScoring.value = true
 
-        // Load score limits
+        // Load multi-parameter values
         maxScore.value = Number(contest.value.scoring_parameters.max_score ?? 10)
         minScore.value = Number(contest.value.scoring_parameters.min_score ?? 0)
 
-        //  Load parameters into reactive ref
-        if (contest.value.scoring_parameters.parameters &&
-          Array.isArray(contest.value.scoring_parameters.parameters) &&
-          contest.value.scoring_parameters.parameters.length > 0) {
+        if (contest.value.scoring_parameters.parameters?.length > 0) {
           scoringParameters.value = contest.value.scoring_parameters.parameters.map(p => ({
             name: p.name || '',
             weight: Number(p.weight || 0),
             description: p.description || ''
           }))
-
-          console.log('[EDIT MODAL] Loaded parameters:', scoringParameters.value)
         } else {
-          console.warn('[EDIT MODAL] No parameters found, loading defaults')
           loadDefaultParameters()
         }
 
-        //  Sync with editForm
+        // Sync to editForm
         editForm.scoring_parameters = {
           enabled: true,
           max_score: maxScore.value,
           min_score: minScore.value,
           parameters: scoringParameters.value.map(p => ({ ...p }))
         }
-      } else {
-        // Simple scoring mode
-        console.log('[EDIT MODAL] Using simple scoring mode')
 
-        editForm.scoring_mode = 'simple'
+        // Also sync simple values for consistency
+        editForm.marks_setting_accepted = maxScore.value
+        editForm.marks_setting_rejected = minScore.value
+      } else {
+        // Contest is using simple scoring
         enableMultiParameterScoring.value = false
 
+        // Load simple scoring values
         editForm.marks_setting_accepted = Number(contest.value.marks_setting_accepted ?? 0)
         editForm.marks_setting_rejected = Number(contest.value.marks_setting_rejected ?? 0)
 
-        // Reset multi-parameter values
+        // Reset multi-parameter values to defaults (not loaded from contest)
         maxScore.value = 10
         minScore.value = 0
         loadDefaultParameters()
@@ -1609,30 +1778,24 @@ export default {
           parameters: []
         }
       }
-
-      // Reset search states
       jurySearchQuery.value = ''
       jurySearchResults.value = []
       organizerSearchQuery.value = ''
       organizerSearchResults.value = []
 
-      // Show modal
       if (editModal) editModal.show()
     }
 
-    // Save contest edits with validation
+
     const saveContestEdits = async () => {
       try {
         savingContest.value = true
-
-        // Validate categories
         const validCategories = editForm.categories.filter(cat => cat && cat.trim())
         if (validCategories.length === 0) {
           showAlert('At least one category URL is required', 'warning')
           return
         }
 
-        // Validate category URLs
         for (const category of validCategories) {
           if (!category.startsWith('http://') && !category.startsWith('https://')) {
             showAlert('All category URLs must be valid HTTP/HTTPS URLs', 'warning')
@@ -1643,25 +1806,27 @@ export default {
         let scoringParametersPayload = null
 
         if (enableMultiParameterScoring.value) {
+          // Multi-parameter scoring is enabled (either locked or unlocked)
+
           // Validate weights sum to 100
           if (totalWeight.value !== 100) {
             showAlert('Parameter weights must sum to 100%', 'warning')
             return
           }
 
-          //  Build clean payload without Vue reactivity
+          // Build clean payload
           scoringParametersPayload = {
             enabled: true,
             max_score: Number(maxScore.value),
             min_score: Number(minScore.value),
             parameters: scoringParameters.value.map(param => ({
-              name: String(param.name || ''),
+              name: String(param.name || '').trim(),
               weight: Number(param.weight || 0),
-              description: String(param.description || '')
+              description: String(param.description || '').trim()
             }))
           }
         } else {
-          // Simple scoring - explicitly set enabled: false
+          // Simple scoring is enabled
           scoringParametersPayload = {
             enabled: false,
             max_score: Number(editForm.marks_setting_accepted),
@@ -1672,7 +1837,6 @@ export default {
           console.log('[SAVE] Simple scoring payload:', scoringParametersPayload)
         }
 
-        // Prepare template link: trim if provided, otherwise set to null
         let templateLinkValue = null
         if (editForm.template_link && typeof editForm.template_link === 'string') {
           const trimmed = editForm.template_link.trim()
@@ -1699,15 +1863,14 @@ export default {
           marks_setting_rejected: Number(editForm.marks_setting_rejected),
           scoring_parameters: scoringParametersPayload
         }
-
         await api.put(`/contest/${contest.value.id}`, payload)
 
         showAlert('Contest updated successfully', 'success')
         editModal.hide()
 
-        // Reload contest to show changes
         await loadContest(contest.value.id)
       } catch (error) {
+        console.error('[SAVE] Error:', error)
         showAlert(
           'Failed to save: ' + (error.response?.data?.detail || error.message),
           'danger'
@@ -1812,27 +1975,34 @@ export default {
       addParameter,
       removeParameter,
       loadDefaultParameters,
-      savingContest
+      savingContest,
+      scoringModeLocked,
+      reviewedSubmissionsCount,
+      contestScoringMode
     }
   }
 }
 </script>
 
+
+
 <style scoped>
-/* Contest View Styling with Wikipedia Colors */
-/* Main Container */
+/* --------------------------------------------------------------------------
+   Main Container & Layout
+   -------------------------------------------------------------------------- */
 .contest-view {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* Header Section */
+/* --------------------------------------------------------------------------
+   Header Section
+   -------------------------------------------------------------------------- */
 .contest-header-section {
   border-bottom: 2px solid var(--wiki-primary);
   padding-bottom: 1rem;
 }
 
-/* Main contest title styling with theme support */
 .contest-title {
   color: var(--wiki-dark);
   font-weight: 700;
@@ -1841,12 +2011,10 @@ export default {
   transition: color 0.3s ease;
 }
 
-/* Dark theme override for title */
 [data-theme="dark"] .contest-title {
   color: #ffffff !important;
 }
 
-/* Metadata container below contest title */
 .contest-meta {
   display: flex;
   align-items: center;
@@ -1854,7 +2022,9 @@ export default {
   flex-wrap: wrap;
 }
 
-/* Base card container with border and shadow */
+/* --------------------------------------------------------------------------
+   Cards & Content Containers
+   -------------------------------------------------------------------------- */
 .card {
   border: 1px solid var(--wiki-border);
   border-radius: 8px;
@@ -1862,18 +2032,15 @@ export default {
   transition: box-shadow 0.2s ease;
 }
 
-/* Dark theme card background and border */
 [data-theme="dark"] .card {
   background-color: #2a2a2a;
   border-color: #444;
 }
 
-/* Elevated shadow on card hover */
 .card:hover {
   box-shadow: 0 4px 8px rgba(0, 102, 153, 0.15);
 }
 
-/* Card header with primary background */
 .card-header {
   background-color: var(--wiki-primary);
   color: white;
@@ -1882,47 +2049,45 @@ export default {
   font-weight: 600;
 }
 
-/* Card body content area */
 .card-body {
   padding: 1.5rem;
   color: var(--wiki-dark);
 }
 
-/* Paragraph spacing within card body */
 .card-body p {
   margin-bottom: 0.75rem;
   color: var(--wiki-text);
 }
 
-/* Ensure strong text is visible in dark mode */
 [data-theme="dark"] .card-body strong {
   color: #ffffff;
 }
 
-/* Base badge styling */
+/* --------------------------------------------------------------------------
+   Badges
+   -------------------------------------------------------------------------- */
 .badge {
   font-weight: 500;
   padding: 0.4em 0.8em;
   font-size: 0.85em;
 }
 
-/* Primary badge uses theme primary color */
 .badge.bg-primary {
   background-color: var(--wiki-primary) !important;
 }
 
-/* Info badge styled as primary with white text */
 .badge.bg-info {
   background-color: var(--wiki-primary) !important;
   color: white;
 }
 
-/* Remove default top margin from tables */
+/* --------------------------------------------------------------------------
+   Tables
+   -------------------------------------------------------------------------- */
 .table {
   margin-top: 0;
 }
 
-/* Table header with light background and primary accent */
 .table thead th {
   background-color: rgba(0, 102, 153, 0.1);
   color: var(--wiki-primary);
@@ -1931,38 +2096,32 @@ export default {
   padding: 0.75rem;
 }
 
-/* Dark theme table header with adjusted opacity */
 [data-theme="dark"] .table thead th {
   background-color: rgba(93, 184, 230, 0.15);
   border-bottom-color: var(--wiki-primary);
 }
 
-/* Table body cell styling */
 .table tbody td {
   padding: 0.75rem;
   vertical-align: middle;
   color: var(--wiki-text);
 }
 
-/* Row hover effect for better readability */
 .table tbody tr:hover {
   background-color: var(--wiki-hover-bg);
 }
 
-/* Links within tables */
 .table a {
   color: var(--wiki-primary);
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
-/* Link hover state with underline */
 .table a:hover {
   color: var(--wiki-primary-hover);
   text-decoration: underline;
 }
 
-/* Clickable article titles with pointer cursor */
 .article-title-link {
   cursor: pointer;
   color: var(--wiki-primary);
@@ -1975,14 +2134,15 @@ export default {
   text-decoration: underline;
 }
 
-/* Primary outline button */
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
 .btn-outline-primary {
   border-color: var(--wiki-primary);
   color: var(--wiki-primary);
   transition: all 0.2s ease;
 }
 
-/* Outline button hover with lift effect */
 .btn-outline-primary:hover {
   background-color: var(--wiki-primary);
   border-color: var(--wiki-primary);
@@ -1991,14 +2151,12 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 102, 153, 0.3);
 }
 
-/* Solid primary button */
 .btn-primary {
   background-color: var(--wiki-primary);
   border-color: var(--wiki-primary);
   transition: all 0.2s ease;
 }
 
-/* Primary button hover with lift effect */
 .btn-primary:hover {
   background-color: var(--wiki-primary-hover);
   border-color: var(--wiki-primary-hover);
@@ -2006,15 +2164,13 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 102, 153, 0.3);
 }
 
-/* Danger button for destructive actions */
 .btn-danger {
   background-color: var(--wiki-danger);
   border-color: var(--wiki-danger);
   color: white;
-  transition: all 0.2s
+  transition: all 0.2s ease;
 }
 
-/* Danger button hover state */
 .btn-danger:hover {
   background-color: var(--wiki-danger-hover);
   border-color: var(--wiki-danger-hover);
@@ -2022,7 +2178,6 @@ export default {
   box-shadow: 0 2px 4px rgba(153, 0, 0, 0.2);
 }
 
-/* Dark theme danger button */
 [data-theme="dark"] .btn-danger {
   background-color: #990000;
   border-color: #990000;
@@ -2033,7 +2188,6 @@ export default {
   border-color: #7a0000;
 }
 
-/* Secondary outline button */
 .btn-outline-secondary {
   border-color: var(--wiki-text-muted);
   color: var(--wiki-text-muted);
@@ -2046,42 +2200,42 @@ export default {
   color: white;
 }
 
-/* Base alert with left border accent */
+/* --------------------------------------------------------------------------
+   Alerts
+   -------------------------------------------------------------------------- */
 .alert {
   border-radius: 0.5rem;
   border-left: 4px solid;
   padding: 0.75rem 1rem;
 }
 
-/* Info alert with primary color scheme */
 .alert-info {
   background-color: rgba(0, 102, 153, 0.1);
   border-color: var(--wiki-primary);
   color: var(--wiki-primary);
 }
 
-/* Dark theme info alert with higher opacity */
 [data-theme="dark"] .alert-info {
   background-color: rgba(93, 184, 230, 0.2);
   border-color: var(--wiki-primary);
   color: var(--wiki-primary);
 }
 
-/* Danger alert for errors */
 .alert-danger {
   background-color: rgba(153, 0, 0, 0.1);
   border-color: var(--wiki-danger);
   color: var(--wiki-danger);
 }
 
-/* Warning alert uses danger colors */
 .alert-warning {
   background-color: rgba(153, 0, 0, 0.1);
   border-color: var(--wiki-danger);
   color: var(--wiki-danger);
 }
 
-/* Primary colored loading spinner */
+/* --------------------------------------------------------------------------
+   Loading Spinners
+   -------------------------------------------------------------------------- */
 .spinner-border.text-primary {
   color: var(--wiki-primary) !important;
   width: 3rem;
@@ -2089,12 +2243,13 @@ export default {
   border-width: 0.3em;
 }
 
-/* Container for description content */
+/* --------------------------------------------------------------------------
+   Description Section
+   -------------------------------------------------------------------------- */
 .description-section {
   margin-top: 0;
 }
 
-/* Text with preserved line breaks and word wrapping */
 .description-text {
   white-space: pre-line;
   line-height: 1.6;
@@ -2108,8 +2263,11 @@ export default {
   color: var(--wiki-text);
 }
 
-/* Autocomplete dropdown container */
-.jury-autocomplete {
+/* --------------------------------------------------------------------------
+   Autocomplete Components
+   -------------------------------------------------------------------------- */
+.jury-autocomplete,
+.organizer-autocomplete {
   border: 1px solid var(--wiki-border);
   border-top: none;
   border-radius: 0 0 4px 4px;
@@ -2119,34 +2277,33 @@ export default {
   transition: background-color 0.2s ease;
 }
 
-/* Dark theme dropdown with deeper shadow */
-[data-theme="dark"] .jury-autocomplete {
+[data-theme="dark"] .jury-autocomplete,
+[data-theme="dark"] .organizer-autocomplete {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-/* Individual autocomplete suggestion item */
-.jury-autocomplete .p-2 {
+.jury-autocomplete .p-2,
+.organizer-autocomplete .p-2 {
   transition: background-color 0.2s ease;
   color: var(--wiki-text);
 }
 
-/* Suggestion hover state */
-.jury-autocomplete .p-2:hover {
+.jury-autocomplete .p-2:hover,
+.organizer-autocomplete .p-2:hover {
   background-color: var(--wiki-hover-bg) !important;
 }
 
-/* Warning indicator for self-selection */
-.jury-autocomplete .bg-warning-subtle {
+.jury-autocomplete .bg-warning-subtle,
+.organizer-autocomplete .bg-warning-subtle {
   background-color: rgba(255, 193, 7, 0.25) !important;
   border-left: 4px solid #ffc107;
 }
 
-/* Dark theme self-selection warning */
-[data-theme="dark"] .jury-autocomplete .bg-warning-subtle {
+[data-theme="dark"] .jury-autocomplete .bg-warning-subtle,
+[data-theme="dark"] .organizer-autocomplete .bg-warning-subtle {
   background-color: rgba(255, 193, 7, 0.35) !important;
 }
 
-/* Badge displayed on self-selection warning */
 .self-warning-badge {
   background-color: #ffc107;
   color: #000;
@@ -2162,73 +2319,65 @@ export default {
   color: #fff;
 }
 
-/* Primary text color within autocomplete */
-.jury-autocomplete .text-primary {
+.jury-autocomplete .text-primary,
+.organizer-autocomplete .text-primary {
   color: var(--wiki-primary) !important;
 }
 
-/* Adjustments for screens 768px and below */
-@media (max-width: 768px) {
-  .contest-title {
-    font-size: 2rem;
-  }
-
-  .card-body {
-    padding: 1rem;
-  }
-
-  .table {
-    font-size: 0.9rem;
-  }
-
-  .table thead th,
-  .table tbody td {
-    padding: 0.5rem;
-  }
-}
-
-/* Modal that takes entire viewport */
-.modal-fullscreen {
-  width: 100vw;
-  max-width: 100%;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-}
-
-/* Modal content fills viewport height */
-.modal-fullscreen .modal-content {
-  height: 100vh;
-  border: 0;
-  border-radius: 0;
+/* --------------------------------------------------------------------------
+   Organizers & Jury Display
+   -------------------------------------------------------------------------- */
+.organizers-flex {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 
-/* Scrollable modal body */
-.modal-fullscreen .modal-body {
-  flex: 1;
+.organizer-chip {
+  display: flex;
+  align-items: center;
+  padding: 0.50rem 1rem;
+  background-color: var(--wiki-primary);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.organizer-chip:hover {
+  background-color: var(--wiki-primary);
+  transform: translateY(-2px);
+}
+
+[data-theme="dark"] .organizer-chip {
+  background-color: var(--wiki-primary);
+}
+
+[data-theme="dark"] .organizer-chip:hover {
+  background-color: var(--wiki-primary);
+}
+
+/* Selection boxes for organizers/jury in edit modal */
+.organizer-selection-box,
+.jury-selection-box {
+  min-height: 50px;
+  max-height: 150px;
   overflow-y: auto;
-  padding: 2rem;
 }
 
-/* Row spacing within fullscreen modal */
-.modal-fullscreen .modal-body .row {
-  margin-bottom: 1rem;
+.organizer-placeholder-text,
+.jury-placeholder-text {
+  color: #6c757d;
+  font-style: italic;
+  display: block;
+  padding: 0.5rem;
 }
 
-/* Override margin-bottom utility class */
-.modal-fullscreen .modal-body .mb-3 {
-  margin-bottom: 1.5rem !important;
-}
-
-/* Center and constrain form width */
-.modal-fullscreen .modal-body form {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* Card container for scoring criteria */
+/* --------------------------------------------------------------------------
+   Scoring System Display (View Mode)
+   -------------------------------------------------------------------------- */
 .scoring-card {
   background: white;
   border: 1px solid #e5e7eb;
@@ -2242,33 +2391,10 @@ export default {
   border-color: #404040;
 }
 
-/* Inner content padding */
 .scoring-content {
   padding: 1.25rem;
 }
 
-/* Base tag styling for categories */
-.tag {
-  display: inline-block;
-  padding: 0.375rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-/* Multi-parameter tag in green */
-.tag-multi {
-  background: #28a745;
-  color: white;
-}
-
-/* Simple scoring tag in blue */
-.tag-simple {
-  background: #17a2b8;
-  color: white;
-}
-
-/* Flex container for scoring metadata */
 .scoring-meta {
   display: flex;
   align-items: center;
@@ -2278,14 +2404,12 @@ export default {
   flex-wrap: wrap;
 }
 
-/* Maximum points display */
 .max-points {
   color: var(--wiki-primary);
   font-weight: 600;
   font-size: 0.9375rem;
 }
 
-/* Vertical list of scoring parameters */
 .params-list {
   display: flex;
   flex-direction: column;
@@ -2293,7 +2417,6 @@ export default {
   margin-bottom: 1rem;
 }
 
-/* Individual parameter container */
 .param-item {
   padding: 0.5rem;
   background: #f9fafb;
@@ -2305,7 +2428,6 @@ export default {
   background: #1f1f1f;
 }
 
-/* Parameter label and value row */
 .param-row {
   display: flex;
   justify-content: space-between;
@@ -2313,13 +2435,11 @@ export default {
   margin-bottom: 0.375rem;
 }
 
-/* Parameter name label */
 .param-label {
   font-weight: 600;
   font-size: 0.9375rem;
 }
 
-/* Parameter point value badge */
 .param-value {
   background: var(--wiki-primary);
   color: white;
@@ -2329,7 +2449,6 @@ export default {
   font-size: 0.8125rem;
 }
 
-/* Additional parameter description */
 .param-note {
   color: #6b7280;
   font-size: 0.8125rem;
@@ -2341,7 +2460,6 @@ export default {
   color: #9ca3af;
 }
 
-/* Informational message box */
 .info-note {
   display: flex;
   align-items: center;
@@ -2362,7 +2480,6 @@ export default {
   font-size: 0.9375em;
 }
 
-/* Responsive grid for point items */
 .points-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -2370,7 +2487,6 @@ export default {
   margin-top: 1rem;
 }
 
-/* Individual point display card */
 .point-item {
   display: flex;
   justify-content: space-between;
@@ -2385,152 +2501,385 @@ export default {
   background: #1f1f1f;
 }
 
-/* Point category label */
 .point-label {
   font-weight: 500;
   color: #6b7280;
   font-size: 15px;
 }
 
-/* Numeric point value */
 .point-value {
   font-weight: 700;
   font-size: 1.25rem;
-  color: var(--wiki-primary)
-}
-
-/* Submission count display */
-.submissions-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem;
-  background: #f9fafb;
-  border-radius: 6px;
-  margin-top: 1.25rem;
-  font-size: 0.9375rem;
-  border: 2px solid var(--wiki-border);
-}
-
-[data-theme="dark"] .submissions-info {
-  background: #1f1f1f;
-}
-
-.submissions-info span {
-  color: #6b7280;
-  font-weight: 500;
-}
-
-/* Highlighted submission count */
-.submissions-info strong {
   color: var(--wiki-primary);
-  font-size: 1.25rem;
 }
 
-/* Adjustments for screens 640px and below */
-@media (max-width: 640px) {
-  .scoring-meta {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .points-row {
-    grid-template-columns: 1fr;
-  }
+/* --------------------------------------------------------------------------
+   Modal Structure
+   -------------------------------------------------------------------------- */
+.modal-fullscreen {
+  width: 100vw;
+  max-width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
-/* Flex container for organizer chips */
-.organizers-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-/* Vertical grid for organizer management */
-.organizers-grid {
+.modal-fullscreen .modal-content {
+  height: 100vh;
+  border: 0;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
 }
 
-/* Individual organizer card in management modal */
-.organizer-card {
+.modal-fullscreen .modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+
+.modal-fullscreen .modal-body form {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   Edit Section Containers
+   -------------------------------------------------------------------------- */
+.edit-section {
+  padding: 1rem;
+  margin-bottom: 2rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .edit-section {
+  background: #2a2a2a;
+  border-color: #404040;
+}
+
+.section-title {
+  color: var(--wiki-primary);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--wiki-primary);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.5rem;
-  background-color: var(--wiki-hover-bg);
-  border: 1px solid var(--wiki-border);
-  border-radius: 6px;
-  transition: all 0.2s ease;
 }
 
-/* Organizer card hover with subtle highlight */
-.organizer-card:hover {
-  background-color: rgba(0, 102, 153, 0.05);
+[data-theme="dark"] .section-title {
+  color: var(--wiki-primary);
+}
+
+/* Specific styling for scoring section */
+.scoring-section-edit {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border: 2px solid var(--wiki-primary);
+}
+
+[data-theme="dark"] .scoring-section-edit {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
   border-color: var(--wiki-primary);
 }
 
-[data-theme="dark"] .organizer-card {
-  background-color: #2a2a2a;
-  border-color: #444;
+/* --------------------------------------------------------------------------
+   Lock Status Banner
+   -------------------------------------------------------------------------- */
+.scoring-lock-status {
+  margin-bottom: 1.5rem;
 }
 
-[data-theme="dark"] .organizer-card:hover {
-  background-color: rgba(93, 184, 230, 0.1);
-}
-
-/* Informational text about organizers */
-.organizer-info-text {
-  color: var(--wiki-text);
-  font-size: 0.95rem;
-  line-height: 1.6;
-  padding: 0.75rem;
-  background-color: rgba(40, 167, 69, 0.05);
-  border-radius: 4px;
-}
-
-[data-theme="dark"] .organizer-info-text {
-  background-color: rgba(40, 167, 69, 0.1);
-}
-
-/* Flex wrapper for organizer chips */
-.organizers-flex {
+.lock-banner {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.5rem 0.5rem;
+  border-radius: 8px;
+  border: 2px solid;
+  transition: all 0.3s ease;
+}
+
+/* Locked state styling */
+.lock-banner.locked {
+  background: linear-gradient(135deg, #fff3cd 0%, #fffbf0 100%);
+  border-color: #ffc107;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+}
+
+[data-theme="dark"] .lock-banner.locked {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.15) 0%, rgba(255, 193, 7, 0.05) 100%);
+  border-color: #ff9800;
+}
+
+/* Unlocked state styling */
+.lock-banner.unlocked {
+  background: linear-gradient(135deg, #d4edda 0%, #f0fdf4 100%);
+  border-color: #28a745;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+}
+
+[data-theme="dark"] .lock-banner.unlocked {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.15) 0%, rgba(40, 167, 69, 0.05) 100%);
+  border-color: #4ade80;
+}
+
+.lock-banner-icon {
+  flex-shrink: 0;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1.25rem;
+}
+
+.lock-banner.locked .lock-banner-icon {
+  background: #ffc107;
+  color: #000;
+}
+
+[data-theme="dark"] .lock-banner.locked .lock-banner-icon {
+  background: #ff9800;
+  color: #fff;
+}
+
+.lock-banner.unlocked .lock-banner-icon {
+  background: #28a745;
+  color: #fff;
+}
+
+[data-theme="dark"] .lock-banner.unlocked .lock-banner-icon {
+  background: #4ade80;
+  color: #000;
+}
+
+.lock-banner-content {
+  flex: 1;
+}
+
+.lock-banner-title {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  color: #1f2937;
+}
+
+[data-theme="dark"] .lock-banner-title {
+  color: #f3f4f6;
+}
+
+.lock-banner-text {
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .lock-banner-text {
+  color: #d1d5db;
+}
+
+/* --------------------------------------------------------------------------
+   Current Scoring Mode Display
+   -------------------------------------------------------------------------- */
+.current-scoring-mode {
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+[data-theme="dark"] .current-scoring-mode {
+  background: #1f1f1f;
+  border-color: #404040;
+}
+
+.badge-mode {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.3rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.badge-mode.multi {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+}
+
+.badge-mode.simple {
+  background: linear-gradient(135deg, var(--wiki-primary) 0%, #17a2b8 100%);
+  color: white;
+}
+
+/* --------------------------------------------------------------------------
+   Locked Edit Info
+   -------------------------------------------------------------------------- */
+.locked-edit-info {
+  margin-top: 1rem;
+}
+
+.locked-edit-info .alert {
+  margin-bottom: 1.5rem;
+}
+
+.locked-edit-info .alert ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  padding-left: 1.5rem;
+}
+
+.locked-edit-info .alert li {
+  margin-bottom: 0.25rem;
+  color: #1e40af;
+}
+
+[data-theme="dark"] .locked-edit-info .alert li {
+  color: #93c5fd;
+}
+
+/* --------------------------------------------------------------------------
+   Unlocked Edit Mode
+   -------------------------------------------------------------------------- */
+.unlocked-edit-mode {
+  margin-top: 1rem;
+}
+
+/* Scoring mode toggle switch */
+.scoring-mode-toggle {
+  padding: 0.5rem;
+  background: #f0f9ff;
+  border: 2px dashed var(--wiki-primary);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .scoring-mode-toggle {
+  background: rgba(0, 102, 153, 0.1);
+  border-color: var(--wiki-primary);
+}
+
+.scoring-mode-toggle:hover {
+  background: #e0f2fe;
+  box-shadow: 0 2px 6px rgba(0, 102, 153, 0.15);
+}
+
+[data-theme="dark"] .scoring-mode-toggle:hover {
+  background: rgba(0, 102, 153, 0.15);
+}
+ 
+.form-check{
+  display: flex;
+  align-items: end;
+}
+
+.form-check-input {
+  cursor: pointer;
+  width: 3rem;
+  height: 1.5rem;
+}
+
+.form-check-input:checked {
+  background-color: var(--wiki-primary);
+  border-color: var(--wiki-primary);
+}
+
+.form-check-label {
+  cursor: pointer;
+  user-select: none;
+  margin-left: 5px;
+}
+
+/* --------------------------------------------------------------------------
+   Simple Scoring Form
+   -------------------------------------------------------------------------- */
+.simple-scoring-form .alert {
+  border-left: 4px solid #17a2b8;
+  background: rgba(23, 162, 184, 0.1);
+  color: #0c5460;
+}
+
+[data-theme="dark"] .simple-scoring-form .alert {
+  background: rgba(23, 162, 184, 0.15);
+  color: #5db8e6;
+}
+
+/* --------------------------------------------------------------------------
+   Multi-Parameter Scoring Form
+   -------------------------------------------------------------------------- */
+.multi-param-scoring-form .alert {
+  border-left: 4px solid #28a745;
+  background: rgba(40, 167, 69, 0.1);
+  color: #155724;
+}
+
+[data-theme="dark"] .multi-param-scoring-form .alert {
+  background: rgba(40, 167, 69, 0.15);
+  color: #4ade80;
+}
+
+/* Parameters list container */
+.parameters-list {
   margin-top: 0.5rem;
 }
 
-/* Individual organizer chip/badge */
-.organizer-chip {
-  display: flex;
-  align-items: center;
-  padding: 0.50rem 1rem;
-  background-color: var(--wiki-primary);
-  color: white;
-  border-radius: 8px;
-  font-size: 0.95rem;
+.parameter-item {
   transition: all 0.2s ease;
-  position: relative;
 }
 
-/* Chip hover with lift effect */
-.organizer-chip:hover {
-  background-color: var(--wiki-primary);
-  transform: translateY(-2px);
+.parameter-item:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
-[data-theme="dark"] .organizer-chip {
-  background-color: var(--wiki-primary);
+/* Weight validation styling */
+.bg-success-subtle {
+  background-color: rgba(40, 167, 69, 0.1) !important;
+  border: 2px solid #28a745 !important;
 }
 
-[data-theme="dark"] .organizer-chip:hover {
-  background-color: var(--wiki-primary);
+[data-theme="dark"] .bg-success-subtle {
+  background-color: rgba(40, 167, 69, 0.15) !important;
+  border-color: #4ade80 !important;
 }
 
-/* Mobile adjustments for organizers section */
+.bg-danger-subtle {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  border: 2px solid #dc3545 !important;
+}
+
+[data-theme="dark"] .bg-danger-subtle {
+  background-color: rgba(220, 53, 69, 0.15) !important;
+  border-color: #f87171 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Adjustments
+   -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
+  .contest-title {
+    font-size: 2rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .table {
+    font-size: 0.9rem;
+  }
+
+  .table thead th,
+  .table tbody td {
+    padding: 0.5rem;
+  }
+
   .organizers-flex {
     gap: 0.5rem;
   }
@@ -2540,9 +2889,40 @@ export default {
     font-size: 0.85rem;
   }
 
-  .organizer-info-text {
-    font-size: 0.85rem;
-    padding: 0.5rem;
+  .edit-section {
+    padding: 1rem;
+  }
+
+  .lock-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .lock-banner-icon {
+    margin: 0 auto;
+  }
+
+  .modal-fullscreen .modal-body {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .scoring-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .points-row {
+    grid-template-columns: 1fr;
+  }
+
+  .parameter-item .row {
+    gap: 0.75rem;
+  }
+
+  .parameter-item .col-md-1 {
+    text-align: left !important;
   }
 }
 </style>

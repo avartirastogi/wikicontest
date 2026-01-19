@@ -522,6 +522,47 @@ class Contest(BaseModel, ContestMixin):
         username = username.strip()
         return username in self.get_organizers()
 
+    def can_change_scoring_system(self):
+        """
+        Determine if scoring system can be changed.
+
+        Rules:
+        - Cannot change if contest has any reviewed submissions
+        - Can change if contest is brand new (no submissions)
+        - Can change if only pending submissions exist
+
+        Returns:
+            tuple: (can_change: bool, reason: str or None)
+        """
+        from app.models.submission import Submission
+
+        # Check if any submissions have been reviewed
+        reviewed_count = (
+            Submission.query.filter(Submission.contest_id == self.id)
+            .filter(Submission.status.in_(["accepted", "rejected"]))
+            .count()
+        )
+
+        if reviewed_count > 0:
+            return (
+                False,
+                f"Cannot change scoring system: {reviewed_count} submissions have already been reviewed",
+            )
+
+        return True, None
+
+    def get_scoring_mode(self):
+        """
+        Get the current scoring mode for this contest.
+
+        Returns:
+            str: 'simple' or 'multi_parameter'
+        """
+        params = self.get_scoring_parameters()
+        if params and params.get("enabled") is True:
+            return "multi_parameter"
+        return "simple"
+
     # ------------------------------------------------------------------------
     # SERIALIZATION
     # ------------------------------------------------------------------------

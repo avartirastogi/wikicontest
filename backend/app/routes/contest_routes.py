@@ -744,6 +744,38 @@ def update_contest(contest_id):
         ):
             return jsonify({"error": "Permission denied"}), 403
 
+        # --- CRITICAL: Scoring System Change Validation ---
+        if "scoring_parameters" in data:
+            # Get current and proposed scoring modes
+            current_mode = contest.get_scoring_mode()
+
+            proposed_params = data.get("scoring_parameters")
+            if proposed_params is None:
+                proposed_mode = "simple"
+            elif (
+                isinstance(proposed_params, dict)
+                and proposed_params.get("enabled") is True
+            ):
+                proposed_mode = "multi_parameter"
+            else:
+                proposed_mode = "simple"
+
+            # Check if mode is changing
+            if current_mode != proposed_mode:
+                can_change, reason = contest.can_change_scoring_system()
+                if not can_change:
+                    return (
+                        jsonify(
+                            {
+                                "error": reason,
+                                "current_mode": current_mode,
+                                "attempted_mode": proposed_mode,
+                                "locked": True,
+                            }
+                        ),
+                        400,
+                    )
+
         # --- Basic Metadata Fields ---
         if "name" in data:
             contest.name = data.get("name") or contest.name
