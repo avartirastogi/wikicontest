@@ -1,7 +1,7 @@
 """add_contest_report_table
 
-Revision ID: xxxxxxxxxxxx  # Alembic automatically generates this
-Revises: yyyyyyyyyyyy     # Previous migration ID
+Revision ID: cb863878e0d1  # Alembic automatically generates this
+Revises: de4074ff4ff8     # Previous migration ID
 Create Date: 2026-01-21 10:30:00.000000
 
 """
