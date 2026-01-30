@@ -35,6 +35,7 @@ from app.utils import (
 from app.services.outreach_dashboard import (
     validate_outreach_url,
     fetch_course_data,
+    fetch_course_users,
 )
 
 
@@ -132,29 +133,6 @@ def get_all_contests():
     return jsonify({"current": current, "upcoming": upcoming, "past": past}), 200
 
 
-@contest_bp.route("/<int:contest_id>", methods=["GET"])
-@require_auth
-@handle_errors
-def get_contest_by_id(contest_id):
-    """
-    Get a specific contest by ID
-
-    Requires authentication - users must be logged in to view contest details.
-
-    Args:
-        contest_id: Contest ID
-
-    Returns:
-        JSON response with contest data
-    """
-    contest = Contest.query.get(contest_id)
-
-    if not contest:
-        return jsonify({"error": "Contest not found"}), 404
-
-    return jsonify(contest.to_dict()), 200
-
-
 @contest_bp.route("/<int:contest_id>/outreach-data", methods=["GET"])
 @require_auth
 @handle_errors
@@ -191,6 +169,65 @@ def get_contest_outreach_data(contest_id):
             "success": False,
             "error": result["error"]
         }), 400
+
+
+@contest_bp.route("/<int:contest_id>/outreach-users", methods=["GET"])
+@require_auth
+@handle_errors
+def get_outreach_dashboard_users(contest_id):
+    """
+    Fetch Outreach Dashboard course users data for a contest.
+    
+    Args:
+        contest_id: ID of the contest
+        
+    Returns:
+        JSON response with Outreach Dashboard course users data or error message
+    """
+    contest = Contest.query.get(contest_id)
+    
+    if not contest:
+        return jsonify({"error": "Contest not found"}), 404
+    
+    if not contest.outreach_dashboard_url:
+        return jsonify({"error": "Contest does not have an Outreach Dashboard URL"}), 400
+    
+    # Fetch course users data from Outreach Dashboard API
+    result = fetch_course_users(contest.outreach_dashboard_url)
+    
+    if result["success"]:
+        return jsonify({
+            "success": True,
+            "data": result["data"]
+        }), 200
+    else:
+        return jsonify({
+            "success": False,
+            "error": result["error"]
+        }), 400
+
+
+@contest_bp.route("/<int:contest_id>", methods=["GET"])
+@require_auth
+@handle_errors
+def get_contest_by_id(contest_id):
+    """
+    Get a specific contest by ID
+
+    Requires authentication - users must be logged in to view contest details.
+
+    Args:
+        contest_id: Contest ID
+
+    Returns:
+        JSON response with contest data
+    """
+    contest = Contest.query.get(contest_id)
+
+    if not contest:
+        return jsonify({"error": "Contest not found"}), 404
+
+    return jsonify(contest.to_dict()), 200
 
 
 @contest_bp.route("/name/<name>", methods=["GET"])
