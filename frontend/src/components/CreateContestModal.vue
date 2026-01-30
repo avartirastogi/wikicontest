@@ -371,6 +371,21 @@
               </small>
             </div>
 
+            <!-- Outreach Dashboard URL (Optional) -->
+            <div class="mb-3">
+              <label for="outreachDashboardUrl" class="form-label">
+                Outreach Dashboard URL
+                <span class="badge bg-secondary ms-1">Optional</span>
+              </label>
+              <input type="url" class="form-control" id="outreachDashboardUrl" v-model="formData.outreach_dashboard_url"
+                placeholder="https://outreachdashboard.wmflabs.org/courses/WikiClub_Tech_SHUATS/Wikipedia_25_B_Day_Celebration_by_WikiClub_Tech_SHUATS" :disabled="loading" />
+              <small class="form-text text-muted d-block mt-2">
+                <i class="fas fa-info-circle me-1"></i>
+                Link this contest to an Outreach Dashboard course. If provided, course statistics and information will be displayed in a dedicated tab.
+                Format: https://outreachdashboard.wmflabs.org/courses/{school}/{course_slug}
+              </small>
+            </div>
+
           </form>
         </div>
 
@@ -507,6 +522,7 @@ export default {
       min_byte_count: 0,
       categories: [''],
       template_link: '',
+      outreach_dashboard_url: '',
       min_reference_count: 0
     })
 
@@ -788,6 +804,24 @@ export default {
         }
       }
 
+      // Validate Outreach Dashboard URL if provided
+      if (formData.outreach_dashboard_url && formData.outreach_dashboard_url.trim()) {
+        const outreachUrl = formData.outreach_dashboard_url.trim()
+        // Basic URL format validation
+        if (!outreachUrl.startsWith('http://') && !outreachUrl.startsWith('https://')) {
+          showAlert('Outreach Dashboard URL must be a valid HTTP/HTTPS URL', 'warning')
+          return
+        }
+        // Check if it's an Outreach Dashboard URL
+        if (!outreachUrl.includes('outreachdashboard.wmflabs.org')) {
+          showAlert(
+            'Outreach Dashboard URL must point to outreachdashboard.wmflabs.org',
+            'warning'
+          )
+          return
+        }
+      }
+
       // Scoring-specific validation
       if (enableMultiParameterScoring.value) {
         if (totalWeight.value !== 100) {
@@ -855,6 +889,13 @@ export default {
           templateLinkValue = trimmed.length > 0 ? trimmed : null
         }
 
+        // Prepare Outreach Dashboard URL: trim if provided, otherwise set to null
+        let outreachUrlValue = null
+        if (formData.outreach_dashboard_url && typeof formData.outreach_dashboard_url === 'string') {
+          const trimmed = formData.outreach_dashboard_url.trim()
+          outreachUrlValue = trimmed.length > 0 ? trimmed : null
+        }
+
         // Construct contest data payload with all form values
         const contestData = {
           ...formData,
@@ -869,12 +910,17 @@ export default {
           categories: formData.categories.filter(cat => cat && cat.trim()).map(cat => cat.trim()),
           // Template link (optional): trim or set to null if empty
           template_link: templateLinkValue,
+          // Outreach Dashboard URL (optional): trim or set to null if empty
+          outreach_dashboard_url: outreachUrlValue,
           scoring_parameters: scoringParametersPayload,
           min_reference_count: formData.min_reference_count || 0
         }
 
         // Submit contest creation request
+        console.log('[CREATE CONTEST] Submitting contest data:', contestData)
         const result = await store.createContest(contestData)
+        console.log('[CREATE CONTEST] Result:', result)
+        
         if (result.success) {
           showAlert('Contest created successfully!', 'success')
           emit('created')
@@ -892,10 +938,12 @@ export default {
           // Reset form
           resetForm()
         } else {
+          console.error('[CREATE CONTEST] Error:', result.error)
           showAlert(result.error || 'Failed to create contest', 'danger')
         }
       } catch (error) {
-        showAlert('Failed to create contest: ' + error.message, 'danger')
+        console.error('[CREATE CONTEST] Exception:', error)
+        showAlert('Failed to create contest: ' + (error.message || 'Unknown error'), 'danger')
       } finally {
         // Always reset loading state
         loading.value = false
@@ -915,6 +963,7 @@ export default {
       formData.min_byte_count = 0
       formData.categories = ['']
       formData.template_link = ''
+      formData.outreach_dashboard_url = ''
       formData.min_reference_count = 0
 
       // Reset dates to default (tomorrow and next week)
