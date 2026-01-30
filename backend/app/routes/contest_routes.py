@@ -37,6 +37,7 @@ from app.services.outreach_dashboard import (
     fetch_course_data,
     fetch_course_users,
     fetch_course_articles,
+    fetch_course_uploads,
 )
 
 
@@ -231,6 +232,42 @@ def get_outreach_dashboard_articles(contest_id):
     
     # Fetch course articles data from Outreach Dashboard API
     result = fetch_course_articles(contest.outreach_dashboard_url)
+    
+    if result["success"]:
+        return jsonify({
+            "success": True,
+            "data": result["data"]
+        }), 200
+    else:
+        return jsonify({
+            "success": False,
+            "error": result["error"]
+        }), 400
+
+
+@contest_bp.route("/<int:contest_id>/outreach-uploads", methods=["GET"])
+@require_auth
+@handle_errors
+def get_outreach_dashboard_uploads(contest_id):
+    """
+    Fetch Outreach Dashboard course uploads data for a contest.
+    
+    Args:
+        contest_id: ID of the contest
+        
+    Returns:
+        JSON response with Outreach Dashboard course uploads data or error message
+    """
+    contest = Contest.query.get(contest_id)
+    
+    if not contest:
+        return jsonify({"error": "Contest not found"}), 404
+    
+    if not contest.outreach_dashboard_url:
+        return jsonify({"error": "Contest does not have an Outreach Dashboard URL"}), 400
+    
+    # Fetch course uploads data from Outreach Dashboard API
+    result = fetch_course_uploads(contest.outreach_dashboard_url)
     
     if result["success"]:
         return jsonify({
