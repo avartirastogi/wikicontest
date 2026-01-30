@@ -1,28 +1,34 @@
 <template>
   <div class="container py-5">
     <!-- Navigation and Action Buttons -->
-    <div class="mb-4 d-flex justify-content-between align-items-center">
-      <button class="btn btn-outline-secondary" @click="goBack">
-        <i class="fas fa-arrow-left me-2"></i>Back to Contests
-      </button>
-      <div class="d-flex gap-2">
-        <button v-if="contest" class="btn btn-primary text-white" @click="goToLeaderboard"
-          title="View Contest Leaderboard">
-          <i class="fas fa-trophy me-2"></i>Leaderboard
+    <div class="mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <button class="btn btn-outline-secondary" @click="goBack">
+          <i class="fas fa-arrow-left me-2"></i>Back to Contests
         </button>
-        <!-- Only contest creators and admins can delete -->
-        <button v-if="canDeleteContest" class="btn btn-danger" @click="handleDeleteContest" :disabled="deletingContest">
-          <span v-if="deletingContest" class="spinner-border spinner-border-sm me-2"></span>
-          <i v-else class="fas fa-trash me-2"></i>
-          {{ deletingContest ? 'Deleting...' : 'Delete Contest' }}
-        </button>
+        <div class="d-flex gap-2">
+          <button v-if="contest" class="btn btn-primary text-white" @click="goToLeaderboard"
+            title="View Contest Leaderboard">
+            <i class="fas fa-trophy me-2"></i>Leaderboard
+          </button>
+          <!-- Only contest creators and admins can delete -->
+          <button v-if="canDeleteContest" class="btn btn-danger" @click="handleDeleteContest"
+            :disabled="deletingContest">
+            <span v-if="deletingContest" class="spinner-border spinner-border-sm me-2"></span>
+            <i v-else class="fas fa-trash me-2"></i>
+            {{ deletingContest ? 'Deleting...' : 'Delete Contest' }}
+          </button>
 
-        <button v-if="canDeleteContest" class="btn btn-primary" @click="openEditModal">
-          <i class="fas fa-edit me-2"></i>Edit Contest
-        </button>
-        <!-- In the top button section, after Leaderboard button -->
-        <button v-if="canViewSubmissions && contest" class="btn btn-success text-white" @click="openReportModal"
-          :disabled="generatingReport" title="Generate and Download Contest Report">
+          <button v-if="canDeleteContest" class="btn btn-primary" @click="openEditModal">
+            <i class="fas fa-edit me-2"></i>Edit Contest
+          </button>
+        </div>
+      </div>
+
+      <!-- Generate Report Button - Separate Row -->
+      <div v-if="canViewSubmissions && contest" class="d-flex justify-content-end">
+        <button class="btn btn-success text-white" @click="openReportModal" :disabled="generatingReport"
+          title="Generate and Download Contest Report">
           <span v-if="generatingReport">
             <span class="spinner-border spinner-border-sm me-2"></span>
             Generating...
@@ -34,6 +40,7 @@
         </button>
       </div>
     </div>
+
 
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-5">
@@ -65,12 +72,14 @@
       <!-- Main Content with Tabs -->
       <ul class="nav nav-tabs mb-4" role="tablist" v-if="contest.outreach_dashboard_url">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
+          <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview"
+            type="button" role="tab" aria-controls="overview" aria-selected="true">
             <i class="fas fa-info-circle me-2"></i>Overview
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="outreach-tab" data-bs-toggle="tab" data-bs-target="#outreach" type="button" role="tab" aria-controls="outreach" aria-selected="false">
+          <button class="nav-link" id="outreach-tab" data-bs-toggle="tab" data-bs-target="#outreach" type="button"
+            role="tab" aria-controls="outreach" aria-selected="false">
             <i class="fas fa-graduation-cap me-2"></i>Outreach Dashboard
           </button>
         </li>
@@ -78,333 +87,337 @@
 
       <div class="tab-content" :class="{ 'mt-0': !contest.outreach_dashboard_url }">
         <!-- Overview Tab -->
-        <div v-if="contest.outreach_dashboard_url" class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+        <div v-if="contest.outreach_dashboard_url" class="tab-pane fade show active" id="overview" role="tabpanel"
+          aria-labelledby="overview-tab">
           <div class="row">
             <div :class="canViewSubmissions ? 'col-md-12' : 'col-md-12'">
-          <!-- Basic Contest Information -->
-          <div class="card mb-4">
-            <div class="card-header">
-              <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Contest Details</h5>
-            </div>
-            <div class="card-body">
-              <p><strong>Project:</strong> {{ contest.project_name }}</p>
-              <p><strong>Status:</strong> <span class="badge bg-primary">{{ contest.status }}</span></p>
-              <p v-if="contest.start_date"><strong>Start Date:</strong> {{ formatDate(contest.start_date) }}</p>
-              <p v-if="contest.end_date"><strong>End Date:</strong> {{ formatDate(contest.end_date) }}</p>
-
-              <strong>Organizers:</strong>
-              <div v-if="contest.organizers && contest.organizers.length > 0" class="organizers-flex">
-                <div v-for="organizer in contest.organizers" :key="organizer" class="organizer-chip">
-                  <i class="fas fa-user-tie me-2"></i>
-                  <strong>{{ organizer }}</strong>
+              <!-- Basic Contest Information -->
+              <div class="card mb-4">
+                <div class="card-header">
+                  <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Contest Details</h5>
                 </div>
-              </div>
-            </div>
-          </div>
-          </div>
+                <div class="card-body">
+                  <p><strong>Project:</strong> {{ contest.project_name }}</p>
+                  <p><strong>Status:</strong> <span class="badge bg-primary">{{ contest.status }}</span></p>
+                  <p v-if="contest.start_date"><strong>Start Date:</strong> {{ formatDate(contest.start_date) }}</p>
+                  <p v-if="contest.end_date"><strong>End Date:</strong> {{ formatDate(contest.end_date) }}</p>
 
-          <!-- Scoring System Display -->
-      <div class="col-md-12">
-        <div class="scoring-card">
-          <div class="card-header">
-            <h5 class="mb-0"><i class="fas fa-chart-line"></i> Scoring System</h5>
-          </div>
-
-          <div class="scoring-content">
-            <!-- Multi-Parameter Scoring Display -->
-            <div v-if="contest.scoring_parameters?.enabled === true">
-              <div class="scoring-meta">
-                <span class="max-points">Accepted points: {{ contest.scoring_parameters.max_score }}</span>
-                <span class="max-points">Rejected points: {{ contest.scoring_parameters.min_score }}</span>
-              </div>
-
-              <div class="params-list">
-                <div v-for="param in contest.scoring_parameters.parameters" :key="param.name" class="param-item">
-                  <div class="param-row">
-                    <span class="param-label">{{ param.name }}</span>
-                    <span class="param-value">{{ param.weight }}%</span>
+                  <strong>Organizers:</strong>
+                  <div v-if="contest.organizers && contest.organizers.length > 0" class="organizers-flex">
+                    <div v-for="organizer in contest.organizers" :key="organizer" class="organizer-chip">
+                      <i class="fas fa-user-tie me-2"></i>
+                      <strong>{{ organizer }}</strong>
+                    </div>
                   </div>
-                  <p v-if="param.description" class="param-note">{{ param.description }}</p>
-                </div>
-              </div>
-
-              <div class="info-note">
-                <i class="fas fa-info-circle"></i>
-                <span>Each parameter scored 0-10, weighted average calculated</span>
-              </div>
-            </div>
-
-            <!-- Simple Accept/Reject Scoring Display -->
-            <div v-else>
-              <div class="points-row">
-                <div class="point-item">
-                  <span class="point-label">Accepted</span>
-                  <span class="point-value">{{ contest.marks_setting_accepted }}</span>
-                </div>
-
-                <div class="point-item">
-                  <span class="point-label">Rejected</span>
-                  <span class="point-value">{{ contest.marks_setting_rejected }}</span>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Contest Description -->
-      <div v-if="contest.description" class="card mb-4 description-section">
-        <div class="card-header">
-          <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Description</h5>
-        </div>
-        <div class="card-body">
-          <p class="description-text">{{ contest.description }}</p>
-        </div>
-      </div>
+            <!-- Scoring System Display -->
+            <div class="col-md-12">
+              <div class="scoring-card">
+                <div class="card-header">
+                  <h5 class="mb-0"><i class="fas fa-chart-line"></i> Scoring System</h5>
+                </div>
 
-      <!-- Contest Rules -->
-      <div v-if="contest.rules && contest.rules.text" class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0"><i class="fas fa-book me-2"></i>Contest Rules</h5>
-        </div>
-        <div class="card-body">
-          <pre class="rules-text" style="white-space: pre-wrap; font-size: 1rem;">{{ contest.rules.text }}</pre>
-        </div>
-      </div>
+                <div class="scoring-content">
+                  <!-- Multi-Parameter Scoring Display -->
+                  <div v-if="contest.scoring_parameters?.enabled === true">
+                    <div class="scoring-meta">
+                      <span class="max-points">Accepted points: {{ contest.scoring_parameters.max_score }}</span>
+                      <span class="max-points">Rejected points: {{ contest.scoring_parameters.min_score }}</span>
+                    </div>
 
-      <!-- Submission Type Information -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Submission Type Allowed</h5>
-        </div>
-        <div class="card-body">
-          <p>
-            <strong>
-              {{
-                contest.allowed_submission_type === 'new'
-                  ? 'New Articles Only'
-                  : contest.allowed_submission_type === 'expansion'
-                    ? 'Improved Articles Only'
-                    : 'Both (New Articles + Improved Articles)'
-              }}
-            </strong>
-          </p>
+                    <div class="params-list">
+                      <div v-for="param in contest.scoring_parameters.parameters" :key="param.name" class="param-item">
+                        <div class="param-row">
+                          <span class="param-label">{{ param.name }}</span>
+                          <span class="param-value">{{ param.weight }}%</span>
+                        </div>
+                        <p v-if="param.description" class="param-note">{{ param.description }}</p>
+                      </div>
+                    </div>
 
-          <p class="mt-2 small text-muted">
-            <em>
-              • <strong>New Articles</strong> = Completely new Wikipedia article created during the contest.<br />
-              • <strong>Improved Articles</strong> = An existing article improved or expanded with substantial content.
-            </em>
-          </p>
-        </div>
-      </div>
+                    <div class="info-note">
+                      <i class="fas fa-info-circle"></i>
+                      <span>Each parameter scored 0-10, weighted average calculated</span>
+                    </div>
+                  </div>
 
-      <!-- Required MediaWiki Categories -->
-      <div v-if="contest.categories && contest.categories.length > 0" class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Required Categories</h5>
-        </div>
-        <div class="card-body">
-          <p class="mb-2">
-            <strong>Articles must belong to the following MediaWiki categories:</strong>
-          </p>
-          <ul class="list-unstyled">
-            <li v-for="(category, index) in contest.categories" :key="index" class="mb-2">
-              <a :href="category" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
-                <i class="fas fa-external-link-alt me-2"></i>{{ getCategoryName(category) }}
-              </a>
-            </li>
-          </ul>
-          <small class="text-muted">
-            <i class="fas fa-info-circle me-1"></i>
-            Submitted articles must be categorized under at least one of these categories.
-          </small>
-        </div>
-      </div>
+                  <!-- Simple Accept/Reject Scoring Display -->
+                  <div v-else>
+                    <div class="points-row">
+                      <div class="point-item">
+                        <span class="point-label">Accepted</span>
+                        <span class="point-value">{{ contest.marks_setting_accepted }}</span>
+                      </div>
 
-      <!-- Minimum Reference Requirement -->
-      <div v-if="contest.min_reference_count > 0" class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0"><i class="fas fa-link me-2"></i>Minimum Reference Count</h5>
-        </div>
-        <div class="card-body">
-          <p>
-            <strong>{{ contest.min_reference_count }} References required</strong>
-          </p>
-          <small class="text-muted">
-            <i class="fas fa-info-circle me-1"></i>
-            Submitted articles must have at least {{ contest.min_reference_count }} external references.
-          </small>
-        </div>
-      </div>
-
-      <!-- Jury Members List -->
-      <div v-if="contest.jury_members && contest.jury_members.length > 0" class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0"><i class="fas fa-users me-2"></i>Jury Members</h5>
-        </div>
-        <div class="card-body">
-          <div class="organizers-flex">
-            <div v-for="jury in contest.jury_members" :key="jury" class="organizer-chip">
-              <i class="fas fa-gavel me-2"></i>
-              <strong>{{ jury }}</strong>
+                      <div class="point-item">
+                        <span class="point-label">Rejected</span>
+                        <span class="point-value">{{ contest.marks_setting_rejected }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Submissions Table (Visible to Jury and Organizers) -->
-      <div v-if="canViewSubmissions" class="card mb-4">
-        <div class="card-header">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Submissions</h5>
-            <button v-if="loadingSubmissions || refreshingMetadata" class="btn btn-sm btn-outline-secondary" disabled>
-              <span class="spinner-border spinner-border-sm me-2"></span>
-              {{ loadingSubmissions ? 'Loading...' : 'Refreshing...' }}
-            </button>
-            <!-- Refresh metadata fetches latest article data from MediaWiki -->
-            <button v-else class="btn btn-sm btn-outline-light" @click="refreshMetadata"
-              :disabled="submissions.length === 0" title="Refresh article metadata"
-              style="color: white; border-color: white;">
-              <i class="fas fa-database me-1"></i>Refresh Metadata
-            </button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div v-if="submissions.length === 0 && !loadingSubmissions" class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>No submissions yet for this contest.
-          </div>
+            <!-- Contest Description -->
+            <div v-if="contest.description" class="card mb-4 description-section">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Description</h5>
+              </div>
+              <div class="card-body">
+                <p class="description-text">{{ contest.description }}</p>
+              </div>
+            </div>
 
-          <div v-else-if="submissions.length > 0" class="table-responsive">
-            <table class="table table-sm table-hover">
-              <thead>
-                <tr>
-                  <th>Article Title</th>
-                  <th>Article Author</th>
-                  <th>Submitted By</th>
-                  <th>Status</th>
-                  <th>Score</th>
-                  <th>Submitted At</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="submission in submissions" :key="submission.id">
-                  <!-- Article Title with Metadata -->
-                  <td>
-                    <a href="#" @click.prevent="showArticlePreview(submission)"
-                      class="text-decoration-none article-title-link" :title="submission.article_link">
-                      {{ submission.article_title }}
-                      <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
+            <!-- Contest Rules -->
+            <div v-if="contest.rules && contest.rules.text" class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-book me-2"></i>Contest Rules</h5>
+              </div>
+              <div class="card-body">
+                <pre class="rules-text" style="white-space: pre-wrap; font-size: 1rem;">{{ contest.rules.text }}</pre>
+              </div>
+            </div>
+
+            <!-- Submission Type Information -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Submission Type Allowed</h5>
+              </div>
+              <div class="card-body">
+                <p>
+                  <strong>
+                    {{
+                      contest.allowed_submission_type === 'new'
+                        ? 'New Articles Only'
+                        : contest.allowed_submission_type === 'expansion'
+                          ? 'Improved Articles Only'
+                          : 'Both (New Articles + Improved Articles)'
+                    }}
+                  </strong>
+                </p>
+
+                <p class="mt-2 small text-muted">
+                  <em>
+                    • <strong>New Articles</strong> = Completely new Wikipedia article created during the contest.<br />
+                    • <strong>Improved Articles</strong> = An existing article improved or expanded with substantial
+                    content.
+                  </em>
+                </p>
+              </div>
+            </div>
+
+            <!-- Required MediaWiki Categories -->
+            <div v-if="contest.categories && contest.categories.length > 0" class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Required Categories</h5>
+              </div>
+              <div class="card-body">
+                <p class="mb-2">
+                  <strong>Articles must belong to the following MediaWiki categories:</strong>
+                </p>
+                <ul class="list-unstyled">
+                  <li v-for="(category, index) in contest.categories" :key="index" class="mb-2">
+                    <a :href="category" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
+                      <i class="fas fa-external-link-alt me-2"></i>{{ getCategoryName(category) }}
                     </a>
-                    <!-- Total byte count -->
-                    <div v-if="submission.article_word_count !== null" class="text-muted small mt-1">
-                      <i class="fas fa-file-alt me-1"></i>Total bytes:
-                      {{ formatByteCountWithExact((submission.article_word_count || 0) +
-                        (submission.article_expansion_bytes || 0)) }}
-                    </div>
-                    <!-- Original article size -->
-                    <div v-if="submission.article_word_count !== null &&
-                      submission.article_word_count !== undefined" class="text-muted small mt-1">
-                      <i class="fas fa-clock me-1"></i>Original bytes:
-                      {{ formatByteCountWithExact(submission.article_word_count) }}
-                    </div>
-                    <!-- Expansion bytes (can be negative for content removal) -->
-                    <div v-if="submission.article_expansion_bytes !== null &&
-                      submission.article_expansion_bytes !== undefined" class="text-muted small mt-1">
-                      <i class="me-1" :class="submission.article_expansion_bytes > 0
-                        ? 'fas fa-arrow-up'
-                        : submission.article_expansion_bytes < 0
-                          ? 'fas fa-arrow-down'
-                          : 'fas fa-arrows-left-right'
-                        "></i>
-                      Expansion bytes:
-                      <span v-if="submission.article_expansion_bytes !== 0"
-                        :class="submission.article_expansion_bytes >= 0 ? 'text-success' : 'text-danger'">
-                        {{ submission.article_expansion_bytes >= 0 ? '+' : '-' }}{{
-                          formatByteCountWithExact(Math.abs(submission.article_expansion_bytes))
-                        }}
-                      </span>
-                      <span v-else>
-                        {{ formatByteCountWithExact(0) }}
-                      </span>
-                    </div>
-                  </td>
-                  <!-- Author Information with Latest Revision -->
-                  <td>
-                    <div v-if="submission.article_author">
-                      <i class="fas fa-user me-1"></i>{{ submission.article_author }}
-                    </div>
-                    <div v-else class="text-muted small">Unknown</div>
-                    <div v-if="submission.article_created_at" class="text-muted small mt-1">
-                      <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
-                    </div>
-                    <!-- Latest revision author may differ from original -->
-                    <div v-if="submission.latest_revision_author" class="mt-2 pt-2"
-                      style="border-top: 1px solid #dee2e6;">
-                      <div>
-                        <i class="fas fa-user me-1"></i>{{ submission.latest_revision_author }}
-                        <span class="badge bg-info ms-1" style="font-size: 0.7em;">Latest</span>
-                      </div>
-                      <div v-if="submission.latest_revision_timestamp" class="text-muted small mt-1">
-                        <i class="fas fa-calendar me-1"></i>
-                        {{ formatDateShort(submission.latest_revision_timestamp) }}
-                      </div>
-                    </div>
-                  </td>
-                  <td>{{ submission.username || 'Unknown' }}</td>
-                  <td>
-                    <span :class="`badge bg-${getStatusColor(submission.status)}`">
-                      {{ submission.status }}
-                    </span>
-                    <div v-if="submission.already_reviewed" class="text-muted small mt-1">
-                      <i class="fas fa-check-circle me-1"></i>Reviewed
-                    </div>
-                  </td>
-                  <td>{{ submission.score || 0 }}</td>
-                  <td>{{ formatDate(submission.submitted_at) }}</td>
-                  <td>
-                    <button @click="showArticlePreview(submission)" class="btn btn-sm btn-outline-primary"
-                      title="Preview Article">
-                      <i class="fas fa-eye"></i>
-                    </button>
-                    <button v-if="canViewSubmissions" @click="handleDeleteSubmission(submission)"
-                      class="btn btn-sm btn-outline-danger" title="Delete Submission"
-                      :disabled="deletingSubmissionId === submission.id">
-                      <span v-if="deletingSubmissionId === submission.id"
-                        class="spinner-border spinner-border-sm"></span>
-                      <i v-else class="fas fa-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </li>
+                </ul>
+                <small class="text-muted">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Submitted articles must be categorized under at least one of these categories.
+                </small>
+              </div>
+            </div>
+
+            <!-- Minimum Reference Requirement -->
+            <div v-if="contest.min_reference_count > 0" class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-link me-2"></i>Minimum Reference Count</h5>
+              </div>
+              <div class="card-body">
+                <p>
+                  <strong>{{ contest.min_reference_count }} References required</strong>
+                </p>
+                <small class="text-muted">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Submitted articles must have at least {{ contest.min_reference_count }} external references.
+                </small>
+              </div>
+            </div>
+
+            <!-- Jury Members List -->
+            <div v-if="contest.jury_members && contest.jury_members.length > 0" class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Jury Members</h5>
+              </div>
+              <div class="card-body">
+                <div class="organizers-flex">
+                  <div v-for="jury in contest.jury_members" :key="jury" class="organizer-chip">
+                    <i class="fas fa-gavel me-2"></i>
+                    <strong>{{ jury }}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submissions Table (Visible to Jury and Organizers) -->
+            <div v-if="canViewSubmissions" class="card mb-4">
+              <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Submissions</h5>
+                  <button v-if="loadingSubmissions || refreshingMetadata" class="btn btn-sm btn-outline-secondary"
+                    disabled>
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    {{ loadingSubmissions ? 'Loading...' : 'Refreshing...' }}
+                  </button>
+                  <!-- Refresh metadata fetches latest article data from MediaWiki -->
+                  <button v-else class="btn btn-sm btn-outline-light" @click="refreshMetadata"
+                    :disabled="submissions.length === 0" title="Refresh article metadata"
+                    style="color: white; border-color: white;">
+                    <i class="fas fa-database me-1"></i>Refresh Metadata
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div v-if="submissions.length === 0 && !loadingSubmissions" class="alert alert-info">
+                  <i class="fas fa-info-circle me-2"></i>No submissions yet for this contest.
+                </div>
+
+                <div v-else-if="submissions.length > 0" class="table-responsive">
+                  <table class="table table-sm table-hover">
+                    <thead>
+                      <tr>
+                        <th>Article Title</th>
+                        <th>Article Author</th>
+                        <th>Submitted By</th>
+                        <th>Status</th>
+                        <th>Score</th>
+                        <th>Submitted At</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="submission in submissions" :key="submission.id">
+                        <!-- Article Title with Metadata -->
+                        <td>
+                          <a href="#" @click.prevent="showArticlePreview(submission)"
+                            class="text-decoration-none article-title-link" :title="submission.article_link">
+                            {{ submission.article_title }}
+                            <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
+                          </a>
+                          <!-- Total byte count -->
+                          <div v-if="submission.article_word_count !== null" class="text-muted small mt-1">
+                            <i class="fas fa-file-alt me-1"></i>Total bytes:
+                            {{ formatByteCountWithExact((submission.article_word_count || 0) +
+                              (submission.article_expansion_bytes || 0)) }}
+                          </div>
+                          <!-- Original article size -->
+                          <div v-if="submission.article_word_count !== null &&
+                            submission.article_word_count !== undefined" class="text-muted small mt-1">
+                            <i class="fas fa-clock me-1"></i>Original bytes:
+                            {{ formatByteCountWithExact(submission.article_word_count) }}
+                          </div>
+                          <!-- Expansion bytes (can be negative for content removal) -->
+                          <div v-if="submission.article_expansion_bytes !== null &&
+                            submission.article_expansion_bytes !== undefined" class="text-muted small mt-1">
+                            <i class="me-1" :class="submission.article_expansion_bytes > 0
+                              ? 'fas fa-arrow-up'
+                              : submission.article_expansion_bytes < 0
+                                ? 'fas fa-arrow-down'
+                                : 'fas fa-arrows-left-right'
+                              "></i>
+                            Expansion bytes:
+                            <span v-if="submission.article_expansion_bytes !== 0"
+                              :class="submission.article_expansion_bytes >= 0 ? 'text-success' : 'text-danger'">
+                              {{ submission.article_expansion_bytes >= 0 ? '+' : '-' }}{{
+                                formatByteCountWithExact(Math.abs(submission.article_expansion_bytes))
+                              }}
+                            </span>
+                            <span v-else>
+                              {{ formatByteCountWithExact(0) }}
+                            </span>
+                          </div>
+                        </td>
+                        <!-- Author Information with Latest Revision -->
+                        <td>
+                          <div v-if="submission.article_author">
+                            <i class="fas fa-user me-1"></i>{{ submission.article_author }}
+                          </div>
+                          <div v-else class="text-muted small">Unknown</div>
+                          <div v-if="submission.article_created_at" class="text-muted small mt-1">
+                            <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
+                          </div>
+                          <!-- Latest revision author may differ from original -->
+                          <div v-if="submission.latest_revision_author" class="mt-2 pt-2"
+                            style="border-top: 1px solid #dee2e6;">
+                            <div>
+                              <i class="fas fa-user me-1"></i>{{ submission.latest_revision_author }}
+                              <span class="badge bg-info ms-1" style="font-size: 0.7em;">Latest</span>
+                            </div>
+                            <div v-if="submission.latest_revision_timestamp" class="text-muted small mt-1">
+                              <i class="fas fa-calendar me-1"></i>
+                              {{ formatDateShort(submission.latest_revision_timestamp) }}
+                            </div>
+                          </div>
+                        </td>
+                        <td>{{ submission.username || 'Unknown' }}</td>
+                        <td>
+                          <span :class="`badge bg-${getStatusColor(submission.status)}`">
+                            {{ submission.status }}
+                          </span>
+                          <div v-if="submission.already_reviewed" class="text-muted small mt-1">
+                            <i class="fas fa-check-circle me-1"></i>Reviewed
+                          </div>
+                        </td>
+                        <td>{{ submission.score || 0 }}</td>
+                        <td>{{ formatDate(submission.submitted_at) }}</td>
+                        <td>
+                          <button @click="showArticlePreview(submission)" class="btn btn-sm btn-outline-primary"
+                            title="Preview Article">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                          <button v-if="canViewSubmissions" @click="handleDeleteSubmission(submission)"
+                            class="btn btn-sm btn-outline-danger" title="Delete Submission"
+                            :disabled="deletingSubmissionId === submission.id">
+                            <span v-if="deletingSubmissionId === submission.id"
+                              class="spinner-border spinner-border-sm"></span>
+                            <i v-else class="fas fa-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Action Row -->
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-4">
+              <!-- Debug warning for auth issues -->
+              <div v-if="contest && !currentUser && !checkingAuth" class="alert alert-warning py-1 px-2 mb-0 me-auto">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                <strong>User not loaded!</strong>
+                <button class="btn btn-sm btn-outline-warning ms-2" @click="forceAuthRefresh">
+                  <i class="fas fa-sync-alt me-1"></i>Refresh Auth
+                </button>
+              </div>
+
+              <!-- Submit article button for active contests -->
+              <button v-if="contest?.status === 'current' && isAuthenticated && !canViewSubmissions"
+                class="btn btn-primary ms-auto" @click="handleSubmitArticle">
+                <i class="fas fa-paper-plane me-2"></i>Submit Article
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Bottom Action Row -->
-      <div class="d-flex justify-content-between align-items-center gap-2 mb-4">
-        <!-- Debug warning for auth issues -->
-        <div v-if="contest && !currentUser && !checkingAuth" class="alert alert-warning py-1 px-2 mb-0 me-auto">
-          <i class="fas fa-exclamation-triangle me-1"></i>
-          <strong>User not loaded!</strong>
-          <button class="btn btn-sm btn-outline-warning ms-2" @click="forceAuthRefresh">
-            <i class="fas fa-sync-alt me-1"></i>Refresh Auth
-          </button>
-        </div>
-
-        <!-- Submit article button for active contests -->
-        <button v-if="contest?.status === 'current' && isAuthenticated && !canViewSubmissions"
-          class="btn btn-primary ms-auto" @click="handleSubmitArticle">
-          <i class="fas fa-paper-plane me-2"></i>Submit Article
-        </button>
-      </div>
-        </div>
         </div>
 
         <!-- Outreach Dashboard Tab -->
-        <div v-if="contest.outreach_dashboard_url" class="tab-pane fade" id="outreach" role="tabpanel" aria-labelledby="outreach-tab">
+        <div v-if="contest.outreach_dashboard_url" class="tab-pane fade" id="outreach" role="tabpanel"
+          aria-labelledby="outreach-tab">
           <OutreachDashboardTab :base-url="contest.outreach_dashboard_url" :contest-id="contest.id" />
         </div>
       </div>
@@ -524,7 +537,8 @@
             <p class="mt-2 small text-muted">
               <em>
                 • <strong>New Articles</strong> = Completely new Wikipedia article created during the contest.<br />
-                • <strong>Improved Articles</strong> = An existing article improved or expanded with substantial content.
+                • <strong>Improved Articles</strong> = An existing article improved or expanded with substantial
+                content.
               </em>
             </p>
           </div>
@@ -1261,11 +1275,13 @@
                   Outreach Dashboard URL
                   <span class="badge bg-secondary ms-1">Optional</span>
                 </label>
-                <input type="url" class="form-control" id="editOutreachDashboardUrl" v-model="editForm.outreach_dashboard_url"
+                <input type="url" class="form-control" id="editOutreachDashboardUrl"
+                  v-model="editForm.outreach_dashboard_url"
                   placeholder="https://outreachdashboard.wmflabs.org/courses/WikiClub_Tech_SHUATS/Wikipedia_25_B_Day_Celebration_by_WikiClub_Tech_SHUATS" />
                 <small class="form-text text-muted d-block mt-2">
                   <i class="fas fa-info-circle me-1"></i>
-                  Link this contest to an Outreach Dashboard course. If provided, course statistics and information will be displayed in a dedicated tab.
+                  Link this contest to an Outreach Dashboard course. If provided, course statistics and information will
+                  be displayed in a dedicated tab.
                   Format: https://outreachdashboard.wmflabs.org/courses/{school}/{course_slug}
                 </small>
               </div>
@@ -2168,23 +2184,23 @@ export default {
 
     // Main function: Generate AND Download in one step
     const sanitizeFilename = (name) => {
-  return name
-    .replace(/[^a-z0-9\s-]/gi, '')
-    .replace(/\s+/g, '_')
-    .toLowerCase()
-    .substring(0, 50)
-}
+      return name
+        .replace(/[^a-z0-9\s-]/gi, '')
+        .replace(/\s+/g, '_')
+        .toLowerCase()
+        .substring(0, 50)
+    }
 
-const showDownloadNotification = (filename, type) => {
-  const icon = type === 'pdf' ? 'fa-file-pdf' : 'fa-file-csv'
-  const color = type === 'pdf' ? '#dc3545' : '#28a745'
+    const showDownloadNotification = (filename, type) => {
+      const icon = type === 'pdf' ? 'fa-file-pdf' : 'fa-file-csv'
+      const color = type === 'pdf' ? '#dc3545' : '#28a745'
 
-  const toast = document.createElement('div')
-  toast.innerHTML = `
+      const toast = document.createElement('div')
+      toast.innerHTML = `
     <i class="fas ${icon} me-2"></i>
     <span>Downloaded: ${filename}</span>
   `
-  toast.style.cssText = `
+      toast.style.cssText = `
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -2197,90 +2213,90 @@ const showDownloadNotification = (filename, type) => {
     animation: slideIn 0.3s ease;
   `
 
-  document.body.appendChild(toast)
+      document.body.appendChild(toast)
 
-  setTimeout(() => {
-    toast.style.animation = 'slideOut 0.3s ease'
-    setTimeout(() => document.body.removeChild(toast), 300)
-  }, 3000)
-}
+      setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease'
+        setTimeout(() => document.body.removeChild(toast), 300)
+      }, 3000)
+    }
 
-const generateAndDownload = async () => {
-  if (!contest.value || generatingReport.value) return
+    const generateAndDownload = async () => {
+      if (!contest.value || generatingReport.value) return
 
-  generatingReport.value = true
+      generatingReport.value = true
 
-  try {
-    // Generate report
-    const csrfToken = getCsrfToken()
-    const headers = { 'Content-Type': 'application/json' }
-    if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken
+      try {
+        // Generate report
+        const csrfToken = getCsrfToken()
+        const headers = { 'Content-Type': 'application/json' }
+        if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken
 
-    const generateResponse = await fetch(
-      `/api/report/contest/${contest.value.id}/generate`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        headers,
-        body: JSON.stringify({
-          report_type: reportFormat.value,
-          top_n: 100
-        })
+        const generateResponse = await fetch(
+          `/api/report/contest/${contest.value.id}/generate`,
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers,
+            body: JSON.stringify({
+              report_type: reportFormat.value,
+              top_n: 100
+            })
+          }
+        )
+
+        const generateData = await generateResponse.json()
+
+        if (!generateResponse.ok || !generateData.success) {
+          throw new Error(generateData.error || 'Generation failed')
+        }
+
+        // Download
+        const reportId = generateData.report.id
+        const downloadResponse = await fetch(
+          `/api/report/report/${reportId}/download`,
+          { credentials: 'include' }
+        )
+
+        if (!downloadResponse.ok) throw new Error('Download failed')
+
+        const blob = await downloadResponse.blob()
+        const url = window.URL.createObjectURL(blob)
+
+        // Better filename
+        const timestamp = new Date().toISOString().split('T')[0]
+        const sanitizedName = sanitizeFilename(contest.value.name)
+        const filename = `${sanitizedName}_report_${timestamp}.${reportFormat.value}`
+
+        // For PDF: Open in new tab + download
+        if (reportFormat.value === 'pdf') {
+          window.open(url, '_blank')
+        }
+
+        // Download file
+        const link = document.createElement('a')
+        link.href = url
+        link.download = filename
+        link.style.display = 'none'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        // Cleanup
+        setTimeout(() => window.URL.revokeObjectURL(url), 100)
+
+        // Show notification
+        showDownloadNotification(filename, reportFormat.value)
+
+        // Close modal
+        showReportModal.value = false
+      } catch (error) {
+        console.error(' Error:', error)
+        showAlert('Failed: ' + error.message, 'danger')
+      } finally {
+        generatingReport.value = false
       }
-    )
-
-    const generateData = await generateResponse.json()
-
-    if (!generateResponse.ok || !generateData.success) {
-      throw new Error(generateData.error || 'Generation failed')
     }
-
-    // Download
-    const reportId = generateData.report.id
-    const downloadResponse = await fetch(
-      `/api/report/report/${reportId}/download`,
-      { credentials: 'include' }
-    )
-
-    if (!downloadResponse.ok) throw new Error('Download failed')
-
-    const blob = await downloadResponse.blob()
-    const url = window.URL.createObjectURL(blob)
-
-    // Better filename
-    const timestamp = new Date().toISOString().split('T')[0]
-    const sanitizedName = sanitizeFilename(contest.value.name)
-    const filename = `${sanitizedName}_report_${timestamp}.${reportFormat.value}`
-
-    // For PDF: Open in new tab + download
-    if (reportFormat.value === 'pdf') {
-      window.open(url, '_blank')
-    }
-
-    // Download file
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.style.display = 'none'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    // Cleanup
-    setTimeout(() => window.URL.revokeObjectURL(url), 100)
-
-    // Show notification
-    showDownloadNotification(filename, reportFormat.value)
-
-    // Close modal
-    showReportModal.value = false
-  } catch (error) {
-    console.error(' Error:', error)
-    showAlert('Failed: ' + error.message, 'danger')
-  } finally {
-    generatingReport.value = false
-  }
-}
 
     const openEditModal = () => {
       if (!contest.value) return
@@ -2590,11 +2606,11 @@ const generateAndDownload = async () => {
       reviewedSubmissionsCount,
       contestScoringMode,
       showReportModal,
-  reportFormat,
-  generatingReport,
-  openReportModal,
-  closeReportModal,
-  generateAndDownload
+      reportFormat,
+      generatingReport,
+      openReportModal,
+      closeReportModal,
+      generateAndDownload
     }
   }
 }
