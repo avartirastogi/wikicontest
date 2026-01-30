@@ -35,6 +35,17 @@
           <i class="fas fa-file-alt me-2"></i>Articles
         </button>
       </li>
+      <li class="nav-item" role="presentation">
+        <button 
+          class="nav-link" 
+          :class="{ active: activeSubTab === 'uploads' }"
+          @click="handleUploadsTabClick"
+          type="button"
+          role="tab"
+        >
+          <i class="fas fa-upload me-2"></i>Uploads
+        </button>
+      </li>
     </ul>
 
     <!-- Tab Content -->
@@ -451,13 +462,121 @@
           <p>No articles tracked in this course.</p>
         </div>
       </div>
+
+      <!-- Uploads Tab -->
+      <div 
+        v-show="activeSubTab === 'uploads'"
+        class="tab-pane"
+        :class="{ 'active': activeSubTab === 'uploads' }"
+        role="tabpanel"
+      >
+        <!-- Loading State -->
+        <div v-if="loadingUploads" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-3 text-muted">Loading course uploads...</p>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="uploadsError" class="alert alert-danger">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          <strong>Error loading course uploads:</strong> {{ uploadsError }}
+          <button class="btn btn-sm btn-outline-danger ms-3" @click="loadUploadsData">
+            <i class="fas fa-redo me-1"></i>Retry
+          </button>
+        </div>
+
+        <!-- Uploads Data Display -->
+        <div v-else-if="uploadsData && uploadsData.length > 0" class="uploads-data">
+          <!-- Header with Refresh Button -->
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0">
+              <i class="fas fa-upload me-2"></i>Course Uploads ({{ uploadsData.length }})
+            </h5>
+            <button class="btn btn-sm btn-outline-primary" @click="loadUploadsData" :disabled="loadingUploads">
+              <i class="fas fa-sync-alt me-1" :class="{ 'fa-spin': loadingUploads }"></i>Refresh
+            </button>
+          </div>
+
+          <!-- Uploads Grid/Table -->
+          <div class="card">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>File Name</th>
+                      <th>Uploader</th>
+                      <th>Uploaded</th>
+                      <th>Status</th>
+                      <th>Usage</th>
+                      <th>Preview</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="upload in uploadsData" :key="upload.id">
+                      <td>
+                        <strong>{{ upload.file_name || 'N/A' }}</strong>
+                      </td>
+                      <td>{{ upload.uploader || 'N/A' }}</td>
+                      <td>{{ formatDate(upload.uploaded_at) }}</td>
+                      <td>
+                        <span v-if="upload.deleted" class="badge bg-danger">Deleted</span>
+                        <span v-else class="badge bg-success">Active</span>
+                      </td>
+                      <td>
+                        <span v-if="upload.usage_count !== null" class="badge bg-info">
+                          {{ upload.usage_count }} {{ upload.usage_count === 1 ? 'use' : 'uses' }}
+                        </span>
+                        <span v-else class="badge bg-secondary">Not tracked</span>
+                      </td>
+                      <td>
+                        <img 
+                          v-if="upload.thumburl" 
+                          :src="upload.thumburl" 
+                          :alt="upload.file_name"
+                          class="img-thumbnail"
+                          style="max-width: 100px; max-height: 100px; cursor: pointer;"
+                          @click="openUrl(upload.url)"
+                          :title="upload.file_name"
+                        />
+                        <span v-else class="text-muted">No preview</span>
+                      </td>
+                      <td>
+                        <a 
+                          v-if="upload.url" 
+                          :href="upload.url" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          class="btn btn-sm btn-outline-primary"
+                          title="View on Commons"
+                        >
+                          <i class="fas fa-external-link-alt"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Uploads State -->
+        <div v-else-if="uploadsData && uploadsData.length === 0" class="text-center py-5 text-muted">
+          <i class="fas fa-upload fa-3x mb-3"></i>
+          <p>No uploads found in this course.</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue'
-import { fetchCourseData, fetchCourseUsers, fetchCourseArticles } from '../services/outreachDashboard'
+import { fetchCourseData, fetchCourseUsers, fetchCourseArticles, fetchCourseUploads } from '../services/outreachDashboard'
 
 export default {
   name: 'OutreachDashboardTab',
@@ -484,6 +603,10 @@ export default {
     const loadingArticles = ref(false)
     const articlesError = ref(null)
     const articlesData = ref(null)
+    
+    const loadingUploads = ref(false)
+    const uploadsError = ref(null)
+    const uploadsData = ref(null)
 
     const formatDate = (dateString) => {
       if (!dateString) return 'N/A'
@@ -599,6 +722,45 @@ export default {
       }
     }
 
+    const loadUploadsData = async () => {
+      if (!props.contestId) {
+        uploadsError.value = 'Contest ID is required'
+        return
+      }
+
+      loadingUploads.value = true
+      uploadsError.value = null
+
+      try {
+        const result = await fetchCourseUploads(props.contestId)
+        if (result.success) {
+          uploadsData.value = result.data || []
+        } else {
+          uploadsError.value = result.error || 'Failed to load course uploads'
+          uploadsData.value = null
+        }
+      } catch (err) {
+        uploadsError.value = err.message || 'Unexpected error occurred'
+        uploadsData.value = null
+      } finally {
+        loadingUploads.value = false
+      }
+    }
+
+    const handleUploadsTabClick = () => {
+      activeSubTab.value = 'uploads'
+      // Load uploads data when tab is clicked (only if not already loaded)
+      if (!uploadsData.value && !loadingUploads.value) {
+        loadUploadsData()
+      }
+    }
+
+    const openUrl = (url) => {
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      }
+    }
+
     onMounted(() => {
       // Load course data on mount
       loadCourseData()
@@ -615,13 +777,19 @@ export default {
       loadingArticles,
       articlesError,
       articlesData,
+      loadingUploads,
+      uploadsError,
+      uploadsData,
       formatDate,
       formatNumber,
       loadCourseData,
       loadUsersData,
       handleUsersTabClick,
       loadArticlesData,
-      handleArticlesTabClick
+      handleArticlesTabClick,
+      loadUploadsData,
+      handleUploadsTabClick,
+      openUrl
     }
   }
 }
