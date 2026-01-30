@@ -100,6 +100,10 @@ class Contest(BaseModel, ContestMixin):
     # Used to enforce template attachment on submitted articles
     template_link = db.Column(db.Text, nullable=True)
 
+    # Outreach Dashboard URL (base URL for Outreach Dashboard course)
+    # Used to link contest with Outreach Dashboard course data
+    outreach_dashboard_url = db.Column(db.Text, nullable=True)
+
     # Contest organizers who can manage the contest (comma-separated usernames)
     # Creator is always included as an organizer
     organizers = db.Column(db.Text, nullable=True)
@@ -157,6 +161,9 @@ class Contest(BaseModel, ContestMixin):
 
         # Set template link (optional)
         self.template_link = kwargs.get("template_link")
+
+        # Set Outreach Dashboard URL (optional)
+        self.outreach_dashboard_url = kwargs.get("outreach_dashboard_url")
 
         # Set complex fields using setter methods (handle JSON/list conversion)
         self.set_categories(kwargs.get("categories", []))
@@ -594,6 +601,7 @@ class Contest(BaseModel, ContestMixin):
             "jury_members": self.get_jury_members(),
             "organizers": self.get_organizers(),
             "template_link": self.template_link,
+            "outreach_dashboard_url": self.outreach_dashboard_url,
             "created_at": (
                 (self.created_at.isoformat() + "Z") if self.created_at else None
             ),
