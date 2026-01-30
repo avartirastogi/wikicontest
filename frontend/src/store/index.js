@@ -219,12 +219,16 @@ export function useStore() {
   // Create contest
   const createContest = async (contestData) => {
     try {
+      console.log('[STORE] Creating contest with data:', contestData)
       const response = await api.post('/contest', contestData)
+      console.log('[STORE] Contest created successfully:', response)
       // Reload contests after creation
       await loadContests()
       return { success: true, data: response }
     } catch (error) {
-      return { success: false, error: error.message }
+      console.error('[STORE] Error creating contest:', error)
+      const errorMessage = error.response?.data?.error || error.message || 'Unknown error occurred'
+      return { success: false, error: errorMessage }
     }
   }
 
