@@ -26,6 +26,9 @@ def parse_outreach_url(url: str) -> Dict[str, Optional[str]]:
     - https://outreachdashboard.wmflabs.org/courses/{school}/{course_slug}
     - https://outreachdashboard.wmflabs.org/courses/{school}/{course_slug}/
     - https://outreachdashboard.wmflabs.org/courses/{school}/{course_slug}/course.json
+    - https://outreachdashboard.wmflabs.org/courses/{school}/{course_slug}/home
+    - https://outreachdashboard.wmflabs.org/courses/{school}/{course_slug}/enroll
+    - And other paths (automatically stripped)
     
     Args:
         url: The Outreach Dashboard URL to parse
@@ -54,20 +57,33 @@ def parse_outreach_url(url: str) -> Dict[str, Optional[str]]:
     # Extract path components
     path = parsed.path.strip('/')
     
-    # Pattern: /courses/{school}/{course_slug} or /courses/{school}/{course_slug}/course.json
-    pattern = r'^courses/([^/]+)/([^/]+)(?:/course\.json)?/?$'
-    match = re.match(pattern, path)
+    # Split path into components and take only the first 3 parts
+    # This handles URLs with suffixes like /home, /enroll, /course.json, etc.
+    # Example: courses/school/course/home -> ['courses', 'school', 'course', 'home']
+    # We only need: ['courses', 'school', 'course']
+    path_parts = path.split('/')
     
-    if match:
-        school = match.group(1)
-        course_slug = match.group(2)
-        return {
-            'school': school,
-            'course_slug': course_slug,
-            'valid': True
-        }
+    # We need at least 3 parts: courses, school, course_slug
+    if len(path_parts) < 3:
+        return {'school': None, 'course_slug': None, 'valid': False}
     
-    return {'school': None, 'course_slug': None, 'valid': False}
+    # Check if it starts with 'courses'
+    if path_parts[0] != 'courses':
+        return {'school': None, 'course_slug': None, 'valid': False}
+    
+    # Extract school and course_slug (ignore any additional path segments)
+    school = path_parts[1]
+    course_slug = path_parts[2]
+    
+    # Validate that school and course_slug are not empty
+    if not school or not course_slug:
+        return {'school': None, 'course_slug': None, 'valid': False}
+    
+    return {
+        'school': school,
+        'course_slug': course_slug,
+        'valid': True
+    }
 
 
 def validate_outreach_url(url: str) -> Dict[str, Any]:
@@ -128,9 +144,14 @@ def fetch_course_data(base_url: str) -> Dict[str, Any]:
     
     base_url = base_url.strip()
     
-    # Ensure base_url doesn't end with /course.json
-    if base_url.endswith('/course.json'):
-        base_url = base_url[:-12]
+    # Remove common suffixes that users might include
+    # This handles cases like /home, /enroll, /course.json, etc.
+    common_suffixes = ['/home', '/enroll', '/course.json', '/students', '/articles', '/timeline']
+    for suffix in common_suffixes:
+        if base_url.endswith(suffix):
+            base_url = base_url[:-len(suffix)]
+            break
+    
     base_url = base_url.rstrip('/')
     
     # Parse URL to get school and course_slug
