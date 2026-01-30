@@ -32,6 +32,10 @@ from app.utils import (
     get_article_reference_count,
     MEDIAWIKI_API_TIMEOUT,
 )
+from app.services.outreach_dashboard import (
+    validate_outreach_url,
+    fetch_course_data,
+)
 
 
 # ------------------------------------------------------------------------
@@ -149,6 +153,44 @@ def get_contest_by_id(contest_id):
         return jsonify({"error": "Contest not found"}), 404
 
     return jsonify(contest.to_dict()), 200
+
+
+@contest_bp.route("/<int:contest_id>/outreach-data", methods=["GET"])
+@require_auth
+@handle_errors
+def get_contest_outreach_data(contest_id):
+    """
+    Get Outreach Dashboard course data for a contest
+    
+    Requires authentication - users must be logged in to view contest details.
+    
+    Args:
+        contest_id: Contest ID
+        
+    Returns:
+        JSON response with Outreach Dashboard course data or error message
+    """
+    contest = Contest.query.get(contest_id)
+    
+    if not contest:
+        return jsonify({"error": "Contest not found"}), 404
+    
+    if not contest.outreach_dashboard_url:
+        return jsonify({"error": "Contest does not have an Outreach Dashboard URL"}), 400
+    
+    # Fetch course data from Outreach Dashboard API
+    result = fetch_course_data(contest.outreach_dashboard_url)
+    
+    if result["success"]:
+        return jsonify({
+            "success": True,
+            "data": result["data"]
+        }), 200
+    else:
+        return jsonify({
+            "success": False,
+            "error": result["error"]
+        }), 400
 
 
 @contest_bp.route("/name/<name>", methods=["GET"])
@@ -610,6 +652,26 @@ def create_contest():
         else:
             template_link = None  # Empty string becomes None
 
+    # Parse outreach_dashboard_url (optional)
+    outreach_dashboard_url = data.get("outreach_dashboard_url")
+    if outreach_dashboard_url:
+        outreach_dashboard_url = outreach_dashboard_url.strip()
+        if outreach_dashboard_url:  # Non-empty after strip
+            validation_result = validate_outreach_url(outreach_dashboard_url)
+            if not validation_result["valid"]:
+                return (
+                    jsonify(
+                        {
+                            "error": f"Invalid Outreach Dashboard URL: {validation_result['error']}"
+                        }
+                    ),
+                    400,
+                )
+        else:
+            outreach_dashboard_url = None  # Empty string becomes None
+    else:
+        outreach_dashboard_url = None
+
     # Create contest
     try:
         # Parse additional organizers (creator is automatically added)
@@ -633,6 +695,7 @@ def create_contest():
             min_byte_count=min_byte_count,
             categories=categories,
             template_link=template_link,
+            outreach_dashboard_url=outreach_dashboard_url,
             scoring_parameters=scoring_parameters,
             organizers=additional_organizers,
             min_reference_count=min_reference_count,
@@ -929,6 +992,28 @@ def update_contest(contest_id):
                     contest.template_link = None  # Empty string clears the field
             else:
                 contest.template_link = None  # None clears the field
+
+        # --- Outreach Dashboard URL ---
+        if "outreach_dashboard_url" in data:
+            outreach_url_value = data.get("outreach_dashboard_url")
+            if outreach_url_value:
+                outreach_url_value = outreach_url_value.strip()
+                if outreach_url_value:  # Non-empty after strip
+                    validation_result = validate_outreach_url(outreach_url_value)
+                    if not validation_result["valid"]:
+                        return (
+                            jsonify(
+                                {
+                                    "error": f"Invalid Outreach Dashboard URL: {validation_result['error']}"
+                                }
+                            ),
+                            400,
+                        )
+                    contest.outreach_dashboard_url = outreach_url_value
+                else:
+                    contest.outreach_dashboard_url = None  # Empty string clears the field
+            else:
+                contest.outreach_dashboard_url = None  # None clears the field
 
         # --- Jury Members ---
         # Accept both list and comma-separated string formats
