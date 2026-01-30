@@ -2,11 +2,12 @@
 Outreach Dashboard API Service
 
 This module provides functions to interact with Wikimedia's Outreach Dashboard API.
-It handles URL parsing, validation, and fetching course data.
+It handles URL parsing, validation, and fetching data from various endpoints.
+Designed to be extensible for future API endpoints.
 """
 
 import re
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 from urllib.parse import urlparse, urljoin
 
 import requests
@@ -122,6 +123,89 @@ def validate_outreach_url(url: str) -> Dict[str, Any]:
     return {'valid': True, 'error': None}
 
 
+def _build_api_url(school: str, course_slug: str, endpoint: str) -> str:
+    """
+    Build API URL for any Outreach Dashboard endpoint.
+    
+    Args:
+        school: School/institution name
+        course_slug: Course slug identifier
+        endpoint: API endpoint name (e.g., 'course.json', 'users.json')
+        
+    Returns:
+        Full API URL string
+    """
+    return f"{OUTREACH_DASHBOARD_BASE}/courses/{school}/{course_slug}/{endpoint}"
+
+
+def _make_api_request(api_url: str) -> Dict[str, Any]:
+    """
+    Make HTTP request to Outreach Dashboard API with standardized error handling.
+    
+    Args:
+        api_url: Full API URL to request
+        
+    Returns:
+        Dictionary with keys:
+            - 'success': Boolean indicating if request was successful
+            - 'data': Parsed JSON data if successful (None otherwise)
+            - 'error': Error message if failed (None if successful)
+    """
+    try:
+        # Make request to Outreach Dashboard API
+        response = requests.get(api_url, timeout=API_TIMEOUT)
+        
+        if response.status_code == 404:
+            return {
+                'success': False,
+                'data': None,
+                'error': 'Resource not found. Please verify the URL is correct.'
+            }
+        
+        if response.status_code != 200:
+            return {
+                'success': False,
+                'data': None,
+                'error': f'API returned status code {response.status_code}'
+            }
+        
+        # Parse JSON response
+        try:
+            data = response.json()
+        except ValueError as e:
+            return {
+                'success': False,
+                'data': None,
+                'error': f'Failed to parse API response: {str(e)}'
+            }
+        
+        return {
+            'success': True,
+            'data': data,
+            'error': None
+        }
+            
+    except requests.exceptions.Timeout:
+        return {
+            'success': False,
+            'data': None,
+            'error': 'Request timed out. The Outreach Dashboard API may be slow or unavailable.'
+        }
+    except requests.exceptions.ConnectionError:
+        return {
+            'success': False,
+            'data': None,
+            'error': 'Failed to connect to Outreach Dashboard API. Please check your internet connection.'
+        }
+    except Exception as e:
+        current_app.logger.error(f"Error fetching Outreach Dashboard data: {str(e)}")
+        return {
+            'success': False,
+            'data': None,
+            'error': f'Unexpected error: {str(e)}'
+        }
+
+
 def fetch_course_data(base_url: str) -> Dict[str, Any]:
     """
     Fetch course data from Outreach Dashboard API.
@@ -163,69 +247,119 @@ def fetch_course_data(base_url: str) -> Dict[str, Any]:
             'error': 'Invalid Outreach Dashboard URL format'
         }
     
-    # Build API URL
-    api_url = f"{OUTREACH_DASHBOARD_BASE}/courses/{parsed['school']}/{parsed['course_slug']}/course.json"
+    # Build API URL using helper function
+    api_url = _build_api_url(parsed['school'], parsed['course_slug'], 'course.json')
     
-    try:
-        # Make request to Outreach Dashboard API
-        response = requests.get(api_url, timeout=API_TIMEOUT)
+    # Make API request using base handler
+    result = _make_api_request(api_url)
+    
+    if not result['success']:
+        return result
+    
+    # Extract course data from response
+    data = result['data']
+    if 'course' in data:
+        return {
+            'success': True,
+            'data': data['course'],
+            'error': None
+        }
+    else:
+        return {
+            'success': False,
+            'data': None,
+            'error': 'Invalid API response format: missing "course" key'
+        }
+
+
+def fetch_course_users(base_url: str) -> Dict[str, Any]:
+    """
+    Fetch course users data from Outreach Dashboard API.
+    
+    Returns an array of user objects with enrollment details, contribution metrics,
+    and links to Wikimedia profiles.
+    
+    Args:
+        base_url: Base URL of the course (without /users.json)
         
-        if response.status_code == 404:
-            return {
-                'success': False,
-                'data': None,
-                'error': 'Course not found. Please verify the URL is correct.'
-            }
-        
-        if response.status_code != 200:
-            return {
-                'success': False,
-                'data': None,
-                'error': f'API returned status code {response.status_code}'
-            }
-        
-        # Parse JSON response
-        try:
-            data = response.json()
-        except ValueError as e:
-            return {
-                'success': False,
-                'data': None,
-                'error': f'Failed to parse API response: {str(e)}'
-            }
-        
-        # Extract course data from response
-        if 'course' in data:
+    Returns:
+        Dictionary with keys:
+            - 'success': Boolean indicating if fetch was successful
+            - 'data': List of user objects if successful (None otherwise)
+            - 'error': Error message if failed (None if successful)
+            
+    User objects include important fields:
+        - id: Unique Wikimedia user ID
+        - username: Wikimedia username
+        - role: User's role (0 for student, 1 for instructor)
+        - enrolled_at: Enrollment timestamp (ISO 8601)
+        - character_sum_ms: Characters added to mainspace
+        - character_sum_us: Characters added to userspace
+        - total_uploads: Number of files uploaded
+        - contribution_url: URL to user's contributions
+        - sandbox_url: URL to user's sandbox
+        - global_contribution_url: URL to global contributions
+        - admin: Boolean indicating admin rights
+    """
+    if not base_url or not isinstance(base_url, str):
+        return {
+            'success': False,
+            'data': None,
+            'error': 'Base URL is required'
+        }
+    
+    base_url = base_url.strip()
+    
+    # Remove common suffixes that users might include
+    common_suffixes = ['/home', '/enroll', '/users.json', '/course.json', '/students', '/articles', '/timeline']
+    for suffix in common_suffixes:
+        if base_url.endswith(suffix):
+            base_url = base_url[:-len(suffix)]
+            break
+    
+    base_url = base_url.rstrip('/')
+    
+    # Parse URL to get school and course_slug
+    parsed = parse_outreach_url(base_url)
+    if not parsed['valid']:
+        return {
+            'success': False,
+            'data': None,
+            'error': 'Invalid Outreach Dashboard URL format'
+        }
+    
+    # Build API URL using helper function
+    api_url = _build_api_url(parsed['school'], parsed['course_slug'], 'users.json')
+    
+    # Make API request using base handler
+    result = _make_api_request(api_url)
+    
+    if not result['success']:
+        return result
+    
+    # Extract users data from response
+    # Response structure: {'course': {'users': [...]}}
+    data = result['data']
+    if 'course' in data and 'users' in data['course']:
+        users = data['course']['users']
+        # Ensure it's a list (API may return empty array)
+        if isinstance(users, list):
             return {
                 'success': True,
-                'data': data['course'],
+                'data': users,
                 'error': None
             }
         else:
             return {
                 'success': False,
                 'data': None,
-                'error': 'Invalid API response format'
+                'error': 'Invalid API response format: "users" is not an array'
             }
-            
-    except requests.exceptions.Timeout:
+    else:
         return {
             'success': False,
             'data': None,
-            'error': 'Request timed out. The Outreach Dashboard API may be slow or unavailable.'
-        }
-    except requests.exceptions.ConnectionError:
-        return {
-            'success': False,
-            'data': None,
-            'error': 'Failed to connect to Outreach Dashboard API. Please check your internet connection.'
-        }
-    except Exception as e:
-        current_app.logger.error(f"Error fetching Outreach Dashboard data: {str(e)}")
-        return {
-            'success': False,
-            'data': None,
-            'error': f'Unexpected error: {str(e)}'
+            'error': 'Invalid API response format: missing "course.users" key'
         }
 
 
