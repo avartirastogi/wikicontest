@@ -40,9 +40,11 @@ from app.database import db
 from app.models.user import User  # pylint: disable=unused-import
 from app.models.contest import Contest  # pylint: disable=unused-import
 from app.models.submission import Submission  # pylint: disable=unused-import
+from app.models.contest_report import ContestReport # pylint: disable=unused-import
 from app.routes.user_routes import user_bp
 from app.routes.contest_routes import contest_bp
 from app.routes.submission_routes import submission_bp
+from app.routes.report_routes import report_bp
 from app.utils import (
     extract_page_title_from_url,
     build_mediawiki_revisions_api_params,
@@ -201,6 +203,7 @@ app = create_app()
 app.register_blueprint(user_bp, url_prefix='/api/user')  # User management endpoints
 app.register_blueprint(contest_bp, url_prefix='/api/contest')  # Contest endpoints
 app.register_blueprint(submission_bp, url_prefix='/api/submission')  # Submission endpoints
+app.register_blueprint(report_bp, url_prefix='/api/report')
 
 
 # ---------------------------------------------------------------------------
