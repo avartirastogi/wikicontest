@@ -5,6 +5,8 @@
  * from the frontend. It handles fetching course data and parsing URLs.
  */
 
+import api from './api'
+
 /**
  * Parse an Outreach Dashboard URL to extract components
  * 
@@ -168,6 +170,53 @@ export async function fetchCourseData(baseUrl) {
       success: false,
       data: null,
       error: error.message || 'Unexpected error occurred'
+    }
+  }
+}
+
+/**
+ * Fetch course users data from backend API endpoint
+ * 
+ * This function calls the backend endpoint which then fetches data from
+ * Outreach Dashboard API. This is the preferred method as it goes through
+ * the backend service layer.
+ * 
+ * @param {number} contestId - ID of the contest
+ * @returns {Promise<Object>} Promise resolving to users data or error
+ */
+export async function fetchCourseUsers(contestId) {
+  if (!contestId || typeof contestId !== 'number') {
+    return {
+      success: false,
+      data: null,
+      error: 'Contest ID is required'
+    }
+  }
+
+  try {
+    const response = await api.get(`/contest/${contestId}/outreach-users`)
+    
+    // Note: api.get() returns response.data directly due to axios interceptor
+    if (response.success) {
+      return {
+        success: true,
+        data: response.data,
+        error: null
+      }
+    } else {
+      return {
+        success: false,
+        data: null,
+        error: response.error || 'Failed to fetch course users'
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching course users:', error)
+    const errorMessage = error.response?.data?.error || error.message || 'Unknown error occurred'
+    return {
+      success: false,
+      data: null,
+      error: errorMessage
     }
   }
 }
