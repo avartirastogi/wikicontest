@@ -31,6 +31,8 @@ from app.utils import (
     check_article_has_category,
     append_categories_to_article,
     get_article_reference_count,
+    get_article_image_count,
+    get_article_infobox_count,
     MEDIAWIKI_API_TIMEOUT,
 )
 from app.services.outreach_dashboard import (
@@ -1314,6 +1316,8 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
     article_size_at_start = None
     article_expansion_bytes = None
     article_reference_count = None
+    image_count = None
+    infobox_count = None
 
     # --- Fetch Article Information from MediaWiki API ---
     # MediaWiki API fetching has deep nesting due to complex error handling
@@ -1699,6 +1703,31 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             pass
         article_reference_count = None
 
+    # --- Fetch Image and Infobox Counts ---
+    # These richness metrics are stored for future use but are not used in
+    # validation or scoring yet.
+    try:
+        image_count = get_article_image_count(article_link)
+    except Exception as img_error:  # pylint: disable=broad-exception-caught
+        try:
+            current_app.logger.warning(
+                "Failed to fetch image count: %s", str(img_error)
+            )
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        image_count = None
+
+    try:
+        infobox_count = get_article_infobox_count(article_link)
+    except Exception as ibx_error:  # pylint: disable=broad-exception-caught
+        try:
+            current_app.logger.warning(
+                "Failed to fetch infobox count: %s", str(ibx_error)
+            )
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        infobox_count = None
+
     # --- Validate Article Requirements ---
     # Validate article byte count against contest requirements
     # This check happens after fetching article information from MediaWiki API
@@ -2060,6 +2089,8 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             template_added=template_added,
             categories_added=categories_added,
             category_error=category_error,
+            image_count=image_count,
+            infobox_count=infobox_count,
         )
 
         submission.save()

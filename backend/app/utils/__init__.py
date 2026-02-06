@@ -44,6 +44,8 @@ __all__ = [
     "append_categories_to_article",
     "get_article_reference_count",
     "get_mediawiki_user_edit_count",
+    "get_article_image_count",
+    "get_article_infobox_count",
 ]
 
 
@@ -946,6 +948,63 @@ def _fetch_footnotes_count(api_url: str, page_title: str, headers: dict) -> int:
         # If footnote counting fails, continue with external links only
         # This ensures we still return a count even if content fetch fails
         return 0
+
+
+def _log_warning(message: str, error: Exception) -> None:
+    """Best-effort logging helper that uses Flask current_app when available.
+
+    This keeps network helpers free from hard Flask dependencies while still
+    providing useful diagnostics in a running application.
+    """
+    try:
+        from flask import current_app
+
+        current_app.logger.warning("%s: %s", message, str(error))
+    except Exception:  # pylint: disable=broad-exception-caught
+        # Logging must never break core logic, so ignore any logging failures
+        pass
+
+
+def get_article_image_count(article_url: str) -> Optional[int]:
+    """
+    The count is approximate and based purely on wikitext patterns; it does
+    not guarantee that every match results in a rendered image, but it
+    generally tracks user-added content images.
+    """
+    try:
+        wikitext = get_article_wikitext(article_url)
+        if wikitext is None:
+            return None
+
+        # Match explicit file/image links like [[File:Example.jpg|...]] or
+        # [[Image:Example.png|...]] in a case-insensitive way.
+        matches = re.findall(r'\[\[(?:File|Image):', wikitext, flags=re.IGNORECASE)
+        return len(matches)
+
+    except Exception as error:  # pylint: disable=broad-exception-caught
+        _log_warning("Failed to fetch image count", error)
+        return None
+
+
+def get_article_infobox_count(article_url: str) -> Optional[int]:
+    """Count approximate number of infobox templates in article wikitext.
+
+    Detection is done via a simple regex scan for ``{{infobox ...}}`` in the
+    raw wikitext. This is an approximation and may over-count or under-count
+    in edge cases (e.g. nested templates, unusual formatting), but is
+    sufficient for high-level richness metrics.
+    """
+    try:
+        wikitext = get_article_wikitext(article_url)
+        if wikitext is None:
+            return None
+
+        matches = re.findall(r"\{\{\s*infobox\b", wikitext, flags=re.IGNORECASE)
+        return len(matches)
+
+    except Exception as error:  # pylint: disable=broad-exception-caught
+        _log_warning("Failed to fetch infobox count", error)
+        return None
 
 
 def get_article_reference_count(article_url: str) -> Optional[int]:
