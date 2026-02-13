@@ -46,6 +46,8 @@ __all__ = [
     "get_mediawiki_user_edit_count",
     "get_article_image_count",
     "get_article_infobox_count",
+    "get_article_incoming_links",
+    "get_article_outgoing_links",
 ]
 
 
@@ -1489,3 +1491,177 @@ def append_categories_to_article(  # pylint: disable=too-many-return-statements
         return result
     result['error'] = 'Unknown API response format'
     return result
+
+
+def get_article_incoming_links(article_url: str) -> Optional[int]:
+    """
+    Count the number of mainspace articles that link to the given article.
+    
+    This uses the MediaWiki API's "backlinks" query to count incoming links
+    from other articles in the main namespace (namespace 0).
+    
+    Args:
+        article_url: Full URL to the wiki article
+        
+    Returns:
+        Integer count of incoming links from mainspace articles, or None if fetch fails
+    """
+    try:
+        # Extract page title from URL
+        page_title = extract_page_title_from_url(article_url)
+        if not page_title:
+            return None
+            
+        # Parse the article URL to extract base URL
+        url_obj = urlparse(article_url)
+        base_url = f"{url_obj.scheme}://{url_obj.netloc}"
+        api_url = f"{base_url}/w/api.php"
+        
+        # Build API parameters for backlinks query
+        params = {
+            "action": "query",
+            "format": "json",
+            "formatversion": "2",
+            "list": "backlinks",
+            "bltitle": page_title,
+            "blnamespace": "0",  # Only count links from mainspace (namespace 0)
+            "bllimit": "500",  # Maximum allowed by API
+            "blfilterredir": "nonredirects",  # Exclude redirects
+            "redirects": "true",  # Follow redirects to get actual page
+            "converttitles": "true",
+        }
+        
+        headers = get_mediawiki_headers()
+        
+        # Make initial request
+        response = requests.get(api_url, params=params, headers=headers, timeout=MEDIAWIKI_API_TIMEOUT)
+        if response.status_code != 200:
+            return None
+            
+        data = response.json()
+        if "error" in data:
+            return None
+            
+        # Count backlinks from response
+        backlinks = data.get("query", {}).get("backlinks", [])
+        total_count = len(backlinks)
+        
+        # Check if there are more results (continuation)
+        continue_params = data.get("continue")
+        while continue_params and total_count < 10000:  # Safety limit to prevent infinite loops
+            # Update params with continuation token
+            params.update(continue_params)
+            
+            response = requests.get(api_url, params=params, headers=headers, timeout=MEDIAWIKI_API_TIMEOUT)
+            if response.status_code != 200:
+                break
+                
+            data = response.json()
+            if "error" in data:
+                break
+                
+            # Add more backlinks to count
+            more_backlinks = data.get("query", {}).get("backlinks", [])
+            total_count += len(more_backlinks)
+            
+            # Get next continuation token
+            continue_params = data.get("continue")
+            
+        return total_count
+        
+    except Exception:  # pylint: disable=broad-exception-caught
+        # If link counting fails, return None to indicate failure
+        # This ensures submission process continues even if link counting fails
+        return None
+
+
+def get_article_outgoing_links(article_url: str) -> Optional[int]:
+    """
+    Count the number of mainspace articles that the given article links to.
+    
+    This uses the MediaWiki API's "links" query to count outgoing links
+    to other articles in the main namespace (namespace 0).
+    
+    Args:
+        article_url: Full URL to the wiki article
+        
+    Returns:
+        Integer count of outgoing links to mainspace articles, or None if fetch fails
+    """
+    try:
+        # Extract page title from URL
+        page_title = extract_page_title_from_url(article_url)
+        if not page_title:
+            return None
+            
+        # Parse the article URL to extract base URL
+        url_obj = urlparse(article_url)
+        base_url = f"{url_obj.scheme}://{url_obj.netloc}"
+        api_url = f"{base_url}/w/api.php"
+        
+        # Build API parameters for links query
+        params = {
+            "action": "query",
+            "format": "json",
+            "formatversion": "2",
+            "prop": "links",
+            "titles": page_title,
+            "plnamespace": "0",  # Only count links to mainspace (namespace 0)
+            "pllimit": "500",  # Maximum allowed by API
+            "plfilterredir": "nonredirects",  # Exclude redirects
+            "redirects": "true",  # Follow redirects to get actual page
+            "converttitles": "true",
+        }
+        
+        headers = get_mediawiki_headers()
+        
+        # Make initial request
+        response = requests.get(api_url, params=params, headers=headers, timeout=MEDIAWIKI_API_TIMEOUT)
+        if response.status_code != 200:
+            return None
+            
+        data = response.json()
+        if "error" in data:
+            return None
+            
+        # Extract links from response
+        pages = data.get("query", {}).get("pages", [])
+        if not pages:
+            return None
+            
+        page_data = pages[0]
+        if page_data.get("missing", False):
+            return None
+            
+        links = page_data.get("links", [])
+        total_count = len(links)
+        
+        # Check if there are more results (continuation)
+        continue_params = data.get("continue")
+        while continue_params and total_count < 10000:  # Safety limit to prevent infinite loops
+            # Update params with continuation token
+            params.update(continue_params)
+            
+            response = requests.get(api_url, params=params, headers=headers, timeout=MEDIAWIKI_API_TIMEOUT)
+            if response.status_code != 200:
+                break
+                
+            data = response.json()
+            if "error" in data:
+                break
+                
+            # Add more links to count
+            pages = data.get("query", {}).get("pages", [])
+            if pages:
+                more_links = pages[0].get("links", [])
+                total_count += len(more_links)
+            
+            # Get next continuation token
+            continue_params = data.get("continue")
+            
+        return total_count
+        
+    except Exception:  # pylint: disable=broad-exception-caught
+        # If link counting fails, return None to indicate failure
+        # This ensures submission process continues even if link counting fails
+        return None
