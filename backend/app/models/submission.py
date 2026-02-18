@@ -76,6 +76,13 @@ class Submission(BaseModel):
     # Infobox count
     infobox_count = db.Column(db.Integer, nullable=True)
 
+    # Link counts for future scoring evaluation
+    # Number of other mainspace articles that link to this article
+    incoming_links = db.Column(db.Integer, nullable=True)
+    
+    # Number of mainspace articles this article links to
+    outgoing_links = db.Column(db.Integer, nullable=True)
+
     # Template enforcement tracking
     # True if template was automatically added to the article during submission
     template_added = db.Column(db.Boolean, nullable=True, default=False)
@@ -181,6 +188,8 @@ class Submission(BaseModel):
         category_error=None,
         image_count=None,
         infobox_count=None,
+        incoming_links=None,
+        outgoing_links=None,
     ):
         """
         Initialize a new Submission instance
@@ -202,6 +211,8 @@ class Submission(BaseModel):
             category_error: Error message if category attachment failed (optional)
             image_count: Number of images in the article (optional)
             infobox_count: Number of infoboxes in the article (optional)
+            incoming_links: Number of other mainspace articles that link to this article (optional)
+            outgoing_links: Number of mainspace articles this article links to (optional)
         """
         # Set required fields
         self.user_id = user_id
@@ -231,6 +242,8 @@ class Submission(BaseModel):
         self.category_error = category_error
         self.image_count = image_count
         self.infobox_count = infobox_count
+        self.incoming_links = incoming_links
+        self.outgoing_links = outgoing_links
         self.reviewed_by = None
         self.reviewed_at = None
         self.review_comment = None
@@ -544,6 +557,8 @@ class Submission(BaseModel):
             "article_expansion_bytes": self.article_expansion_bytes,
             "image_count": self.image_count,
             "infobox_count": self.infobox_count,
+            "incoming_links": self.incoming_links,
+            "outgoing_links": self.outgoing_links,
             "template_added": self.template_added,
             "categories_added": self.get_categories_added(),
             "category_error": self.category_error,

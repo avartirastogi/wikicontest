@@ -33,6 +33,8 @@ from app.utils import (
     get_article_reference_count,
     get_article_image_count,
     get_article_infobox_count,
+    get_article_incoming_links,
+    get_article_outgoing_links,
     MEDIAWIKI_API_TIMEOUT,
 )
 from app.services.outreach_dashboard import (
@@ -1728,6 +1730,34 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             pass
         infobox_count = None
 
+    # --- Fetch Link Counts ---
+    # Count incoming and outgoing links for future scoring evaluation
+    # These metrics are stored but not used in validation or scoring yet
+    incoming_links = None
+    outgoing_links = None
+    
+    try:
+        incoming_links = get_article_incoming_links(article_link)
+    except Exception as incoming_error:  # pylint: disable=broad-exception-caught
+        try:
+            current_app.logger.warning(
+                "Failed to fetch incoming links count: %s", str(incoming_error)
+            )
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        incoming_links = None
+
+    try:
+        outgoing_links = get_article_outgoing_links(article_link)
+    except Exception as outgoing_error:  # pylint: disable=broad-exception-caught
+        try:
+            current_app.logger.warning(
+                "Failed to fetch outgoing links count: %s", str(outgoing_error)
+            )
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        outgoing_links = None
+
     # --- Validate Article Requirements ---
     # Validate article byte count against contest requirements
     # This check happens after fetching article information from MediaWiki API
@@ -2091,6 +2121,8 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             category_error=category_error,
             image_count=image_count,
             infobox_count=infobox_count,
+            incoming_links=incoming_links,
+            outgoing_links=outgoing_links,
         )
 
         submission.save()
