@@ -25,7 +25,7 @@ from app.utils import (
     get_latest_revision_author,
     build_mediawiki_revisions_api_params,
     get_mediawiki_headers,
-    MEDIAWIKI_API_TIMEOUT
+    MEDIAWIKI_API_TIMEOUT,
 )
 
 # Create blueprint
@@ -35,6 +35,7 @@ submission_bp = Blueprint("submission", __name__)
 # ------------------------------------------------------------------------
 # SUBMISSION RETRIEVAL ENDPOINTS
 # ------------------------------------------------------------------------
+
 
 @submission_bp.route("/", methods=["GET"])
 @require_auth
@@ -83,6 +84,47 @@ def get_submission_by_id(submission_id):  # pylint: disable=unused-argument
     submission_data = submission.to_dict(include_user_info=True)
 
     return jsonify(submission_data), 200
+
+
+@submission_bp.route("/<int:submission_id>", methods=["DELETE"])
+@require_auth
+@handle_errors
+def delete_submission(submission_id):
+    """
+    Delete a submission (admin, contest creator, or jury only)
+    """
+    user = request.current_user
+
+    submission = Submission.query.get(submission_id)
+    if not submission:
+        return jsonify({"error": "Submission not found"}), 404
+
+    # Get associated contest for permission check
+    contest = Contest.query.get(submission.contest_id)
+    if not contest:
+        return jsonify({"error": "Contest not found"}), 404
+
+    # Permission check: admin, contest creator, or jury member
+    is_admin = user.is_admin()
+    is_creator = user.username == contest.created_by
+    jury_members = (
+        contest.get_jury_members()
+        if hasattr(contest, "get_jury_members")
+        else (contest.jury_members or [])
+    )
+    is_jury = user.username in jury_members
+
+    if not (is_admin or is_creator or is_jury):
+        return jsonify({"error": "Permission denied"}), 403
+
+    try:
+        db.session.delete(submission)
+        db.session.commit()
+        return jsonify({"message": "Submission deleted successfully"}), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({"error": "Failed to delete submission"}), 500
+
 
 @submission_bp.route("/user/<int:user_id>", methods=["GET"])
 @require_auth
@@ -189,6 +231,7 @@ def get_pending_submissions():
 # SUBMISSION STATISTICS
 # ------------------------------------------------------------------------
 
+
 @submission_bp.route("/stats", methods=["GET"])
 @require_auth
 @handle_errors
@@ -243,6 +286,7 @@ def get_submission_stats():
 # ------------------------------------------------------------------------
 # METADATA REFRESH ENDPOINT
 # ------------------------------------------------------------------------
+
 
 @submission_bp.route("/contest/<int:contest_id>/refresh-metadata", methods=["POST"])
 @require_auth
@@ -310,7 +354,12 @@ def refresh_metadata(contest_id):
             # Get headers using shared utility function
             headers = get_mediawiki_headers()
 
-            response = requests.get(api_url, params=api_params, headers=headers, timeout=MEDIAWIKI_API_TIMEOUT)
+            response = requests.get(
+                api_url,
+                params=api_params,
+                headers=headers,
+                timeout=MEDIAWIKI_API_TIMEOUT,
+            )
 
             if response.status_code != 200:
                 return None
@@ -487,6 +536,7 @@ def refresh_metadata(contest_id):
 # ------------------------------------------------------------------------
 # SUBMISSION REVIEW ENDPOINT
 # ------------------------------------------------------------------------
+
 
 @submission_bp.route("/<int:submission_id>/review", methods=["PUT"])
 @require_auth
