@@ -11,7 +11,7 @@
             title="View Contest Leaderboard">
             <i class="fas fa-trophy me-2"></i>Leaderboard
           </button>
-                    <!-- Only contest creators and admins can delete -->
+          <!-- Only contest creators and admins can delete -->
           <button v-if="canDeleteContest" class="btn btn-danger" @click="handleDeleteContest"
             :disabled="deletingContest">
             <span v-if="deletingContest" class="spinner-border spinner-border-sm me-2"></span>
@@ -24,7 +24,7 @@
         </div>
       </div>
 
-      <!-- Generate Report Button - Separate Row -->
+      <!-- Generate Report Button -->
       <div v-if="canViewSubmissions && contest" class="d-flex justify-content-end">
         <button class="btn btn-success text-white" @click="openReportModal" :disabled="generatingReport"
           title="Generate and Download Contest Report">
@@ -67,7 +67,7 @@
         </div>
       </div>
 
-      <!-- Main Content with Tabs -->
+      <!-- Tabs -->
       <ul class="nav nav-tabs mb-4" role="tablist" v-if="contest.outreach_dashboard_url">
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview"
@@ -84,11 +84,11 @@
       </ul>
 
       <div class="tab-content" :class="{ 'mt-0': !contest.outreach_dashboard_url }">
-        <!-- Overview Tab -->
+
+        <!-- ═══ Overview Tab (with outreach_dashboard_url) ═══ -->
         <div v-if="contest.outreach_dashboard_url" class="tab-pane fade show active" id="overview" role="tabpanel"
           aria-labelledby="overview-tab">
-          
-          <!-- Basic Contest Information -->
+
           <div class="card mb-4">
             <div class="card-header">
               <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Contest Details</h5>
@@ -98,7 +98,6 @@
               <p><strong>Status:</strong> <span class="badge bg-primary">{{ contest.status }}</span></p>
               <p v-if="contest.start_date"><strong>Start Date:</strong> {{ formatDate(contest.start_date) }}</p>
               <p v-if="contest.end_date"><strong>End Date:</strong> {{ formatDate(contest.end_date) }}</p>
-
               <strong>Organizers:</strong>
               <div v-if="contest.organizers && contest.organizers.length > 0" class="organizers-flex">
                 <div v-for="organizer in contest.organizers" :key="organizer" class="organizer-chip">
@@ -108,6 +107,7 @@
               </div>
             </div>
           </div>
+
 
           <!-- Scoring System Display -->
           <div class="card mb-4">
@@ -121,7 +121,6 @@
                   <span class="max-points">Accepted points: {{ contest.scoring_parameters.max_score }}</span>
                   <span class="max-points">Rejected points: {{ contest.scoring_parameters.min_score }}</span>
                 </div>
-
                 <div class="params-list">
                   <div v-for="param in contest.scoring_parameters.parameters" :key="param.name" class="param-item">
                     <div class="param-row">
@@ -131,7 +130,6 @@
                     <p v-if="param.description" class="param-note">{{ param.description }}</p>
                   </div>
                 </div>
-
                 <div class="info-note">
                   <i class="fas fa-info-circle"></i>
                   <span>Each parameter scored 0-10, weighted average calculated</span>
@@ -154,6 +152,7 @@
             </div>
           </div>
 
+
           <!-- Contest Description -->
           <div v-if="contest.description" class="card mb-4">
             <div class="card-header">
@@ -164,13 +163,14 @@
             </div>
           </div>
 
+
           <!-- Contest Rules -->
           <div v-if="contest.rules && contest.rules.text" class="card mb-4">
             <div class="card-header">
               <h5 class="mb-0"><i class="fas fa-book me-2"></i>Contest Rules</h5>
             </div>
             <div class="card-body">
-              <pre class="rules-text" style="white-space: pre-wrap; font-size: 1rem;">{{ contest.rules.text }}</pre>
+              <pre class="rules-text">{{ contest.rules.text }}</pre>
             </div>
           </div>
 
@@ -181,17 +181,12 @@
             </div>
             <div class="card-body">
               <p>
-                <strong>
-                  {{
-                    contest.allowed_submission_type === 'new'
-                      ? 'New Articles Only'
-                      : contest.allowed_submission_type === 'expansion'
-                        ? 'Improved Articles Only'
-                        : 'Both (New Articles + Improved Articles)'
-                  }}
-                </strong>
+                <strong>{{
+                  contest.allowed_submission_type === 'new' ? 'New Articles Only'
+                    : contest.allowed_submission_type === 'expansion' ? 'Improved Articles Only'
+                      : 'Both (New Articles + Improved Articles)'
+                }}</strong>
               </p>
-
               <p class="mt-2 small text-muted">
                 <em>
                   • <strong>New Articles</strong> = Completely new Wikipedia article created during the contest.<br />
@@ -208,9 +203,7 @@
               <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Required Categories</h5>
             </div>
             <div class="card-body">
-              <p class="mb-2">
-                <strong>Articles must belong to the following MediaWiki categories:</strong>
-              </p>
+              <p class="mb-2"><strong>Articles must belong to the following MediaWiki categories:</strong></p>
               <ul class="list-unstyled">
                 <li v-for="(category, index) in contest.categories" :key="index" class="mb-2">
                   <a :href="category" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
@@ -231,12 +224,24 @@
               <h5 class="mb-0"><i class="fas fa-link me-2"></i>Minimum Reference Count</h5>
             </div>
             <div class="card-body">
-              <p>
-                <strong>{{ contest.min_reference_count }} References required</strong>
-              </p>
+              <p><strong>{{ contest.min_reference_count }} References required</strong></p>
               <small class="text-muted">
                 <i class="fas fa-info-circle me-1"></i>
                 Submitted articles must have at least {{ contest.min_reference_count }} external references.
+              </small>
+            </div>
+          </div>
+
+          <!-- Minimum Byte Requirement -->
+          <div v-if="contest.min_byte_count > 0" class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0"><i class="fas fa-link me-2"></i>Minimum Byte Count</h5>
+            </div>
+            <div class="card-body">
+              <p><strong>{{ contest.min_byte_count }} Byte required</strong></p>
+              <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Submitted articles must have at least {{ contest.min_byte_count }} bytes are required.
               </small>
             </div>
           </div>
@@ -256,11 +261,16 @@
             </div>
           </div>
 
-          <!-- Submissions Table (Visible to Jury and Organizers) -->
+          <!-- SUBMISSIONS TABLE - with outreach -->
           <div v-if="canViewSubmissions" class="card mb-4">
             <div class="card-header">
               <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Submissions</h5>
+                <h5 class="mb-0">
+                  <i class="fas fa-file-alt me-2"></i>Submissions
+                  <span v-if="submissions.length > 0" class="badge bg-light text-dark ms-2" style="font-size:0.75em;">
+                    {{ filteredSubmissions.length }} / {{ submissions.length }}
+                  </span>
+                </h5>
                 <button v-if="loadingSubmissions || refreshingMetadata" class="btn btn-sm btn-outline-secondary"
                   disabled>
                   <span class="spinner-border spinner-border-sm me-2"></span>
@@ -277,106 +287,201 @@
               <div v-if="submissions.length === 0 && !loadingSubmissions" class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i>No submissions yet for this contest.
               </div>
+              <template v-else-if="submissions.length > 0">
+                <!-- Toolbar -->
+                <div class="submissions-toolbar d-flex flex-wrap gap-2 align-items-center mb-3">
+                  <div class="search-wrapper flex-grow-1" style="min-width:220px; max-width:380px;">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text"><i class="fas fa-search"></i></span>
+                      <input v-model="searchQuery" type="text" class="form-control"
+                        placeholder="Search title, author, user..." autocomplete="off" />
+                      <button v-if="searchQuery" class="btn btn-outline-secondary" @click="searchQuery = ''"
+                        title="Clear">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    <label class="text-muted small mb-0 text-nowrap">Rows per page:</label>
+                    <select v-model.number="pageSize" class="form-select form-select-sm" style="width:80px;">
+                      <option v-for="n in PAGE_SIZE_OPTIONS" :key="n" :value="n">{{ n }}</option>
+                    </select>
+                  </div>
+                  <span class="text-muted small ms-auto text-nowrap">
+                    Showing
+                    {{ Math.min((currentPage - 1) * pageSize + 1, filteredSubmissions.length) }}–{{ Math.min(currentPage
+                      * pageSize, filteredSubmissions.length) }}
+                    of {{ filteredSubmissions.length }}
+                    <template v-if="filteredSubmissions.length !== submissions.length">
+                      (filtered from {{ submissions.length }})
+                    </template>
+                  </span>
+                </div>
 
-              <div v-else-if="submissions.length > 0" class="table-responsive">
-                <table class="table table-sm table-hover">
-                  <thead>
-                    <tr>
-                      <th>Article Title</th>
-                      <th>Article Author</th>
-                      <th>Submitted By</th>
-                      <th>Status</th>
-                      <th>Score</th>
-                      <th>Submitted At</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="submission in submissions" :key="submission.id">
-                      <td>
-                        <a href="#" @click.prevent="showArticlePreview(submission)"
-                          class="text-decoration-none article-title-link" :title="submission.article_link">
-                          {{ submission.article_title }}
-                          <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
-                        </a>
-                        <div v-if="submission.article_word_count !== null" class="text-muted small mt-1">
-                          <i class="fas fa-file-alt me-1"></i>Total bytes:
-                          {{ formatByteCountWithExact((submission.article_word_count || 0) +
-                            (submission.article_expansion_bytes || 0)) }}
-                        </div>
-                        <div v-if="submission.article_word_count !== null &&
-                          submission.article_word_count !== undefined" class="text-muted small mt-1">
-                          <i class="fas fa-clock me-1"></i>Original bytes:
-                          {{ formatByteCountWithExact(submission.article_word_count) }}
-                        </div>
-                        <div v-if="submission.article_expansion_bytes !== null &&
-                          submission.article_expansion_bytes !== undefined" class="text-muted small mt-1">
-                          <i class="me-1" :class="submission.article_expansion_bytes > 0
-                            ? 'fas fa-arrow-up'
-                            : submission.article_expansion_bytes < 0
-                              ? 'fas fa-arrow-down'
-                              : 'fas fa-arrows-left-right'
-                            "></i>
-                          Expansion bytes:
-                          <span v-if="submission.article_expansion_bytes !== 0"
-                            :class="submission.article_expansion_bytes >= 0 ? 'text-success' : 'text-danger'">
-                            {{ submission.article_expansion_bytes >= 0 ? '+' : '-' }}{{
-                              formatByteCountWithExact(Math.abs(submission.article_expansion_bytes))
-                            }}
+                <!-- Table -->
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover submissions-table">
+                    <thead>
+                      <tr>
+                        <th class="sortable-th" @click="toggleSort('article_title')">
+                          Article Title
+                          <i class="fas ms-1"
+                            :class="sortKey === 'article_title' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                        </th>
+                        <th class="sortable-th" @click="toggleSort('article_author')">
+                          Article Author
+                          <i class="fas ms-1"
+                            :class="sortKey === 'article_author' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                        </th>
+                        <th class="sortable-th" @click="toggleSort('username')">
+                          Submitted By
+                          <i class="fas ms-1"
+                            :class="sortKey === 'username' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                        </th>
+                        <th class="sortable-th" @click="toggleSort('status')">
+                          Status
+                          <i class="fas ms-1"
+                            :class="sortKey === 'status' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                        </th>
+                        <th class="sortable-th" @click="toggleSort('score')">
+                          Score
+                          <i class="fas ms-1"
+                            :class="sortKey === 'score' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                        </th>
+                        <th class="sortable-th" @click="toggleSort('submitted_at')">
+                          Submitted At
+                          <i class="fas ms-1"
+                            :class="sortKey === 'submitted_at' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                        </th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="submission in pagedSubmissions" :key="submission.id">
+                        <!-- Article Title with expandable bytes -->
+                        <td>
+                          <a href="#" @click.prevent="showArticlePreview(submission)"
+                            class="text-decoration-none article-title-link" :title="submission.article_link">
+                            {{ submission.article_title }}
+                            <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
+                          </a>
+                          <span v-if="submission.article_word_count !== null" class="ms-2 text-muted small bytes-toggle"
+                            @click="toggleExpand(submission.id)" title="Toggle byte details">
+                            <i class="fas"
+                              :class="expandedRows.has(submission.id) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                            {{ expandedRows.has(submission.id) ? 'Hide' : 'Bytes' }}
                           </span>
-                          <span v-else>
-                            {{ formatByteCountWithExact(0) }}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <div v-if="submission.article_author">
-                          <i class="fas fa-user me-1"></i>{{ submission.article_author }}
-                        </div>
-                        <div v-else class="text-muted small">Unknown</div>
-                        <div v-if="submission.article_created_at" class="text-muted small mt-1">
-                          <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
-                        </div>
-                        <div v-if="submission.latest_revision_author" class="mt-2 pt-2"
-                          style="border-top: 1px solid #dee2e6;">
-                          <div>
+                          <div v-if="submission.article_word_count !== null && expandedRows.has(submission.id)"
+                            class="mt-1">
+                            <div class="text-muted small">
+                              <i class="fas fa-file-alt me-1"></i>Total:
+                              {{ formatByteCountWithExact((submission.article_word_count || 0) +
+                                (submission.article_expansion_bytes ||
+                                  0)) }}
+                            </div>
+                            <div class="text-muted small">
+                              <i class="fas fa-clock me-1"></i>Original:
+                              {{ formatByteCountWithExact(submission.article_word_count) }}
+                            </div>
+                            <div v-if="submission.article_expansion_bytes !== null" class="small"
+                              :class="submission.article_expansion_bytes >= 0 ? 'text-success' : 'text-danger'">
+                              <i class="fas"
+                                :class="submission.article_expansion_bytes > 0 ? 'fa-arrow-up' : submission.article_expansion_bytes < 0 ? 'fa-arrow-down' : 'fa-arrows-left-right'"></i>
+                              Expansion: {{ submission.article_expansion_bytes >= 0 ? '+' : '' }}{{
+                                formatByteCountWithExact(Math.abs(submission.article_expansion_bytes)) }}
+                            </div>
+                          </div>
+                        </td>
+                        <!-- Article Author -->
+                        <td>
+                          <div v-if="submission.article_author">
+                            <i class="fas fa-user me-1"></i>{{ submission.article_author }}
+                          </div>
+                          <div v-else class="text-muted small">Unknown</div>
+                          <div v-if="submission.latest_revision_author" class="text-muted small mt-1">
                             <i class="fas fa-user me-1"></i>{{ submission.latest_revision_author }}
-                            <span class="badge bg-info ms-1" style="font-size: 0.7em;">Latest</span>
+                            <span class="badge bg-info ms-1" style="font-size: 0.65em;">Latest</span>
                           </div>
-                          <div v-if="submission.latest_revision_timestamp" class="text-muted small mt-1">
-                            <i class="fas fa-calendar me-1"></i>
-                            {{ formatDateShort(submission.latest_revision_timestamp) }}
+                        </td>
+                        <td>{{ submission.username || 'Unknown' }}</td>
+                        <td>
+                          <span :class="`badge bg-${getStatusColor(submission.status)}`">{{ submission.status }}</span>
+                          <div v-if="submission.already_reviewed" class="text-muted small mt-1">
+                            <i class="fas fa-check-circle me-1"></i>Reviewed
                           </div>
-                        </div>
-                      </td>
-                      <td>{{ submission.username || 'Unknown' }}</td>
-                      <td>
-                        <span :class="`badge bg-${getStatusColor(submission.status)}`">
-                          {{ submission.status }}
-                        </span>
-                        <div v-if="submission.already_reviewed" class="text-muted small mt-1">
-                          <i class="fas fa-check-circle me-1"></i>Reviewed
-                        </div>
-                      </td>
-                      <td>{{ submission.score || 0 }}</td>
-                      <td>{{ formatDate(submission.submitted_at) }}</td>
-                      <td>
-                        <button @click="showArticlePreview(submission)" class="btn btn-sm btn-outline-primary"
-                          title="Preview Article">
-                          <i class="fas fa-eye"></i>
+                        </td>
+                        <td>{{ submission.score || 0 }}</td>
+                        <td>{{ formatDate(submission.submitted_at) }}</td>
+                        <td>
+                          <button @click="showArticlePreview(submission)" class="btn btn-sm btn-outline-primary"
+                            title="Preview Article">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                          <button v-if="canViewSubmissions" @click="handleDeleteSubmission(submission)"
+                            class="btn btn-sm btn-outline-danger ms-1" title="Delete Submission"
+                            :disabled="deletingSubmissionId === submission.id">
+                            <span v-if="deletingSubmissionId === submission.id"
+                              class="spinner-border spinner-border-sm"></span>
+                            <i v-else class="fas fa-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                      <tr v-if="filteredSubmissions.length === 0">
+                        <td colspan="7" class="text-center text-muted py-4">
+                          <i class="fas fa-search me-2"></i>No submissions match "<strong>{{ searchQuery }}</strong>"
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="totalPages > 1"
+                  class="pagination-bar d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3">
+                  <span class="text-muted small">Page {{ currentPage }} of {{ totalPages }}</span>
+                  <nav aria-label="Submissions pagination">
+                    <ul class="pagination pagination-sm mb-0">
+                      <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                        <button class="page-link" @click="currentPage = 1" :disabled="currentPage === 1"
+                          title="First page">
+                          <i class="fas fa-angle-double-left"></i>
                         </button>
-                        <button v-if="canViewSubmissions" @click="handleDeleteSubmission(submission)"
-                          class="btn btn-sm btn-outline-danger" title="Delete Submission"
-                          :disabled="deletingSubmissionId === submission.id">
-                          <span v-if="deletingSubmissionId === submission.id"
-                            class="spinner-border spinner-border-sm"></span>
-                          <i v-else class="fas fa-trash"></i>
+                      </li>
+                      <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                        <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">
+                          <i class="fas fa-angle-left"></i>
                         </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                      </li>
+                      <li v-if="visiblePages[0] > 1" class="page-item disabled">
+                        <span class="page-link">…</span>
+                      </li>
+                      <li v-for="p in visiblePages" :key="p" class="page-item" :class="{ active: p === currentPage }">
+                        <button class="page-link" @click="currentPage = p">{{ p }}</button>
+                      </li>
+                      <li v-if="visiblePages[visiblePages.length - 1] < totalPages" class="page-item disabled">
+                        <span class="page-link">…</span>
+                      </li>
+                      <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                        <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">
+                          <i class="fas fa-angle-right"></i>
+                        </button>
+                      </li>
+                      <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                        <button class="page-link" @click="currentPage = totalPages"
+                          :disabled="currentPage === totalPages" title="Last page">
+                          <i class="fas fa-angle-double-right"></i>
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="text-muted small text-nowrap">Go to:</span>
+                    <input type="number" class="form-control form-control-sm" style="width: 64px;" :min="1"
+                      :max="totalPages" :value="currentPage"
+                      @change="e => { const v = parseInt(e.target.value); if (v >= 1 && v <= totalPages) currentPage = v }" />
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
 
@@ -389,7 +494,6 @@
                 <i class="fas fa-sync-alt me-1"></i>Refresh Auth
               </button>
             </div>
-
             <button v-if="contest?.status === 'current' && isAuthenticated && !canViewSubmissions"
               class="btn btn-primary ms-auto" @click="handleSubmitArticle">
               <i class="fas fa-paper-plane me-2"></i>Submit Article
@@ -404,9 +508,9 @@
         </div>
       </div>
 
-      <!-- Content when no Outreach Dashboard URL (no tabs) -->
+      <!-- ═══ NO Outreach Dashboard URL (no tabs) ═══ -->
       <div v-if="!contest.outreach_dashboard_url">
-        <!-- Basic Contest Information -->
+
         <div class="card mb-4">
           <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Contest Details</h5>
@@ -416,7 +520,6 @@
             <p><strong>Status:</strong> <span class="badge bg-primary">{{ contest.status }}</span></p>
             <p v-if="contest.start_date"><strong>Start Date:</strong> {{ formatDate(contest.start_date) }}</p>
             <p v-if="contest.end_date"><strong>End Date:</strong> {{ formatDate(contest.end_date) }}</p>
-
             <strong>Organizers:</strong>
             <div v-if="contest.organizers && contest.organizers.length > 0" class="organizers-flex">
               <div v-for="organizer in contest.organizers" :key="organizer" class="organizer-chip">
@@ -427,19 +530,16 @@
           </div>
         </div>
 
-        <!-- Scoring System Display -->
         <div class="card mb-4">
           <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Scoring System</h5>
           </div>
           <div class="card-body">
-            <!-- Multi-Parameter Scoring Display -->
             <div v-if="contest.scoring_parameters?.enabled === true">
               <div class="scoring-meta">
                 <span class="max-points">Accepted points: {{ contest.scoring_parameters.max_score }}</span>
                 <span class="max-points">Rejected points: {{ contest.scoring_parameters.min_score }}</span>
               </div>
-
               <div class="params-list">
                 <div v-for="param in contest.scoring_parameters.parameters" :key="param.name" class="param-item">
                   <div class="param-row">
@@ -449,14 +549,11 @@
                   <p v-if="param.description" class="param-note">{{ param.description }}</p>
                 </div>
               </div>
-
               <div class="info-note">
                 <i class="fas fa-info-circle"></i>
                 <span>Each parameter scored 0-10, weighted average calculated</span>
               </div>
             </div>
-
-            <!-- Simple Accept/Reject Scoring Display -->
             <div v-else>
               <div class="points-row">
                 <div class="point-item">
@@ -472,7 +569,6 @@
           </div>
         </div>
 
-        <!-- Contest Description -->
         <div v-if="contest.description" class="card mb-4">
           <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Description</h5>
@@ -482,34 +578,27 @@
           </div>
         </div>
 
-        <!-- Contest Rules -->
         <div v-if="contest.rules && contest.rules.text" class="card mb-4">
           <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-book me-2"></i>Contest Rules</h5>
           </div>
           <div class="card-body">
-            <pre class="rules-text" style="white-space: pre-wrap; font-size: 1rem;">{{ contest.rules.text }}</pre>
+            <pre class="rules-text">{{ contest.rules.text }}</pre>
           </div>
         </div>
 
-        <!-- Submission Type Information -->
         <div class="card mb-4">
           <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Submission Type Allowed</h5>
           </div>
           <div class="card-body">
             <p>
-              <strong>
-                {{
-                  contest.allowed_submission_type === 'new'
-                    ? 'New Articles Only'
-                    : contest.allowed_submission_type === 'expansion'
-                      ? 'Improved Articles Only'
-                      : 'Both (New Articles + Improved Articles)'
-                }}
-              </strong>
+              <strong>{{
+                contest.allowed_submission_type === 'new' ? 'New Articles Only'
+                  : contest.allowed_submission_type === 'expansion' ? 'Improved Articles Only'
+                    : 'Both (New Articles + Improved Articles)'
+              }}</strong>
             </p>
-
             <p class="mt-2 small text-muted">
               <em>
                 • <strong>New Articles</strong> = Completely new Wikipedia article created during the contest.<br />
@@ -520,15 +609,12 @@
           </div>
         </div>
 
-        <!-- Required MediaWiki Categories -->
         <div v-if="contest.categories && contest.categories.length > 0" class="card mb-4">
           <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Required Categories</h5>
           </div>
           <div class="card-body">
-            <p class="mb-2">
-              <strong>Articles must belong to the following MediaWiki categories:</strong>
-            </p>
+            <p class="mb-2"><strong>Articles must belong to the following MediaWiki categories:</strong></p>
             <ul class="list-unstyled">
               <li v-for="(category, index) in contest.categories" :key="index" class="mb-2">
                 <a :href="category" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
@@ -543,15 +629,12 @@
           </div>
         </div>
 
-        <!-- Minimum Reference Requirement -->
         <div v-if="contest.min_reference_count > 0" class="card mb-4">
           <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-link me-2"></i>Minimum Reference Count</h5>
           </div>
           <div class="card-body">
-            <p>
-              <strong>{{ contest.min_reference_count }} References required</strong>
-            </p>
+            <p><strong>{{ contest.min_reference_count }} References required</strong></p>
             <small class="text-muted">
               <i class="fas fa-info-circle me-1"></i>
               Submitted articles must have at least {{ contest.min_reference_count }} external references.
@@ -559,7 +642,20 @@
           </div>
         </div>
 
-        <!-- Jury Members List -->
+        <!-- Minimum Byte Requirement -->
+        <div v-if="contest.min_byte_count > 0" class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-link me-2"></i>Minimum Byte Count</h5>
+          </div>
+          <div class="card-body">
+            <p><strong>Minimum {{ contest.min_byte_count }} Byte required</strong></p>
+            <small class="text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              Submitted articles must have at least {{ contest.min_byte_count }} bytes are required.
+            </small>
+          </div>
+        </div>
+
         <div v-if="contest.jury_members && contest.jury_members.length > 0" class="card mb-4">
           <div class="card-header">
             <h5 class="mb-0"><i class="fas fa-users me-2"></i>Jury Members</h5>
@@ -574,11 +670,16 @@
           </div>
         </div>
 
-        <!-- Submissions Table (Visible to Jury and Organizers) -->
+        <!-- SUBMISSIONS TABLE - without outreach -->
         <div v-if="canViewSubmissions" class="card mb-4">
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
-              <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Submissions</h5>
+              <h5 class="mb-0">
+                <i class="fas fa-file-alt me-2"></i>Submissions
+                <span v-if="submissions.length > 0" class="badge bg-light text-dark ms-2" style="font-size:0.75em;">
+                  {{ filteredSubmissions.length }} / {{ submissions.length }}
+                </span>
+              </h5>
               <button v-if="loadingSubmissions || refreshingMetadata" class="btn btn-sm btn-outline-secondary" disabled>
                 <span class="spinner-border spinner-border-sm me-2"></span>
                 {{ loadingSubmissions ? 'Loading...' : 'Refreshing...' }}
@@ -594,106 +695,201 @@
             <div v-if="submissions.length === 0 && !loadingSubmissions" class="alert alert-info">
               <i class="fas fa-info-circle me-2"></i>No submissions yet for this contest.
             </div>
+            <template v-else-if="submissions.length > 0">
+              <!-- Toolbar -->
+              <div class="submissions-toolbar d-flex flex-wrap gap-2 align-items-center mb-3">
+                <div class="search-wrapper flex-grow-1" style="min-width:220px; max-width:380px;">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input v-model="searchQuery" type="text" class="form-control"
+                      placeholder="Search title, author, user..." autocomplete="off" />
+                    <button v-if="searchQuery" class="btn btn-outline-secondary" @click="searchQuery = ''"
+                      title="Clear">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                  <label class="text-muted small mb-0 text-nowrap">Rows per page:</label>
+                  <select v-model.number="pageSize" class="form-select form-select-sm" style="width:80px;">
+                    <option v-for="n in PAGE_SIZE_OPTIONS" :key="n" :value="n">{{ n }}</option>
+                  </select>
+                </div>
+                <span class="text-muted small ms-auto text-nowrap">
+                  Showing
+                  {{ Math.min((currentPage - 1) * pageSize + 1, filteredSubmissions.length) }}–{{ Math.min(currentPage *
+                    pageSize, filteredSubmissions.length) }}
+                  of {{ filteredSubmissions.length }}
+                  <template v-if="filteredSubmissions.length !== submissions.length">
+                    (filtered from {{ submissions.length }})
+                  </template>
+                </span>
+              </div>
 
-            <div v-else-if="submissions.length > 0" class="table-responsive">
-              <table class="table table-sm table-hover">
-                <thead>
-                  <tr>
-                    <th>Article Title</th>
-                    <th>Article Author</th>
-                    <th>Submitted By</th>
-                    <th>Status</th>
-                    <th>Score</th>
-                    <th>Submitted At</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="submission in submissions" :key="submission.id">
-                    <td>
-                      <a href="#" @click.prevent="showArticlePreview(submission)"
-                        class="text-decoration-none article-title-link" :title="submission.article_link">
-                        {{ submission.article_title }}
-                        <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
-                      </a>
-                      <div v-if="submission.article_word_count !== null" class="text-muted small mt-1">
-                        <i class="fas fa-file-alt me-1"></i>Total bytes:
-                        {{ formatByteCountWithExact((submission.article_word_count || 0) +
-                          (submission.article_expansion_bytes || 0)) }}
-                      </div>
-                      <div v-if="submission.article_word_count !== null &&
-                        submission.article_word_count !== undefined" class="text-muted small mt-1">
-                        <i class="fas fa-clock me-1"></i>Original bytes:
-                        {{ formatByteCountWithExact(submission.article_word_count) }}
-                      </div>
-                      <div v-if="submission.article_expansion_bytes !== null &&
-                        submission.article_expansion_bytes !== undefined" class="text-muted small mt-1">
-                        <i class="me-1" :class="submission.article_expansion_bytes > 0
-                          ? 'fas fa-arrow-up'
-                          : submission.article_expansion_bytes < 0
-                            ? 'fas fa-arrow-down'
-                            : 'fas fa-arrows-left-right'
-                          "></i>
-                        Expansion bytes:
-                        <span v-if="submission.article_expansion_bytes !== 0"
-                          :class="submission.article_expansion_bytes >= 0 ? 'text-success' : 'text-danger'">
-                          {{ submission.article_expansion_bytes >= 0 ? '+' : '-' }}{{
-                            formatByteCountWithExact(Math.abs(submission.article_expansion_bytes))
-                          }}
+              <!-- Table -->
+              <div class="table-responsive">
+                <table class="table table-sm table-hover submissions-table">
+                  <thead>
+                    <tr>
+                      <th class="sortable-th" @click="toggleSort('article_title')">
+                        Article Title
+                        <i class="fas ms-1"
+                          :class="sortKey === 'article_title' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                      </th>
+                      <th class="sortable-th" @click="toggleSort('article_author')">
+                        Article Author
+                        <i class="fas ms-1"
+                          :class="sortKey === 'article_author' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                      </th>
+                      <th class="sortable-th" @click="toggleSort('username')">
+                        Submitted By
+                        <i class="fas ms-1"
+                          :class="sortKey === 'username' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                      </th>
+                      <th class="sortable-th" @click="toggleSort('status')">
+                        Status
+                        <i class="fas ms-1"
+                          :class="sortKey === 'status' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                      </th>
+                      <th class="sortable-th" @click="toggleSort('score')">
+                        Score
+                        <i class="fas ms-1"
+                          :class="sortKey === 'score' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                      </th>
+                      <th class="sortable-th" @click="toggleSort('submitted_at')">
+                        Submitted At
+                        <i class="fas ms-1"
+                          :class="sortKey === 'submitted_at' ? (sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort text-muted'"></i>
+                      </th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="submission in pagedSubmissions" :key="submission.id">
+                      <!-- Article Title with expandable bytes -->
+                      <td>
+                        <a href="#" @click.prevent="showArticlePreview(submission)"
+                          class="text-decoration-none article-title-link" :title="submission.article_link">
+                          {{ submission.article_title }}
+                          <i class="fas fa-eye ms-1" style="font-size: 0.8em;"></i>
+                        </a>
+                        <span v-if="submission.article_word_count !== null" class="ms-2 text-muted small bytes-toggle"
+                          @click="toggleExpand(submission.id)" title="Toggle byte details">
+                          <i class="fas"
+                            :class="expandedRows.has(submission.id) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                          {{ expandedRows.has(submission.id) ? 'Hide' : 'Bytes' }}
                         </span>
-                        <span v-else>
-                          {{ formatByteCountWithExact(0) }}
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <div v-if="submission.article_author">
-                        <i class="fas fa-user me-1"></i>{{ submission.article_author }}
-                      </div>
-                      <div v-else class="text-muted small">Unknown</div>
-                      <div v-if="submission.article_created_at" class="text-muted small mt-1">
-                        <i class="fas fa-calendar me-1"></i>{{ formatDateShort(submission.article_created_at) }}
-                      </div>
-                      <div v-if="submission.latest_revision_author" class="mt-2 pt-2"
-                        style="border-top: 1px solid #dee2e6;">
-                        <div>
+                        <div v-if="submission.article_word_count !== null && expandedRows.has(submission.id)"
+                          class="mt-1">
+                          <div class="text-muted small">
+                            <i class="fas fa-file-alt me-1"></i>Total:
+                            {{ formatByteCountWithExact((submission.article_word_count || 0) +
+                              (submission.article_expansion_bytes
+                                || 0)) }}
+                          </div>
+                          <div class="text-muted small">
+                            <i class="fas fa-clock me-1"></i>Original:
+                            {{ formatByteCountWithExact(submission.article_word_count) }}
+                          </div>
+                          <div v-if="submission.article_expansion_bytes !== null" class="small"
+                            :class="submission.article_expansion_bytes >= 0 ? 'text-success' : 'text-danger'">
+                            <i class="fas"
+                              :class="submission.article_expansion_bytes > 0 ? 'fa-arrow-up' : submission.article_expansion_bytes < 0 ? 'fa-arrow-down' : 'fa-arrows-left-right'"></i>
+                            Expansion: {{ submission.article_expansion_bytes >= 0 ? '+' : '' }}{{
+                              formatByteCountWithExact(Math.abs(submission.article_expansion_bytes)) }}
+                          </div>
+                        </div>
+                      </td>
+                      <!-- Article Author -->
+                      <td>
+                        <div v-if="submission.article_author">
+                          <i class="fas fa-user me-1"></i>{{ submission.article_author }}
+                        </div>
+                        <div v-else class="text-muted small">Unknown</div>
+                        <div v-if="submission.latest_revision_author" class="text-muted small mt-1">
                           <i class="fas fa-user me-1"></i>{{ submission.latest_revision_author }}
-                          <span class="badge bg-info ms-1" style="font-size: 0.7em;">Latest</span>
+                          <span class="badge bg-info ms-1" style="font-size: 0.65em;">Latest</span>
                         </div>
-                        <div v-if="submission.latest_revision_timestamp" class="text-muted small mt-1">
-                          <i class="fas fa-calendar me-1"></i>
-                          {{ formatDateShort(submission.latest_revision_timestamp) }}
+                      </td>
+                      <td>{{ submission.username || 'Unknown' }}</td>
+                      <td>
+                        <span :class="`badge bg-${getStatusColor(submission.status)}`">{{ submission.status }}</span>
+                        <div v-if="submission.already_reviewed" class="text-muted small mt-1">
+                          <i class="fas fa-check-circle me-1"></i>Reviewed
                         </div>
-                      </div>
-                    </td>
-                    <td>{{ submission.username || 'Unknown' }}</td>
-                    <td>
-                      <span :class="`badge bg-${getStatusColor(submission.status)}`">
-                        {{ submission.status }}
-                      </span>
-                      <div v-if="submission.already_reviewed" class="text-muted small mt-1">
-                        <i class="fas fa-check-circle me-1"></i>Reviewed
-                      </div>
-                    </td>
-                    <td>{{ submission.score || 0 }}</td>
-                    <td>{{ formatDate(submission.submitted_at) }}</td>
-                    <td>
-                      <button @click="showArticlePreview(submission)" class="btn btn-sm btn-outline-primary"
-                        title="Preview Article">
-                        <i class="fas fa-eye"></i>
+                      </td>
+                      <td>{{ submission.score || 0 }}</td>
+                      <td>{{ formatDate(submission.submitted_at) }}</td>
+                      <td>
+                        <button @click="showArticlePreview(submission)" class="btn btn-sm btn-outline-primary"
+                          title="Preview Article">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                        <button v-if="canViewSubmissions" @click="handleDeleteSubmission(submission)"
+                          class="btn btn-sm btn-outline-danger ms-1" title="Delete Submission"
+                          :disabled="deletingSubmissionId === submission.id">
+                          <span v-if="deletingSubmissionId === submission.id"
+                            class="spinner-border spinner-border-sm"></span>
+                          <i v-else class="fas fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr v-if="filteredSubmissions.length === 0">
+                      <td colspan="7" class="text-center text-muted py-4">
+                        <i class="fas fa-search me-2"></i>No submissions match "<strong>{{ searchQuery }}</strong>"
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
+              <div v-if="totalPages > 1"
+                class="pagination-bar d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3">
+                <span class="text-muted small">Page {{ currentPage }} of {{ totalPages }}</span>
+                <nav aria-label="Submissions pagination">
+                  <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                      <button class="page-link" @click="currentPage = 1" :disabled="currentPage === 1"
+                        title="First page">
+                        <i class="fas fa-angle-double-left"></i>
                       </button>
-                      <button v-if="canViewSubmissions" @click="handleDeleteSubmission(submission)"
-                        class="btn btn-sm btn-outline-danger" title="Delete Submission"
-                        :disabled="deletingSubmissionId === submission.id">
-                        <span v-if="deletingSubmissionId === submission.id"
-                          class="spinner-border spinner-border-sm"></span>
-                        <i v-else class="fas fa-trash"></i>
+                    </li>
+                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                      <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">
+                        <i class="fas fa-angle-left"></i>
                       </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                    </li>
+                    <li v-if="visiblePages[0] > 1" class="page-item disabled">
+                      <span class="page-link">…</span>
+                    </li>
+                    <li v-for="p in visiblePages" :key="p" class="page-item" :class="{ active: p === currentPage }">
+                      <button class="page-link" @click="currentPage = p">{{ p }}</button>
+                    </li>
+                    <li v-if="visiblePages[visiblePages.length - 1] < totalPages" class="page-item disabled">
+                      <span class="page-link">…</span>
+                    </li>
+                    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                      <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">
+                        <i class="fas fa-angle-right"></i>
+                      </button>
+                    </li>
+                    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                      <button class="page-link" @click="currentPage = totalPages" :disabled="currentPage === totalPages"
+                        title="Last page">
+                        <i class="fas fa-angle-double-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+                <div class="d-flex align-items-center gap-1">
+                  <span class="text-muted small text-nowrap">Go to:</span>
+                  <input type="number" class="form-control form-control-sm" style="width: 64px;" :min="1"
+                    :max="totalPages" :value="currentPage"
+                    @change="e => { const v = parseInt(e.target.value); if (v >= 1 && v <= totalPages) currentPage = v }" />
+                </div>
+              </div>
+            </template>
           </div>
         </div>
 
@@ -706,7 +902,6 @@
               <i class="fas fa-sync-alt me-1"></i>Refresh Auth
             </button>
           </div>
-
           <button v-if="contest?.status === 'current' && isAuthenticated && !canViewSubmissions"
             class="btn btn-primary ms-auto" @click="handleSubmitArticle">
             <i class="fas fa-paper-plane me-2"></i>Submit Article
@@ -731,91 +926,66 @@
     <div class="modal-dialog modal-fullscreen">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">
-            <i class="fas fa-edit me-2"></i>Edit Contest
-          </h5>
+          <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Contest</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-
         <div class="modal-body">
           <form @submit.prevent="saveContestEdits">
-
-            <!-- Basic Information Section -->
             <div class="edit-section">
-              <h6 class="section-title">
-                <i class="fas fa-info-circle me-2"></i>Basic Information
-              </h6>
-
+              <h6 class="section-title"><i class="fas fa-info-circle me-2"></i>Basic Information</h6>
               <div class="mb-3">
                 <label class="form-label">Contest Name *</label>
                 <input v-model="editForm.name" class="form-control" required />
               </div>
-
               <div class="mb-3">
                 <label class="form-label">Project Name *</label>
                 <input v-model="editForm.project_name" class="form-control" required />
               </div>
-
               <div class="mb-3">
-                <label for="editContestDescription" class="form-label">Description</label>
-                <textarea class="form-control" id="editContestDescription" rows="3"
-                  v-model="editForm.description"></textarea>
+                <label class="form-label">Description</label>
+                <textarea class="form-control" rows="3" v-model="editForm.description"></textarea>
               </div>
-
               <div class="mb-3">
-                <label for="editContestRules" class="form-label">Contest Rules *</label>
-                <textarea class="form-control" id="editContestRules" rows="4"
-                  placeholder="Write rules about how articles must be submitted." v-model="editForm.rules"
-                  required></textarea>
+                <label class="form-label">Contest Rules *</label>
+                <textarea class="form-control" rows="4" v-model="editForm.rules" required></textarea>
               </div>
-
               <div class="mb-3">
-                <label for="editAllowedType" class="form-label">Allowed Submission Type *</label>
-                <select id="editAllowedType" class="form-control" v-model="editForm.allowed_submission_type">
+                <label class="form-label">Allowed Submission Type *</label>
+                <select class="form-control" v-model="editForm.allowed_submission_type">
                   <option value="new">New Article Only</option>
                   <option value="expansion">Improved Article Only</option>
                   <option value="both">Both (New Article + Improved Article)</option>
                 </select>
               </div>
-
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label for="editStartDate" class="form-label">Start Date *</label>
-                  <input type="date" class="form-control" id="editStartDate" v-model="editForm.start_date" required />
+                  <label class="form-label">Start Date *</label>
+                  <input type="date" class="form-control" v-model="editForm.start_date" required />
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="editEndDate" class="form-label">End Date *</label>
-                  <input type="date" class="form-control" id="editEndDate" v-model="editForm.end_date" required />
+                  <label class="form-label">End Date *</label>
+                  <input type="date" class="form-control" v-model="editForm.end_date" required />
                 </div>
               </div>
             </div>
 
-            <!-- Organizers Section -->
             <div class="edit-section">
-              <h6 class="section-title">
-                <i class="fas fa-user-tie me-2"></i>Organizers
-              </h6>
-
+              <h6 class="section-title"><i class="fas fa-user-tie me-2"></i>Organizers</h6>
               <div class="mb-2 p-2 border rounded bg-light organizer-selection-box" style="min-height: 40px;">
-                <small v-if="editForm.selectedOrganizers.length === 0" class="organizer-placeholder-text">
-                  No additional organizers added
-                </small>
+                <small v-if="editForm.selectedOrganizers.length === 0" class="organizer-placeholder-text">No additional
+                  organizers added</small>
                 <span v-for="username in editForm.selectedOrganizers" :key="username" class="badge bg-success me-2 mb-2"
                   style="font-size: 0.9rem; cursor: pointer;">
-                  {{ username }}
-                  <i class="fas fa-times ms-1" @click="removeOrganizer(username)"></i>
+                  {{ username }}<i class="fas fa-times ms-1" @click="removeOrganizer(username)"></i>
                 </span>
               </div>
-
               <div style="position: relative;">
                 <input type="text" class="form-control" v-model="organizerSearchQuery" @input="searchOrganizers"
                   placeholder="Type username to add additional organizers..." autocomplete="off" />
-
                 <div v-if="organizerSearchResults.length > 0 && organizerSearchQuery.length >= 2"
                   class="organizer-autocomplete position-absolute w-100 border rounded-bottom"
-                  style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div v-for="user in organizerSearchResults" :key="user.username"
-                    class="p-2 border-bottom cursor-pointer"
+                  style="max-height: 200px; overflow-y: auto; z-index: 1000;">
+                  <div v-for="user in organizerSearchResults" :key="user.username" class="p-2 border-bottom"
                     :class="{ 'bg-warning-subtle': isCurrentUser(user.username) }" style="cursor: pointer;"
                     @click="addOrganizer(user.username)">
                     <div class="d-flex align-items-center justify-content-between">
@@ -823,45 +993,35 @@
                         <i class="fas fa-user-tie me-2 text-success"></i>
                         <strong>{{ user.username }}</strong>
                       </div>
-                      <div v-if="isCurrentUser(user.username)" class="badge bg-info">
-                        You (already added as creator)
+                      <div v-if="isCurrentUser(user.username)" class="badge bg-info">You (already added as creator)
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-
               <small class="form-text text-muted mt-1">
-                <i class="fas fa-info-circle me-1"></i>
-                You will be automatically added as an organizer. Add others who should manage this contest.
+                <i class="fas fa-info-circle me-1"></i>You will be automatically added as an organizer.
               </small>
             </div>
 
-            <!-- Jury Members Section -->
             <div class="edit-section">
-              <h6 class="section-title">
-                <i class="fas fa-gavel me-2"></i>Jury Members
-              </h6>
-
+              <h6 class="section-title"><i class="fas fa-gavel me-2"></i>Jury Members</h6>
               <div class="mb-2 p-2 border rounded bg-light jury-selection-box" style="min-height: 40px;">
-                <small v-if="editForm.selectedJuryMembers.length === 0" class="jury-placeholder-text">
-                  No jury members selected yet
-                </small>
+                <small v-if="editForm.selectedJuryMembers.length === 0" class="jury-placeholder-text">No jury members
+                  selected yet</small>
                 <span v-for="username in editForm.selectedJuryMembers" :key="username"
                   class="badge bg-primary me-2 mb-2" style="font-size: 0.9rem; cursor: pointer;">
-                  <i class="fas fa-gavel me-1"></i>{{ username }}
-                  <i class="fas fa-times ms-1" @click="removeJuryMember(username)"></i>
+                  <i class="fas fa-gavel me-1"></i>{{ username }}<i class="fas fa-times ms-1"
+                    @click="removeJuryMember(username)"></i>
                 </span>
               </div>
-
               <div style="position: relative;">
                 <input type="text" class="form-control" v-model="jurySearchQuery" @input="searchJuryMembers"
                   placeholder="Type username to search and add..." autocomplete="off" />
-
                 <div v-if="jurySearchResults.length > 0 && jurySearchQuery.length >= 2"
                   class="jury-autocomplete position-absolute w-100 border rounded-bottom"
-                  style="max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div v-for="user in jurySearchResults" :key="user.username" class="p-2 border-bottom cursor-pointer"
+                  style="max-height: 200px; overflow-y: auto; z-index: 1000;">
+                  <div v-for="user in jurySearchResults" :key="user.username" class="p-2 border-bottom"
                     :class="{ 'bg-warning-subtle': isCurrentUser(user.username) }" style="cursor: pointer;"
                     @click="addJuryMember(user.username)">
                     <div class="d-flex align-items-center justify-content-between">
@@ -870,35 +1030,24 @@
                         <strong>{{ user.username }}</strong>
                       </div>
                       <div v-if="isCurrentUser(user.username)" class="self-warning-badge">
-                        <i class="fas fa-exclamation-triangle me-1"></i>
-                        <strong>This is you - Not Recommended</strong>
+                        <i class="fas fa-exclamation-triangle me-1"></i><strong>This is you - Not Recommended</strong>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-
               <small class="form-text text-muted mt-1">
-                <i class="fas fa-info-circle me-1"></i>
-                Jury members will review and score submissions. It's recommended to select other users.
+                <i class="fas fa-info-circle me-1"></i>Jury members will review and score submissions.
               </small>
             </div>
 
-            <!-- Scoring Section -->
             <div class="edit-section scoring-section-edit">
-              <h6 class="section-title">
-                <i class="fas fa-chart-line me-2"></i>Scoring System
-              </h6>
-
+              <h6 class="section-title"><i class="fas fa-chart-line me-2"></i>Scoring System</h6>
               <div class="scoring-lock-status mb-3">
                 <div v-if="scoringModeLocked" class="lock-banner locked">
-                  <div class="lock-banner-icon">
-                    <i class="fas fa-lock"></i>
-                  </div>
+                  <div class="lock-banner-icon"><i class="fas fa-lock"></i></div>
                   <div class="lock-banner-content">
-                    <div class="lock-banner-title">
-                      <strong>Scoring Mode is Locked</strong>
-                    </div>
+                    <div class="lock-banner-title"><strong>Scoring Mode is Locked</strong></div>
                     <div class="lock-banner-text">
                       This contest has <strong>{{ reviewedSubmissionsCount }}</strong>
                       reviewed {{ reviewedSubmissionsCount === 1 ? 'submission' : 'submissions' }}.
@@ -906,11 +1055,8 @@
                     </div>
                   </div>
                 </div>
-
                 <div v-else class="lock-banner unlocked">
-                  <div class="lock-banner-icon">
-                    <i class="fas fa-unlock-alt"></i>
-                  </div>
+                  <div class="lock-banner-icon"><i class="fas fa-unlock-alt"></i></div>
                   <div class="lock-banner-content">
                     <div class="scoring-mode-badge">
                       <span v-if="contestScoringMode === 'multi_parameter'" class="badge-mode multi">
@@ -921,8 +1067,7 @@
                       </span>
                     </div>
                     <div class="lock-banner-title">
-                      <strong>Scoring Mode is Editable:</strong> No submissions have been reviewed yet. You can change
-                      the scoring mode if needed.
+                      <strong>Scoring Mode is Editable:</strong> No submissions have been reviewed yet.
                     </div>
                   </div>
                 </div>
@@ -933,21 +1078,12 @@
                   <i class="fas fa-info-circle me-2"></i>
                   <strong>What you can edit:</strong>
                   <ul class="mb-0 mt-2">
-                    <li v-if="contestScoringMode === 'multi_parameter'">
-                      Maximum and minimum score values
-                    </li>
-                    <li v-if="contestScoringMode === 'multi_parameter'">
-                      Parameter weights (must still sum to 100%)
-                    </li>
-                    <li v-if="contestScoringMode === 'multi_parameter'">
-                      Parameter names and descriptions
-                    </li>
-                    <li v-if="contestScoringMode === 'simple'">
-                      Points for accepted and rejected submissions
-                    </li>
+                    <li v-if="contestScoringMode === 'multi_parameter'">Maximum and minimum score values</li>
+                    <li v-if="contestScoringMode === 'multi_parameter'">Parameter weights (must still sum to 100%)</li>
+                    <li v-if="contestScoringMode === 'multi_parameter'">Parameter names and descriptions</li>
+                    <li v-if="contestScoringMode === 'simple'">Points for accepted and rejected submissions</li>
                   </ul>
                 </div>
-
                 <div v-if="contestScoringMode === 'multi_parameter'">
                   <div class="row mb-3">
                     <div class="col-md-6">
@@ -961,7 +1097,6 @@
                       <small class="text-muted">Score for rejected submissions</small>
                     </div>
                   </div>
-
                   <div class="mb-3">
                     <label class="form-label fw-bold">Scoring Parameters *</label>
                     <div class="parameters-list">
@@ -977,7 +1112,7 @@
                               <label class="small text-muted mb-1">Weight (%)</label>
                               <div class="input-group">
                                 <input type="number" class="form-control" v-model.number="param.weight" min="0"
-                                  max="100" placeholder="0-100" required />
+                                  max="100" required />
                                 <span class="input-group-text">%</span>
                               </div>
                             </div>
@@ -989,8 +1124,7 @@
                             <div class="col-md-1 text-end">
                               <label class="small text-muted mb-1 d-block">&nbsp;</label>
                               <button type="button" class="btn btn-sm btn-outline-danger"
-                                @click="removeParameter(index)" :disabled="scoringParameters.length <= 1"
-                                title="Remove parameter">
+                                @click="removeParameter(index)" :disabled="scoringParameters.length <= 1">
                                 <i class="fas fa-trash"></i>
                               </button>
                             </div>
@@ -998,44 +1132,33 @@
                         </div>
                       </div>
                     </div>
-
                     <button type="button" class="btn btn-sm btn-outline-primary mt-2" @click="addParameter">
                       <i class="fas fa-plus me-1"></i>Add Parameter
                     </button>
-
                     <div class="mt-3 p-3 rounded" :class="weightTotalClass">
                       <div class="d-flex justify-content-between align-items-center">
                         <strong>Total Weight: {{ totalWeight }}%</strong>
-                        <span v-if="totalWeight !== 100" class="text-danger">
-                          <i class="fas fa-exclamation-triangle me-1"></i>
-                          Must equal 100%
-                        </span>
-                        <span v-else class="text-success">
-                          <i class="fas fa-check-circle me-1"></i>
-                          Valid
-                        </span>
+                        <span v-if="totalWeight !== 100" class="text-danger"><i
+                            class="fas fa-exclamation-triangle me-1"></i>Must equal 100%</span>
+                        <span v-else class="text-success"><i class="fas fa-check-circle me-1"></i>Valid</span>
                       </div>
                     </div>
                   </div>
-
                   <button type="button" class="btn btn-sm btn-outline-secondary" @click="loadDefaultParameters">
                     <i class="fas fa-redo me-1"></i>Reset to Default Parameters
                   </button>
                 </div>
-
                 <div v-else>
                   <div class="row">
                     <div class="col-md-6 mb-3">
                       <label class="form-label">Points for Accepted Submissions *</label>
                       <input type="number" class="form-control" v-model.number="editForm.marks_setting_accepted" min="0"
                         required />
-                      <small class="text-muted">Maximum points for accepted submissions</small>
                     </div>
                     <div class="col-md-6 mb-3">
                       <label class="form-label">Points for Rejected Submissions *</label>
                       <input type="number" class="form-control" v-model.number="editForm.marks_setting_rejected" min="0"
                         required />
-                      <small class="text-muted">Points for rejected submissions</small>
                     </div>
                   </div>
                 </div>
@@ -1046,47 +1169,39 @@
                   <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="editEnableMultiParam"
                       v-model="enableMultiParameterScoring" />
-                    <label class="form-check-label fw-bold" for="editEnableMultiParam">
-                      Enable Multi-Parameter Scoring
-                    </label>
+                    <label class="form-check-label fw-bold" for="editEnableMultiParam">Enable Multi-Parameter
+                      Scoring</label>
                   </div>
                   <small class="text-muted mt-1 d-block">
-                    <i class="fas fa-lightbulb me-1"></i>
-                    Multi-parameter scoring allows jury to rate submissions on multiple criteria with weighted scores.
+                    <i class="fas fa-lightbulb me-1"></i>Multi-parameter scoring allows jury to rate on multiple
+                    criteria.
                   </small>
                 </div>
-
                 <div v-if="!enableMultiParameterScoring" class="simple-scoring-form">
                   <div class="row">
                     <div class="col-md-6 mb-3">
                       <label class="form-label">Points for Accepted Submissions *</label>
                       <input type="number" class="form-control" v-model.number="editForm.marks_setting_accepted" min="0"
                         required />
-                      <small class="text-muted">Maximum points that can be awarded</small>
                     </div>
                     <div class="col-md-6 mb-3">
                       <label class="form-label">Points for Rejected Submissions *</label>
                       <input type="number" class="form-control" v-model.number="editForm.marks_setting_rejected" min="0"
                         required />
-                      <small class="text-muted">Points for rejected submissions (usually 0)</small>
                     </div>
                   </div>
                 </div>
-
                 <div v-else class="multi-param-scoring-form">
                   <div class="row mb-3">
                     <div class="col-md-6">
                       <label class="form-label">Maximum Score (Accepted) *</label>
                       <input type="number" class="form-control" v-model.number="maxScore" min="1" max="1000" required />
-                      <small class="text-muted">Final weighted score scaled to this maximum</small>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label">Minimum Score (Rejected) *</label>
                       <input type="number" class="form-control" v-model.number="minScore" min="0" max="1000" required />
-                      <small class="text-muted">Fixed score for rejected submissions</small>
                     </div>
                   </div>
-
                   <div class="mb-3">
                     <label class="form-label fw-bold">Scoring Parameters *</label>
                     <div class="parameters-list">
@@ -1102,7 +1217,7 @@
                               <label class="small text-muted mb-1">Weight (%)</label>
                               <div class="input-group">
                                 <input type="number" class="form-control" v-model.number="param.weight" min="0"
-                                  max="100" placeholder="0-100" required />
+                                  max="100" required />
                                 <span class="input-group-text">%</span>
                               </div>
                             </div>
@@ -1114,8 +1229,7 @@
                             <div class="col-md-1 text-end">
                               <label class="small text-muted mb-1 d-block">&nbsp;</label>
                               <button type="button" class="btn btn-sm btn-outline-danger"
-                                @click="removeParameter(index)" :disabled="scoringParameters.length <= 1"
-                                title="Remove parameter">
+                                @click="removeParameter(index)" :disabled="scoringParameters.length <= 1">
                                 <i class="fas fa-trash"></i>
                               </button>
                             </div>
@@ -1123,26 +1237,18 @@
                         </div>
                       </div>
                     </div>
-
                     <button type="button" class="btn btn-sm btn-outline-primary mt-2" @click="addParameter">
                       <i class="fas fa-plus me-1"></i>Add Parameter
                     </button>
-
                     <div class="mt-3 p-3 rounded" :class="weightTotalClass">
                       <div class="d-flex justify-content-between align-items-center">
                         <strong>Total Weight: {{ totalWeight }}%</strong>
-                        <span v-if="totalWeight !== 100" class="text-danger">
-                          <i class="fas fa-exclamation-triangle me-1"></i>
-                          Must equal 100%
-                        </span>
-                        <span v-else class="text-success">
-                          <i class="fas fa-check-circle me-1"></i>
-                          Valid
-                        </span>
+                        <span v-if="totalWeight !== 100" class="text-danger"><i
+                            class="fas fa-exclamation-triangle me-1"></i>Must equal 100%</span>
+                        <span v-else class="text-success"><i class="fas fa-check-circle me-1"></i>Valid</span>
                       </div>
                     </div>
                   </div>
-
                   <button type="button" class="btn btn-sm btn-outline-secondary" @click="loadDefaultParameters">
                     <i class="fas fa-redo me-1"></i>Load Default Parameters
                   </button>
@@ -1150,88 +1256,47 @@
               </div>
             </div>
 
-            <!-- Article Requirements Section -->
             <div class="edit-section">
-              <h6 class="section-title">
-                <i class="fas fa-file-alt me-2"></i>Article Requirements
-              </h6>
-
+              <h6 class="section-title"><i class="fas fa-file-alt me-2"></i>Article Requirements</h6>
               <div class="mb-3">
                 <label class="form-label">Minimum Byte Count *</label>
-                <input type="number" v-model.number="editForm.min_byte_count" class="form-control" min="0"
-                  placeholder="e.g., 1000" required />
-                <small class="form-text text-muted">Articles must have at least this many bytes</small>
+                <input type="number" v-model.number="editForm.min_byte_count" class="form-control" min="0" required />
               </div>
-
               <div class="mb-3">
                 <label class="form-label">Minimum Reference Count</label>
-                <input type="number" v-model.number="editForm.min_reference_count" class="form-control" min="0"
-                  placeholder="e.g., 5" />
-                <small class="form-text text-muted">
-                  Articles must have at least this many references. Set to 0 for no requirement.
-                </small>
+                <input type="number" v-model.number="editForm.min_reference_count" class="form-control" min="0" />
               </div>
-
               <div class="mb-3">
-                <label class="form-label">
-                  Category URLs *
-                  <span class="text-muted">(MediaWiki category pages)</span>
-                </label>
-
+                <label class="form-label">Category URLs *</label>
                 <div v-for="(category, index) in editForm.categories" :key="index" class="mb-2">
                   <div class="input-group">
                     <input type="url" class="form-control" v-model="editForm.categories[index]"
-                      :placeholder="index === 0 ? 'https://en.wikipedia.org/wiki/Category:Example' : 'Add another category URL'"
-                      required />
+                      placeholder="https://en.wikipedia.org/wiki/Category:Example" required />
                     <button v-if="editForm.categories.length > 1" type="button" class="btn btn-outline-danger"
-                      @click="removeCategory(index)" title="Remove category">
+                      @click="removeCategory(index)">
                       <i class="fas fa-times"></i>
                     </button>
                   </div>
                 </div>
-
                 <button type="button" class="btn btn-outline-primary btn-sm mt-2" @click="addCategory">
                   <i class="fas fa-plus me-1"></i>Add Category
                 </button>
-
-                <small class="form-text text-muted d-block mt-2">
-                  At least one MediaWiki category URL is required. Articles must belong to these categories.
-                </small>
               </div>
-
               <div class="mb-3">
-                <label for="editTemplateLink" class="form-label">
-                  Contest Template Link
-                  <span class="badge bg-secondary ms-1">Optional</span>
-                </label>
-                <input type="url" class="form-control" id="editTemplateLink" v-model="editForm.template_link"
+                <label class="form-label">Contest Template Link <span
+                    class="badge bg-secondary ms-1">Optional</span></label>
+                <input type="url" class="form-control" v-model="editForm.template_link"
                   placeholder="https://en.wikipedia.org/wiki/Template:YourContestTemplate" />
-                <small class="form-text text-muted d-block mt-2">
-                  <i class="fas fa-info-circle me-1"></i>
-                  If set, this template will be automatically added to submitted articles that don't already have it.
-                </small>
               </div>
-
               <div class="mb-3">
-                <label for="editOutreachDashboardUrl" class="form-label">
-                  Outreach Dashboard URL
-                  <span class="badge bg-secondary ms-1">Optional</span>
-                </label>
-                <input type="url" class="form-control" id="editOutreachDashboardUrl"
-                  v-model="editForm.outreach_dashboard_url"
-                  placeholder="https://outreachdashboard.wmflabs.org/courses/WikiClub_Tech_SHUATS/Wikipedia_25_B_Day_Celebration_by_WikiClub_Tech_SHUATS" />
-                <small class="form-text text-muted d-block mt-2">
-                  <i class="fas fa-info-circle me-1"></i>
-                  Link this contest to an Outreach Dashboard course. If provided, course statistics and information will
-                  be displayed in a dedicated tab.
-                  Format: https://outreachdashboard.wmflabs.org/courses/{school}/{course_slug}
-                </small>
+                <label class="form-label">Outreach Dashboard URL <span
+                    class="badge bg-secondary ms-1">Optional</span></label>
+                <input type="url" class="form-control" v-model="editForm.outreach_dashboard_url"
+                  placeholder="https://outreachdashboard.wmflabs.org/courses/..." />
               </div>
             </div>
-
           </form>
         </div>
-
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             <i class="fas fa-times me-2"></i>Cancel
@@ -1246,83 +1311,53 @@
     </div>
   </div>
 
-  <!-- Report Type Selection Modal -->
+  <!-- Report Modal -->
   <div v-if="showReportModal" class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);"
     @click.self="closeReportModal">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header text-white">
-          <h5 class="modal-title">
-            <i class="fas fa-file-export me-2"></i>
-            Generate Contest Report
-          </h5>
+          <h5 class="modal-title"><i class="fas fa-file-export me-2"></i>Generate Contest Report</h5>
           <button type="button" class="btn-close btn-close-white" @click="closeReportModal"
             :disabled="generatingReport"></button>
         </div>
-
         <div class="modal-body">
-          <p class="text-muted mb-3">
-            <i class="fas fa-info-circle me-2"></i>
-            Select a format and the report will be generated and downloaded automatically.
-          </p>
-
+          <p class="text-muted mb-3"><i class="fas fa-info-circle me-2"></i>Select a format and the report will be
+            generated and downloaded automatically.</p>
           <div class="report-format-selection">
             <label class="form-label fw-bold mb-3">Choose Report Format:</label>
-
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="format-card" :class="{ 'selected': reportFormat === 'csv' }" @click="reportFormat = 'csv'">
-                  <div class="format-icon">
-                    <i class="fas fa-file-csv fa-3x text-success"></i>
-                  </div>
+                  <div class="format-icon"><i class="fas fa-file-csv fa-3x text-success"></i></div>
                   <h6 class="mt-3 mb-1">CSV Report</h6>
-                  <small class="text-muted">
-                    Excel-compatible spreadsheet<br>
-                    Best for data analysis
-                  </small>
+                  <small class="text-muted">Excel-compatible spreadsheet<br>Best for data analysis</small>
                 </div>
               </div>
-
               <div class="col-md-6">
                 <div class="format-card" :class="{ 'selected': reportFormat === 'pdf' }" @click="reportFormat = 'pdf'">
-                  <div class="format-icon">
-                    <i class="fas fa-file-pdf fa-3x text-danger"></i>
-                  </div>
+                  <div class="format-icon"><i class="fas fa-file-pdf fa-3x text-danger"></i></div>
                   <h6 class="mt-3 mb-1">PDF Report</h6>
-                  <small class="text-muted">
-                    Professional document<br>
-                    Includes charts & graphs
-                  </small>
+                  <small class="text-muted">Professional document<br>Includes charts & graphs</small>
                 </div>
               </div>
             </div>
           </div>
-
           <div v-if="generatingReport" class="alert alert-info mt-3 mb-0">
             <div class="d-flex align-items-center">
               <div class="spinner-border spinner-border-sm me-3" role="status"></div>
-              <div>
-                <strong>Generating your report...</strong><br>
-                <small>This may take a few moments. Please wait.</small>
-              </div>
+              <div><strong>Generating your report...</strong><br><small>This may take a few moments.</small></div>
             </div>
           </div>
         </div>
-
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" @click="closeReportModal" :disabled="generatingReport">
-            <i class="fas fa-times me-2"></i>
-            Cancel
+            <i class="fas fa-times me-2"></i>Cancel
           </button>
           <button type="button" class="btn btn-primary" @click="generateAndDownload" :disabled="generatingReport">
-            <span v-if="generatingReport">
-              <span class="spinner-border spinner-border-sm me-2"></span>
-              Generating...
-            </span>
-            <span v-else>
-              <i class="fas fa-download me-2"></i>
-              Generate & Download
-            </span>
+            <span v-if="generatingReport"><span
+                class="spinner-border spinner-border-sm me-2"></span>Generating...</span>
+            <span v-else><i class="fas fa-download me-2"></i>Generate & Download</span>
           </button>
         </div>
       </div>
@@ -1392,6 +1427,83 @@ export default {
     const contestScoringMode = ref('simple')
     const scoringModeLocked = ref(false)
     const reviewedSubmissionsCount = ref(0)
+
+    // ─── PAGINATION STATE ─────────────────────────────────────────────────
+    const PAGE_SIZE_OPTIONS = [50, 100, 200]
+    const pageSize = ref(200)
+    const currentPage = ref(1)
+    const searchQuery = ref('')
+    const sortKey = ref('submitted_at')
+    const sortDir = ref('desc')
+
+    // ─── EXPANDABLE ROWS (bytes toggle) ───────────────────────────────────
+    const expandedRows = ref(new Set())
+    const toggleExpand = (id) => {
+      const s = new Set(expandedRows.value)
+      s.has(id) ? s.delete(id) : s.add(id)
+      expandedRows.value = s
+    }
+
+    // ─── FILTERED + SORTED + PAGED SUBMISSIONS ────────────────────────────
+    const filteredSubmissions = computed(() => {
+      const q = searchQuery.value.trim().toLowerCase()
+      let list = submissions.value
+
+      if (q) {
+        list = list.filter(s =>
+          (s.article_title || '').toLowerCase().includes(q) ||
+          (s.article_author || '').toLowerCase().includes(q) ||
+          (s.username || '').toLowerCase().includes(q)
+        )
+      }
+
+      const key = sortKey.value
+      list = [...list].sort((a, b) => {
+        let aVal = a[key] ?? ''
+        let bVal = b[key] ?? ''
+        if (typeof aVal === 'string') aVal = aVal.toLowerCase()
+        if (typeof bVal === 'string') bVal = bVal.toLowerCase()
+        if (aVal < bVal) return sortDir.value === 'asc' ? -1 : 1
+        if (aVal > bVal) return sortDir.value === 'asc' ? 1 : -1
+        return 0
+      })
+
+      return list
+    })
+
+    const totalPages = computed(() =>
+      Math.max(1, Math.ceil(filteredSubmissions.value.length / pageSize.value))
+    )
+
+    const pagedSubmissions = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value
+      return filteredSubmissions.value.slice(start, start + pageSize.value)
+    })
+
+    const visiblePages = computed(() => {
+      const total = totalPages.value
+      const cur = currentPage.value
+      const delta = 2
+      const pages = []
+      for (let i = Math.max(1, cur - delta); i <= Math.min(total, cur + delta); i++) {
+        pages.push(i)
+      }
+      return pages
+    })
+
+    const toggleSort = (key) => {
+      if (sortKey.value === key) {
+        sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+      } else {
+        sortKey.value = key
+        sortDir.value = 'asc'
+      }
+      currentPage.value = 1
+    }
+
+    watch(searchQuery, () => { currentPage.value = 1 })
+    watch(pageSize, () => { currentPage.value = 1 })
+    // ──────────────────────────────────────────────────────────────────────
 
     // Calculate total weight of all parameters
     const totalWeight = computed(() => {
@@ -1505,7 +1617,6 @@ export default {
       const usernameLower = username.toLowerCase()
       const creatorLower = contestCreator.toLowerCase()
 
-      // Allow delete if user is creator or admin-level
       if (usernameLower === creatorLower) {
         canDeleteContest.value = true
         return
@@ -1523,12 +1634,10 @@ export default {
     const formatDate = (dateString) => {
       if (!dateString) return 'No date'
       try {
-        // Ensure UTC format for consistent parsing
         let utcDateString = dateString
         if (!dateString.endsWith('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
           utcDateString = dateString + 'Z'
         }
-
         return new Date(utcDateString).toLocaleString('en-IN', {
           timeZone: 'Asia/Kolkata',
           year: 'numeric',
@@ -1551,7 +1660,6 @@ export default {
         if (!dateString.endsWith('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
           utcDateString = dateString + 'Z'
         }
-
         return new Date(utcDateString).toLocaleString('en-IN', {
           timeZone: 'Asia/Kolkata',
           year: 'numeric',
@@ -1566,57 +1674,39 @@ export default {
       }
     }
 
-    // Convert bytes to human-readable format (KB/MB)
+    // Convert bytes to human-readable format
     const formatByteCount = (bytes) => {
       if (!bytes) return ''
-      if (bytes >= 1048576) {
-        return `${(bytes / 1048576).toFixed(1)} MB`
-      }
-      if (bytes >= 1024) {
-        return `${(bytes / 1024).toFixed(1)} KB`
-      }
+      if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(1)} MB`
+      if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`
       return `${bytes} bytes`
     }
 
     // Format bytes with exact count in parentheses
     const formatByteCountWithExact = (bytes) => {
       if (!bytes && bytes !== 0) return ''
-
       const absBytes = Math.abs(bytes)
-
-      let formatted = ''
-      if (absBytes >= 1048576) {
-        formatted = `${(absBytes / 1048576).toFixed(1)} MB (${bytes} bytes)`
-      } else if (absBytes >= 1024) {
-        formatted = `${(absBytes / 1024).toFixed(1)} KB (${bytes} bytes)`
-      } else {
-        formatted = `${bytes} bytes`
-      }
-
-      return formatted
+      if (absBytes >= 1048576) return `${(absBytes / 1048576).toFixed(1)} MB (${bytes} bytes)`
+      if (absBytes >= 1024) return `${(absBytes / 1024).toFixed(1)} KB (${bytes} bytes)`
+      return `${bytes} bytes`
     }
 
     // Extract category name from full MediaWiki URL
     const getCategoryName = (categoryUrl) => {
       if (!categoryUrl) return ''
-
       try {
         const url = new URL(categoryUrl)
         let pageTitle = ''
-
-        // Parse standard MediaWiki URL format
         if (url.pathname.includes('/wiki/')) {
           pageTitle = decodeURIComponent(url.pathname.split('/wiki/')[1])
         } else if (url.searchParams.has('title')) {
           pageTitle = decodeURIComponent(url.searchParams.get('title'))
         } else {
-          // Fallback to last path segment
           const parts = url.pathname.split('/').filter(p => p)
           if (parts.length > 0) {
             pageTitle = decodeURIComponent(parts[parts.length - 1])
           }
         }
-
         return pageTitle || categoryUrl
       } catch (e) {
         return categoryUrl
@@ -1627,12 +1717,8 @@ export default {
     const formatWordCount = (bytes) => {
       if (bytes === null || bytes === undefined) return '0 bytes'
       const absBytes = Math.abs(bytes)
-      if (absBytes >= 1048576) {
-        return `${(absBytes / 1048576).toFixed(1)} MB`
-      }
-      if (absBytes >= 1024) {
-        return `${(absBytes / 1024).toFixed(1)} KB`
-      }
+      if (absBytes >= 1048576) return `${(absBytes / 1048576).toFixed(1)} MB`
+      if (absBytes >= 1024) return `${(absBytes / 1024).toFixed(1)} KB`
       return `${absBytes} bytes`
     }
 
@@ -1650,14 +1736,10 @@ export default {
     // Get Bootstrap color class for submission status
     const getStatusColor = (status) => {
       switch (status?.toLowerCase()) {
-        case 'accepted':
-          return 'success'
-        case 'rejected':
-          return 'danger'
-        case 'pending':
-          return 'warning'
-        default:
-          return 'secondary'
+        case 'accepted': return 'success'
+        case 'rejected': return 'danger'
+        case 'pending': return 'warning'
+        default: return 'secondary'
       }
     }
 
@@ -1665,7 +1747,6 @@ export default {
     const loadContest = async (id = null) => {
       loading.value = true
       error.value = null
-
       try {
         let data
         if (id) {
@@ -1676,7 +1757,6 @@ export default {
           data = await api.get(`/contest/name/${contestName}`)
         }
 
-        // Ensure scoring parameters are initialized
         contest.value = {
           ...data,
           scoring_parameters: data.scoring_parameters
@@ -1684,10 +1764,7 @@ export default {
             : { enabled: false }
         }
 
-        // Check permissions after loading contest
         await checkAuthAndPermissions()
-
-        // Load submissions if user has access
         if (canViewSubmissions.value) loadSubmissions()
       } catch (err) {
         console.error('Error loading contest:', err)
@@ -1701,21 +1778,14 @@ export default {
     const checkAuthAndPermissions = async () => {
       checkingAuth.value = true
       canDeleteContest.value = false
-
       try {
-        // Try to get user from store
         let loadedUser = store.currentUser || (store.state && store.state.currentUser) || currentUser.value
-
-        // If not in store, fetch from backend
         if (!loadedUser) {
           await store.checkAuth()
           await new Promise(resolve => setTimeout(resolve, 150))
           loadedUser = store.currentUser || (store.state && store.state.currentUser) || currentUser.value
         }
-
-        // Allow time for reactive updates
         await new Promise(resolve => setTimeout(resolve, 100))
-
         checkDeletePermission()
       } catch (error) {
         console.error('Failed to check auth:', error)
@@ -1727,10 +1797,7 @@ export default {
 
     // Fetch all submissions for this contest
     const loadSubmissions = async () => {
-      if (!contest.value || !canViewSubmissions.value) {
-        return
-      }
-
+      if (!contest.value || !canViewSubmissions.value) return
       loadingSubmissions.value = true
       try {
         const data = await api.get(`/contest/${contest.value.id}/submissions`)
@@ -1744,12 +1811,9 @@ export default {
       }
     }
 
-    // Refresh article metadata from MediaWiki for all submissions
+    // Refresh article metadata from MediaWiki
     const refreshMetadata = async () => {
-      if (!contest.value || !canViewSubmissions.value || submissions.value.length === 0) {
-        return
-      }
-
+      if (!contest.value || !canViewSubmissions.value || submissions.value.length === 0) return
       refreshingMetadata.value = true
       try {
         const response = await api.post(`/submission/contest/${contest.value.id}/refresh-metadata`)
@@ -1769,14 +1833,11 @@ export default {
     // Delete contest with confirmation
     const handleDeleteContest = async () => {
       if (!contest.value) return
-
       const confirmed = confirm(
         `Are you sure you want to delete the contest "${contest.value.name}"?\n\n` +
         'This action cannot be undone and will delete all associated submissions.'
       )
-
       if (!confirmed) return
-
       deletingContest.value = true
       try {
         await api.delete(`/contest/${contest.value.id}`)
@@ -1834,7 +1895,6 @@ export default {
     // Show article preview modal for submission
     const showArticlePreview = (submission) => {
       currentSubmissionId.value = submission.id
-
       setTimeout(() => {
         const modalElement = document.getElementById('articlePreviewModal')
         if (modalElement) {
@@ -1847,11 +1907,7 @@ export default {
     // Update submission in array after review
     const handleSubmissionReviewed = (reviewData) => {
       console.log('Review received:', reviewData)
-
-      const submissionIndex = submissions.value.findIndex(
-        s => s.id === reviewData.submissionId
-      )
-
+      const submissionIndex = submissions.value.findIndex(s => s.id === reviewData.submissionId)
       if (submissionIndex !== -1) {
         submissions.value[submissionIndex] = {
           ...submissions.value[submissionIndex],
@@ -1861,10 +1917,8 @@ export default {
           already_reviewed: true,
           reviewed_at: new Date().toISOString()
         }
-
         // Trigger reactivity
         submissions.value = [...submissions.value]
-
         showAlert('Submission reviewed successfully', 'success')
       }
     }
@@ -1872,17 +1926,10 @@ export default {
     // Handle submission deleted from modal
     const handleSubmissionDeleted = (submissionId) => {
       console.log('Submission deleted:', submissionId)
-
-      // Remove the submission from the array
-      const submissionIndex = submissions.value.findIndex(
-        s => s.id === submissionId
-      )
-
+      const submissionIndex = submissions.value.findIndex(s => s.id === submissionId)
       if (submissionIndex !== -1) {
         submissions.value.splice(submissionIndex, 1)
         showAlert('Submission deleted successfully', 'success')
-
-        // Update contest submission count if available
         if (contest.value && contest.value.submission_count) {
           contest.value.submission_count -= 1
         }
@@ -1891,28 +1938,19 @@ export default {
 
     // Handle delete submission from table
     const handleDeleteSubmission = async (submission) => {
-      // Confirmation dialog
       const confirmed = confirm(
         `Are you sure you want to delete the submission "${submission.article_title}"?\n\n` +
         'This action cannot be undone and will adjust the user\'s score.'
       )
-
       if (!confirmed) return
-
       deletingSubmissionId.value = submission.id
-
       try {
         await api.deleteSubmission(submission.id)
-
-        // Remove from array
         const index = submissions.value.findIndex(s => s.id === submission.id)
         if (index !== -1) {
           submissions.value.splice(index, 1)
         }
-
         showAlert('Submission deleted successfully', 'success')
-
-        // Update contest submission count
         if (contest.value && contest.value.submission_count) {
           contest.value.submission_count -= 1
         }
@@ -1979,17 +2017,14 @@ export default {
     // Search jury members with debounce
     const searchJuryMembers = async () => {
       const query = jurySearchQuery.value.trim()
-
       if (query.length < 2) {
         jurySearchResults.value = []
         return
       }
       if (jurySearchTimeout) { clearTimeout(jurySearchTimeout) }
-      // Debounce to avoid excessive API calls
       jurySearchTimeout = setTimeout(async () => {
         try {
           const response = await api.get(`/user/search?q=${encodeURIComponent(query)}&limit=10`)
-          // Filter out already selected users
           jurySearchResults.value = (response.users || []).filter(
             user => !editForm.selectedJuryMembers.includes(user.username)
           )
@@ -2000,26 +2035,17 @@ export default {
       }, 300)
     }
 
-
     // Add jury member with self-selection warning
     const addJuryMember = (username) => {
-      // Check if trying to add self
       if (isCurrentUser(username)) {
-        // Show confirmation dialog before adding
         const confirmed = window.confirm(
           ' WARNING: Self-Selection as Jury Member\n\n' +
           'You are about to select yourself as a jury member.\n\n' +
           'It is strongly recommended to select other users as jury members to maintain fairness and objectivity.\n\n' +
           'Are you sure you want to proceed with selecting yourself?'
         )
-
-        // If user cancels, don't add them
-        if (!confirmed) {
-          return
-        }
+        if (!confirmed) return
       }
-
-      // Add if not already in list
       if (!editForm.selectedJuryMembers.includes(username)) {
         editForm.selectedJuryMembers.push(username)
         jurySearchQuery.value = ''
@@ -2029,26 +2055,20 @@ export default {
 
     // Remove jury member from selection
     const removeJuryMember = (username) => {
-      editForm.selectedJuryMembers = editForm.selectedJuryMembers.filter(
-        u => u !== username
-      )
+      editForm.selectedJuryMembers = editForm.selectedJuryMembers.filter(u => u !== username)
     }
 
     // Search organizers with debounce
     const searchOrganizers = async () => {
       const query = organizerSearchQuery.value.trim()
-
       if (query.length < 2) {
         organizerSearchResults.value = []
         return
       }
-      if (organizerSearchTimeout) {
-        clearTimeout(organizerSearchTimeout)
-      }
+      if (organizerSearchTimeout) { clearTimeout(organizerSearchTimeout) }
       organizerSearchTimeout = setTimeout(async () => {
         try {
           const response = await api.get(`/user/search?q=${encodeURIComponent(query)}&limit=10`)
-          // Filter out already selected organizers and current user
           organizerSearchResults.value = (response.users || []).filter(
             user => !editForm.selectedOrganizers.includes(user.username) &&
               !isCurrentUser(user.username)
@@ -2062,13 +2082,10 @@ export default {
 
     // Add organizer (prevent adding current user)
     const addOrganizer = (username) => {
-      // Don't add current user (they're already creator)
       if (isCurrentUser(username)) {
         showAlert('You will be added automatically as contest creator', 'info')
         return
       }
-
-      // Add the organizer if not already selected
       if (!editForm.selectedOrganizers.includes(username)) {
         editForm.selectedOrganizers.push(username)
         organizerSearchQuery.value = ''
@@ -2078,9 +2095,7 @@ export default {
 
     // Remove organizer from selection
     const removeOrganizer = (username) => {
-      editForm.selectedOrganizers = editForm.selectedOrganizers.filter(
-        u => u !== username
-      )
+      editForm.selectedOrganizers = editForm.selectedOrganizers.filter(u => u !== username)
     }
 
     // Add new category field
@@ -2097,7 +2112,7 @@ export default {
 
     // Open report modal
     const openReportModal = () => {
-      reportFormat.value = 'csv' // Default to CSV
+      reportFormat.value = 'csv'
       showReportModal.value = true
     }
 
@@ -2120,7 +2135,6 @@ export default {
       return null
     }
 
-    // Main function: Generate AND Download in one step
     const sanitizeFilename = (name) => {
       return name
         .replace(/[^a-z0-9\s-]/gi, '')
@@ -2132,27 +2146,21 @@ export default {
     const showDownloadNotification = (filename, type) => {
       const icon = type === 'pdf' ? 'fa-file-pdf' : 'fa-file-csv'
       const color = type === 'pdf' ? '#dc3545' : '#28a745'
-
       const toast = document.createElement('div')
-      toast.innerHTML = `
-    <i class="fas ${icon} me-2"></i>
-    <span>Downloaded: ${filename}</span>
-  `
+      toast.innerHTML = `<i class="fas ${icon} me-2"></i><span>Downloaded: ${filename}</span>`
       toast.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: ${color};
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    z-index: 9999;
-    animation: slideIn 0.3s ease;
-  `
-
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: ${color};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+      `
       document.body.appendChild(toast)
-
       setTimeout(() => {
         toast.style.animation = 'slideOut 0.3s ease'
         setTimeout(() => document.body.removeChild(toast), 300)
@@ -2161,11 +2169,8 @@ export default {
 
     const generateAndDownload = async () => {
       if (!contest.value || generatingReport.value) return
-
       generatingReport.value = true
-
       try {
-        // Generate report
         const csrfToken = getCsrfToken()
         const headers = { 'Content-Type': 'application/json' }
         if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken
@@ -2184,12 +2189,10 @@ export default {
         )
 
         const generateData = await generateResponse.json()
-
         if (!generateResponse.ok || !generateData.success) {
           throw new Error(generateData.error || 'Generation failed')
         }
 
-        // Download
         const reportId = generateData.report.id
         const downloadResponse = await fetch(
           `/api/report/report/${reportId}/download`,
@@ -2201,17 +2204,14 @@ export default {
         const blob = await downloadResponse.blob()
         const url = window.URL.createObjectURL(blob)
 
-        // Better filename
         const timestamp = new Date().toISOString().split('T')[0]
         const sanitizedName = sanitizeFilename(contest.value.name)
         const filename = `${sanitizedName}_report_${timestamp}.${reportFormat.value}`
 
-        // For PDF: Open in new tab + download
         if (reportFormat.value === 'pdf') {
           window.open(url, '_blank')
         }
 
-        // Download file
         const link = document.createElement('a')
         link.href = url
         link.download = filename
@@ -2220,16 +2220,11 @@ export default {
         link.click()
         document.body.removeChild(link)
 
-        // Cleanup
         setTimeout(() => window.URL.revokeObjectURL(url), 100)
-
-        // Show notification
         showDownloadNotification(filename, reportFormat.value)
-
-        // Close modal
         showReportModal.value = false
       } catch (error) {
-        console.error(' Error:', error)
+        console.error('Error:', error)
         showAlert('Failed: ' + error.message, 'danger')
       } finally {
         generatingReport.value = false
@@ -2238,6 +2233,7 @@ export default {
 
     const openEditModal = () => {
       if (!contest.value) return
+
       editForm.name = contest.value.name
       editForm.project_name = contest.value.project_name || ''
       editForm.description = contest.value.description || ''
@@ -2260,7 +2256,6 @@ export default {
         editForm.selectedOrganizers = []
       }
 
-
       if (Array.isArray(contest.value.categories) && contest.value.categories.length > 0) {
         editForm.categories = [...contest.value.categories]
       } else {
@@ -2277,7 +2272,7 @@ export default {
       reviewedSubmissionsCount.value = reviewedSubmissions.length
       scoringModeLocked.value = reviewedSubmissions.length > 0
 
-      // This determines what the contest is CURRENTLY using
+      // Determine current scoring mode
       if (contest.value.scoring_parameters?.enabled === true) {
         contestScoringMode.value = 'multi_parameter'
         console.log('[EDIT MODAL] Current scoring mode: MULTI-PARAMETER')
@@ -2287,13 +2282,11 @@ export default {
       }
 
       if (contestScoringMode.value === 'multi_parameter') {
-        // Contest is using multi-parameter scoring
         enableMultiParameterScoring.value = true
-
-        // Load multi-parameter values
         maxScore.value = Number(contest.value.scoring_parameters.max_score ?? 10)
         minScore.value = Number(contest.value.scoring_parameters.min_score ?? 0)
 
+        // ✅ FIXED: separate if/else instead of ternary (ternary causes undefined bug)
         if (contest.value.scoring_parameters.parameters?.length > 0) {
           scoringParameters.value = contest.value.scoring_parameters.parameters.map(p => ({
             name: p.name || '',
@@ -2304,7 +2297,6 @@ export default {
           loadDefaultParameters()
         }
 
-        // Sync to editForm
         editForm.scoring_parameters = {
           enabled: true,
           max_score: maxScore.value,
@@ -2312,18 +2304,12 @@ export default {
           parameters: scoringParameters.value.map(p => ({ ...p }))
         }
 
-        // Also sync simple values for consistency
         editForm.marks_setting_accepted = maxScore.value
         editForm.marks_setting_rejected = minScore.value
       } else {
-        // Contest is using simple scoring
         enableMultiParameterScoring.value = false
-
-        // Load simple scoring values
         editForm.marks_setting_accepted = Number(contest.value.marks_setting_accepted ?? 0)
         editForm.marks_setting_rejected = Number(contest.value.marks_setting_rejected ?? 0)
-
-        // Reset multi-parameter values to defaults (not loaded from contest)
         maxScore.value = 10
         minScore.value = 0
         loadDefaultParameters()
@@ -2335,6 +2321,7 @@ export default {
           parameters: []
         }
       }
+
       jurySearchQuery.value = ''
       jurySearchResults.value = []
       organizerSearchQuery.value = ''
@@ -2343,10 +2330,10 @@ export default {
       if (editModal) editModal.show()
     }
 
-
     const saveContestEdits = async () => {
       try {
         savingContest.value = true
+
         const validCategories = editForm.categories.filter(cat => cat && cat.trim())
         if (validCategories.length === 0) {
           showAlert('At least one category URL is required', 'warning')
@@ -2363,15 +2350,10 @@ export default {
         let scoringParametersPayload = null
 
         if (enableMultiParameterScoring.value) {
-          // Multi-parameter scoring is enabled (either locked or unlocked)
-
-          // Validate weights sum to 100
           if (totalWeight.value !== 100) {
             showAlert('Parameter weights must sum to 100%', 'warning')
             return
           }
-
-          // Build clean payload
           scoringParametersPayload = {
             enabled: true,
             max_score: Number(maxScore.value),
@@ -2383,14 +2365,12 @@ export default {
             }))
           }
         } else {
-          // Simple scoring is enabled
           scoringParametersPayload = {
             enabled: false,
             max_score: Number(editForm.marks_setting_accepted),
             min_score: Number(editForm.marks_setting_rejected),
             parameters: []
           }
-
           console.log('[SAVE] Simple scoring payload:', scoringParametersPayload)
         }
 
@@ -2427,6 +2407,7 @@ export default {
           marks_setting_rejected: Number(editForm.marks_setting_rejected),
           scoring_parameters: scoringParametersPayload
         }
+
         await api.put(`/contest/${contest.value.id}`, payload)
 
         showAlert('Contest updated successfully', 'success')
@@ -2446,29 +2427,20 @@ export default {
 
     // Check if user can review submissions (jury members only)
     const canUserReview = computed(() => {
-      if (!isAuthenticated.value || !contest.value || !currentUser.value) {
-        return false
-      }
-
+      if (!isAuthenticated.value || !contest.value || !currentUser.value) return false
       const username = currentUser.value.username.trim().toLowerCase()
-
       if (Array.isArray(contest.value.jury_members)) {
         const jury = contest.value.jury_members
           .filter(Boolean)
           .map(j => String(j).trim().toLowerCase())
-
-        if (jury.includes(username)) {
-          return true
-        }
+        if (jury.includes(username)) return true
       }
-
       return false
     })
 
     // Navigate to contest leaderboard
     const goToLeaderboard = () => {
       if (!contest.value) return
-
       router.push({
         name: 'ContestLeaderboard',
         params: { name: route.params.name }
@@ -2548,24 +2520,34 @@ export default {
       generatingReport,
       openReportModal,
       closeReportModal,
-      generateAndDownload
+      generateAndDownload,
+      // Pagination
+      PAGE_SIZE_OPTIONS,
+      pageSize,
+      currentPage,
+      searchQuery,
+      sortKey,
+      sortDir,
+      filteredSubmissions,
+      totalPages,
+      pagedSubmissions,
+      visiblePages,
+      toggleSort,
+      // Expandable bytes rows
+      expandedRows,
+      toggleExpand
     }
   }
 }
 </script>
 
+
 <style scoped>
-/* --------------------------------------------------------------------------
-   Main Container & Layout
-   -------------------------------------------------------------------------- */
 .contest-view {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* --------------------------------------------------------------------------
-   Header Section
-   -------------------------------------------------------------------------- */
 .contest-header-section {
   border-bottom: 2px solid var(--wiki-primary);
   padding-bottom: 1rem;
@@ -2590,9 +2572,6 @@ export default {
   flex-wrap: wrap;
 }
 
-/* --------------------------------------------------------------------------
-   Cards & Content Containers
-   -------------------------------------------------------------------------- */
 .card {
   border: 1px solid var(--wiki-border);
   border-radius: 8px;
@@ -2631,9 +2610,6 @@ export default {
   color: #ffffff;
 }
 
-/* --------------------------------------------------------------------------
-   Badges
-   -------------------------------------------------------------------------- */
 .badge {
   font-weight: 500;
   padding: 0.4em 0.8em;
@@ -2649,9 +2625,6 @@ export default {
   color: white;
 }
 
-/* --------------------------------------------------------------------------
-   Tables
-   -------------------------------------------------------------------------- */
 .table {
   margin-top: 0;
 }
@@ -2702,9 +2675,121 @@ export default {
   text-decoration: underline;
 }
 
-/* --------------------------------------------------------------------------
-   Buttons
-   -------------------------------------------------------------------------- */
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.sortable-th:hover {
+  background-color: rgba(0, 102, 153, 0.18);
+}
+
+[data-theme="dark"] .sortable-th:hover {
+  background-color: rgba(93, 184, 230, 0.18);
+}
+
+.bytes-toggle {
+  cursor: pointer;
+  font-size: 0.78em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--wiki-border);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.bytes-toggle:hover {
+  background-color: rgba(0, 102, 153, 0.1);
+  border-color: var(--wiki-primary);
+  color: var(--wiki-primary);
+}
+
+[data-theme="dark"] .bytes-toggle:hover {
+  background-color: rgba(93, 184, 230, 0.15);
+  border-color: var(--wiki-primary);
+}
+
+.submissions-toolbar {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--wiki-border);
+  margin-bottom: 0.75rem;
+}
+
+.search-wrapper .input-group-text {
+  background-color: rgba(0, 102, 153, 0.08);
+  border-color: var(--wiki-border);
+  color: var(--wiki-primary);
+}
+
+[data-theme="dark"] .search-wrapper .input-group-text {
+  background-color: rgba(93, 184, 230, 0.1);
+  border-color: #555;
+  color: var(--wiki-primary);
+}
+
+.pagination-bar {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--wiki-border);
+}
+
+.pagination .page-link {
+  color: var(--wiki-primary);
+  border-color: var(--wiki-border);
+  padding: 0.25rem 0.6rem;
+  transition: all 0.15s ease;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--wiki-primary);
+  border-color: var(--wiki-primary);
+  color: white;
+}
+
+.pagination .page-link:hover {
+  background-color: rgba(0, 102, 153, 0.1);
+  color: var(--wiki-primary);
+  border-color: var(--wiki-primary);
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #aaa;
+  pointer-events: none;
+  background-color: transparent;
+}
+
+[data-theme="dark"] .pagination .page-link {
+  background-color: #2a2a2a;
+  border-color: #444;
+  color: var(--wiki-primary);
+}
+
+[data-theme="dark"] .pagination .page-item.active .page-link {
+  background-color: var(--wiki-primary);
+  border-color: var(--wiki-primary);
+  color: white;
+}
+
+[data-theme="dark"] .pagination .page-link:hover {
+  background-color: rgba(93, 184, 230, 0.15);
+  border-color: var(--wiki-primary);
+}
+
+[data-theme="dark"] .pagination .page-item.disabled .page-link {
+  background-color: #1e1e1e;
+  border-color: #333;
+  color: #555;
+}
+
+.submissions-table tbody tr:nth-child(even) {
+  background-color: rgba(0, 102, 153, 0.03);
+}
+
+[data-theme="dark"] .submissions-table tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
 .btn-outline-primary {
   border-color: var(--wiki-primary);
   color: var(--wiki-primary);
@@ -2768,9 +2853,6 @@ export default {
   color: white;
 }
 
-/* --------------------------------------------------------------------------
-   Alerts
-   -------------------------------------------------------------------------- */
 .alert {
   border-radius: 0.5rem;
   border-left: 4px solid;
@@ -2801,9 +2883,6 @@ export default {
   color: var(--wiki-danger);
 }
 
-/* --------------------------------------------------------------------------
-   Loading Spinners
-   -------------------------------------------------------------------------- */
 .spinner-border.text-primary {
   color: var(--wiki-primary) !important;
   width: 3rem;
@@ -2811,9 +2890,6 @@ export default {
   border-width: 0.3em;
 }
 
-/* --------------------------------------------------------------------------
-   Description Section
-   -------------------------------------------------------------------------- */
 .description-text {
   white-space: pre-line;
   line-height: 1.6;
@@ -2832,9 +2908,6 @@ export default {
   font-size: 1rem;
 }
 
-/* --------------------------------------------------------------------------
-   Autocomplete Components
-   -------------------------------------------------------------------------- */
 .jury-autocomplete,
 .organizer-autocomplete {
   border: 1px solid var(--wiki-border);
@@ -2893,9 +2966,6 @@ export default {
   color: var(--wiki-primary) !important;
 }
 
-/* --------------------------------------------------------------------------
-   Organizers & Jury Display
-   -------------------------------------------------------------------------- */
 .organizers-flex {
   display: flex;
   flex-wrap: wrap;
@@ -2906,7 +2976,7 @@ export default {
 .organizer-chip {
   display: flex;
   align-items: center;
-  padding: 0.50rem 1rem;
+  padding: 0.5rem 1rem;
   background-color: var(--wiki-primary);
   color: white;
   border-radius: 8px;
@@ -2915,19 +2985,9 @@ export default {
 }
 
 .organizer-chip:hover {
-  background-color: var(--wiki-primary);
   transform: translateY(-2px);
 }
 
-[data-theme="dark"] .organizer-chip {
-  background-color: var(--wiki-primary);
-}
-
-[data-theme="dark"] .organizer-chip:hover {
-  background-color: var(--wiki-primary);
-}
-
-/* Selection boxes for organizers/jury in edit modal */
 .organizer-selection-box,
 .jury-selection-box {
   min-height: 50px;
@@ -2943,9 +3003,6 @@ export default {
   padding: 0.5rem;
 }
 
-/* --------------------------------------------------------------------------
-   Scoring System Display (View Mode)
-   -------------------------------------------------------------------------- */
 .scoring-meta {
   display: flex;
   align-items: center;
@@ -3027,10 +3084,6 @@ export default {
   color: #93c5fd;
 }
 
-.info-note i {
-  font-size: 0.9375em;
-}
-
 .points-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -3064,9 +3117,6 @@ export default {
   color: var(--wiki-primary);
 }
 
-/* --------------------------------------------------------------------------
-   Modal Structure
-   -------------------------------------------------------------------------- */
 .modal-fullscreen {
   width: 100vw;
   max-width: 100%;
@@ -3094,9 +3144,6 @@ export default {
   margin: 0 auto;
 }
 
-/* --------------------------------------------------------------------------
-   Edit Section Containers
-   -------------------------------------------------------------------------- */
 .edit-section {
   padding: 1rem;
   margin-bottom: 2rem;
@@ -3122,11 +3169,6 @@ export default {
   align-items: center;
 }
 
-[data-theme="dark"] .section-title {
-  color: var(--wiki-primary);
-}
-
-/* Specific styling for scoring section */
 .scoring-section-edit {
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   border: 2px solid var(--wiki-primary);
@@ -3137,9 +3179,6 @@ export default {
   border-color: var(--wiki-primary);
 }
 
-/* --------------------------------------------------------------------------
-   Lock Status Banner
-   -------------------------------------------------------------------------- */
 .scoring-lock-status {
   margin-bottom: 1.5rem;
 }
@@ -3148,7 +3187,7 @@ export default {
   display: flex;
   align-items: baseline;
   gap: 1rem;
-  padding: 0.5rem 0.5rem;
+  padding: 0.5rem;
   border-radius: 8px;
   border: 2px solid;
   transition: all 0.3s ease;
@@ -3231,9 +3270,6 @@ export default {
   color: #d1d5db;
 }
 
-/* --------------------------------------------------------------------------
-   Scoring Mode Badge
-   -------------------------------------------------------------------------- */
 .scoring-mode-badge {
   margin-bottom: 0.5rem;
 }
@@ -3241,7 +3277,7 @@ export default {
 .badge-mode {
   display: inline-flex;
   align-items: center;
-  padding: 0.3rem 0.3rem;
+  padding: 0.3rem;
   border-radius: 6px;
   font-size: 0.95rem;
   font-weight: 600;
@@ -3258,15 +3294,8 @@ export default {
   color: white;
 }
 
-/* --------------------------------------------------------------------------
-   Locked Edit Info
-   -------------------------------------------------------------------------- */
 .locked-edit-info {
   margin-top: 1rem;
-}
-
-.locked-edit-info .alert {
-  margin-bottom: 1.5rem;
 }
 
 .locked-edit-info .alert ul {
@@ -3284,9 +3313,6 @@ export default {
   color: #93c5fd;
 }
 
-/* --------------------------------------------------------------------------
-   Unlocked Edit Mode
-   -------------------------------------------------------------------------- */
 .unlocked-edit-mode {
   margin-top: 1rem;
 }
@@ -3301,7 +3327,6 @@ export default {
 
 [data-theme="dark"] .scoring-mode-toggle {
   background: rgba(0, 102, 153, 0.1);
-  border-color: var(--wiki-primary);
 }
 
 .scoring-mode-toggle:hover {
@@ -3335,31 +3360,6 @@ export default {
   margin-left: 5px;
 }
 
-/* --------------------------------------------------------------------------
-   Simple/Multi-Parameter Scoring Forms
-   -------------------------------------------------------------------------- */
-.simple-scoring-form .alert {
-  border-left: 4px solid #17a2b8;
-  background: rgba(23, 162, 184, 0.1);
-  color: #0c5460;
-}
-
-[data-theme="dark"] .simple-scoring-form .alert {
-  background: rgba(23, 162, 184, 0.15);
-  color: #5db8e6;
-}
-
-.multi-param-scoring-form .alert {
-  border-left: 4px solid #28a745;
-  background: rgba(40, 167, 69, 0.1);
-  color: #155724;
-}
-
-[data-theme="dark"] .multi-param-scoring-form .alert {
-  background: rgba(40, 167, 69, 0.15);
-  color: #4ade80;
-}
-
 .parameters-list {
   margin-top: 0.5rem;
 }
@@ -3373,7 +3373,6 @@ export default {
   transform: translateY(-1px);
 }
 
-/* Weight validation styling */
 .bg-success-subtle {
   background-color: rgba(40, 167, 69, 0.1) !important;
   border: 2px solid #28a745 !important;
@@ -3394,9 +3393,6 @@ export default {
   border-color: #f87171 !important;
 }
 
-/* --------------------------------------------------------------------------
-   Report Modal Styling
-   -------------------------------------------------------------------------- */
 .report-format-selection {
   padding: 0.5rem 0;
 }
@@ -3413,19 +3409,15 @@ export default {
 }
 
 .format-card:hover {
-  border-color: var(--wiki-primary, #006699);
+  border-color: var(--wiki-primary);
   transform: translateY(-3px);
   box-shadow: 0 4px 12px rgba(0, 102, 153, 0.15);
 }
 
 .format-card.selected {
-  border-color: var(--wiki-primary, #006699);
+  border-color: var(--wiki-primary);
   background-color: rgba(0, 102, 153, 0.05);
   box-shadow: 0 4px 12px rgba(0, 102, 153, 0.2);
-}
-
-.format-icon {
-  margin-bottom: 0.5rem;
 }
 
 .format-card i {
@@ -3447,12 +3439,9 @@ export default {
 
 [data-theme="dark"] .format-card.selected {
   background-color: rgba(93, 184, 230, 0.1);
-  border-color: var(--wiki-primary, #5db8e6);
+  border-color: var(--wiki-primary);
 }
 
-/* --------------------------------------------------------------------------
-   Responsive Adjustments
-   -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
   .contest-title {
     font-size: 2rem;
@@ -3495,6 +3484,26 @@ export default {
 
   .modal-fullscreen .modal-body {
     padding: 1rem;
+  }
+
+  .pagination-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .pagination-bar nav {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .submissions-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-wrapper {
+    max-width: 100% !important;
   }
 }
 
