@@ -43,6 +43,7 @@ __all__ = [
     "check_article_has_category",
     "append_categories_to_article",
     "get_article_reference_count",
+    "get_detailed_reference_counts",
     "get_mediawiki_user_edit_count",
     "get_article_image_count",
     "get_article_infobox_count",
@@ -161,6 +162,8 @@ def extract_page_title_from_url(article_url: str) -> Optional[str]:
         return unquote(parts[-1])
 
     return None
+
+
 
 
 def build_mediawiki_revisions_api_params(page_title: str) -> Dict[str, Any]:  # pylint: disable=invalid-name
@@ -388,6 +391,9 @@ def get_article_wikitext(article_url: str) -> Optional[str]:  # pylint: disable=
     Returns:
         Wikitext content as string, or None if fetch fails.
     """
+    if not article_url:
+        return None
+
     page_title = extract_page_title_from_url(article_url)
     if not page_title:
         return None
@@ -442,6 +448,23 @@ def get_article_wikitext(article_url: str) -> Optional[str]:  # pylint: disable=
     content = main_slot.get('content')
 
     return content
+
+
+def get_detailed_reference_counts(article_url: str) -> Dict[str, int]:
+    """Parses wikitext to distinguish between New (defined) and Reused (self-closing) references."""
+    wikitext = get_article_wikitext(article_url)
+    if not wikitext:
+        return {"new": 0, "reused": 0}
+
+    text = re.sub(r"<!--.*?-->", "", wikitext, flags=re.DOTALL)
+
+    new_refs_pattern = r"<ref\b[^>]*?>.*?</ref>"
+    new_refs = len(re.findall(new_refs_pattern, text, flags=re.IGNORECASE | re.DOTALL))
+
+    reused_refs_pattern = r"<ref\b[^>]*?/>"
+    reused_refs = len(re.findall(reused_refs_pattern, text, flags=re.IGNORECASE))
+
+    return {"new": new_refs, "reused": reused_refs}
 
 
 def check_article_has_template(article_url: str, template_name: str) -> Dict[str, Any]:
