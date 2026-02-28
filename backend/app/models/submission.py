@@ -76,6 +76,10 @@ class Submission(BaseModel):
     # Infobox count
     infobox_count = db.Column(db.Integer, nullable=True)
 
+    # Reference Analysis Metrics
+    ref_new_count = db.Column(db.Integer, nullable=True, default=0)
+    ref_reused_count = db.Column(db.Integer, nullable=True, default=0)
+
     # Link counts for future scoring evaluation
     # Number of other mainspace articles that link to this article
     incoming_links = db.Column(db.Integer, nullable=True)
@@ -188,6 +192,8 @@ class Submission(BaseModel):
         category_error=None,
         image_count=None,
         infobox_count=None,
+        ref_new_count=0,
+        ref_reused_count=0,
         incoming_links=None,
         outgoing_links=None,
     ):
@@ -211,6 +217,8 @@ class Submission(BaseModel):
             category_error: Error message if category attachment failed (optional)
             image_count: Number of images in the article (optional)
             infobox_count: Number of infoboxes in the article (optional)
+            ref_new_count: Number of new references added to the article (optional)
+            ref_reused_count: Number of reused references in the article (optional)
             incoming_links: Number of other mainspace articles that link to this article (optional)
             outgoing_links: Number of mainspace articles this article links to (optional)
         """
@@ -242,6 +250,8 @@ class Submission(BaseModel):
         self.category_error = category_error
         self.image_count = image_count
         self.infobox_count = infobox_count
+        self.ref_new_count = ref_new_count
+        self.ref_reused_count = ref_reused_count
         self.incoming_links = incoming_links
         self.outgoing_links = outgoing_links
         self.reviewed_by = None
@@ -557,6 +567,8 @@ class Submission(BaseModel):
             "article_expansion_bytes": self.article_expansion_bytes,
             "image_count": self.image_count,
             "infobox_count": self.infobox_count,
+            "ref_new_count": self.ref_new_count,
+            "ref_reused_count": self.ref_reused_count,
             "incoming_links": self.incoming_links,
             "outgoing_links": self.outgoing_links,
             "template_added": self.template_added,

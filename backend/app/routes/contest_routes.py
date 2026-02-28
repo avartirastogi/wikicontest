@@ -31,6 +31,7 @@ from app.utils import (
     check_article_has_category,
     append_categories_to_article,
     get_article_reference_count,
+    get_detailed_reference_counts,
     get_article_image_count,
     get_article_infobox_count,
     get_article_incoming_links,
@@ -1318,6 +1319,8 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
     article_size_at_start = None
     article_expansion_bytes = None
     article_reference_count = None
+    ref_new_count = 0
+    ref_reused_count = 0
     image_count = None
     infobox_count = None
 
@@ -1704,6 +1707,22 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
         except Exception:  # pylint: disable=broad-exception-caught
             pass
         article_reference_count = None
+
+    # --- Fetch Detailed Reference Counts ---
+    # Counts <ref>...</ref> as new refs, and <ref .../> as reused refs
+    try:
+        ref_counts = get_detailed_reference_counts(article_link)
+        ref_new_count = int(ref_counts.get("new", 0) or 0)
+        ref_reused_count = int(ref_counts.get("reused", 0) or 0)
+    except Exception as ref_detail_error:  # pylint: disable=broad-exception-caught
+        try:
+            current_app.logger.warning(
+                "Failed to fetch detailed reference counts: %s", str(ref_detail_error)
+            )
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        ref_new_count = 0
+        ref_reused_count = 0
 
     # --- Fetch Image and Infobox Counts ---
     # These richness metrics are stored for future use but are not used in
@@ -2121,6 +2140,8 @@ def submit_to_contest(contest_id):  # pylint: disable=too-many-return-statements
             category_error=category_error,
             image_count=image_count,
             infobox_count=infobox_count,
+            ref_new_count=ref_new_count,
+            ref_reused_count=ref_reused_count,
             incoming_links=incoming_links,
             outgoing_links=outgoing_links,
         )

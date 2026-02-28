@@ -25,6 +25,7 @@ from app.utils import (
     get_latest_revision_author,
     build_mediawiki_revisions_api_params,
     get_mediawiki_headers,
+    get_detailed_reference_counts,
     MEDIAWIKI_API_TIMEOUT,
 )
 
@@ -508,6 +509,21 @@ def refresh_metadata(contest_id):
             # Do NOT update: article_author, article_word_count, article_size_at_start
             # These should remain fixed at submission time
             calculate_expansion_bytes(submission, info)
+
+            # Update detailed reference counts on refresh
+            try:
+                ref_counts = get_detailed_reference_counts(submission.article_link)
+                submission.ref_new_count = int(ref_counts.get("new", 0) or 0)
+                submission.ref_reused_count = int(ref_counts.get("reused", 0) or 0)
+            except Exception as ref_error:  # pylint: disable=broad-exception-caught
+                try:
+                    current_app.logger.warning(
+                        "Failed to refresh reference counts for submission %s: %s",
+                        submission.id,
+                        str(ref_error),
+                    )
+                except Exception:  # pylint: disable=broad-exception-caught
+                    pass
 
             updated += 1
         else:
